@@ -1644,7 +1644,7 @@
       "count": 1
     }
   ],
-  "_machines_comment": "A machine category exists at each tier listed. Its craft recipe is hull + (circuits+cables when the tier has electronics) + the parts below.",
+  "_machines_comment": "Machines. 'size' is tiles per side and is the ONLY throughput dial: a machine runs size*size batches of a recipe per cycle, and costs size*size times as much to build. Effect scales with footprint by construction, so there is no separate speed table to keep honest. Bench-scale unit operations are 1x1; vessel-scale plant is 2x2; bulk continuous process units -- columns, crackers, arc and fusion furnaces -- are 3x3.",
   "machines": [
     {
       "id": "furnace",
@@ -1657,7 +1657,8 @@
         "PLS",
         "FUS"
       ],
-      "parts": []
+      "parts": [],
+      "size": 1
     },
     {
       "id": "manual_crafting",
@@ -1666,7 +1667,8 @@
         "MAN"
       ],
       "parts": [],
-      "starting": true
+      "starting": true,
+      "size": 1
     },
     {
       "id": "alloy_smelter",
@@ -1679,7 +1681,8 @@
         "PLS",
         "FUS"
       ],
-      "parts": []
+      "parts": [],
+      "size": 1
     },
     {
       "id": "crusher",
@@ -1697,7 +1700,8 @@
           "component": "piston",
           "count": 2
         }
-      ]
+      ],
+      "size": 1
     },
     {
       "id": "macerator",
@@ -1715,7 +1719,8 @@
           "component": "motor",
           "count": 2
         }
-      ]
+      ],
+      "size": 1
     },
     {
       "id": "sifter",
@@ -1730,7 +1735,8 @@
           "component": "motor",
           "count": 1
         }
-      ]
+      ],
+      "size": 1
     },
     {
       "id": "bender",
@@ -1752,7 +1758,8 @@
           "component": "motor",
           "count": 1
         }
-      ]
+      ],
+      "size": 1
     },
     {
       "id": "lathe",
@@ -1770,7 +1777,8 @@
           "component": "motor",
           "count": 2
         }
-      ]
+      ],
+      "size": 1
     },
     {
       "id": "assembler",
@@ -1793,7 +1801,8 @@
           "component": "piston",
           "count": 1
         }
-      ]
+      ],
+      "size": 1
     },
     {
       "id": "boiler",
@@ -1806,7 +1815,8 @@
           "component": "pump",
           "count": 1
         }
-      ]
+      ],
+      "size": 2
     },
     {
       "id": "miner",
@@ -1829,7 +1839,8 @@
           "component": "conveyor",
           "count": 2
         }
-      ]
+      ],
+      "size": 1
     },
     {
       "id": "pump_station",
@@ -1847,7 +1858,8 @@
           "component": "pump",
           "count": 2
         }
-      ]
+      ],
+      "size": 1
     },
     {
       "id": "generator",
@@ -1866,7 +1878,8 @@
           "component": "motor",
           "count": 2
         }
-      ]
+      ],
+      "size": 1
     },
     {
       "id": "washer",
@@ -1883,7 +1896,8 @@
           "component": "pump",
           "count": 1
         }
-      ]
+      ],
+      "size": 1
     },
     {
       "id": "wire_mill",
@@ -1901,7 +1915,8 @@
           "component": "motor",
           "count": 2
         }
-      ]
+      ],
+      "size": 1
     },
     {
       "id": "mixer",
@@ -1917,7 +1932,8 @@
           "component": "motor",
           "count": 1
         }
-      ]
+      ],
+      "size": 2
     },
     {
       "id": "chemical_reactor",
@@ -1940,7 +1956,8 @@
           "component": "motor",
           "count": 1
         }
-      ]
+      ],
+      "size": 2
     },
     {
       "id": "electrolyzer",
@@ -1958,7 +1975,8 @@
           "component": "pump",
           "count": 1
         }
-      ]
+      ],
+      "size": 2
     },
     {
       "id": "cutter",
@@ -1977,7 +1995,8 @@
           "component": "conveyor",
           "count": 1
         }
-      ]
+      ],
+      "size": 1
     },
     {
       "id": "centrifuge",
@@ -1994,7 +2013,8 @@
           "component": "motor",
           "count": 2
         }
-      ]
+      ],
+      "size": 2
     },
     {
       "id": "distillery",
@@ -2012,7 +2032,8 @@
           "component": "pump",
           "count": 2
         }
-      ]
+      ],
+      "size": 2
     },
     {
       "id": "arc_furnace",
@@ -2027,7 +2048,8 @@
           "component": "motor",
           "count": 1
         }
-      ]
+      ],
+      "size": 3
     },
     {
       "id": "chemical_bath",
@@ -2042,7 +2064,8 @@
           "component": "pump",
           "count": 2
         }
-      ]
+      ],
+      "size": 2
     },
     {
       "id": "vacuum_freezer",
@@ -2062,7 +2085,8 @@
           "component": "motor",
           "count": 1
         }
-      ]
+      ],
+      "size": 2
     },
     {
       "id": "fusion_reactor",
@@ -2081,7 +2105,8 @@
           "component": "motor",
           "count": 4
         }
-      ]
+      ],
+      "size": 3
     },
     {
       "id": "replicator",
@@ -2098,7 +2123,8 @@
           "component": "motor",
           "count": 4
         }
-      ]
+      ],
+      "size": 3
     },
     {
       "id": "vacuum_distillation",
@@ -2114,7 +2140,8 @@
           "component": "pump",
           "count": 3
         }
-      ]
+      ],
+      "size": 3
     },
     {
       "id": "steam_cracker",
@@ -2135,7 +2162,8 @@
           "component": "motor",
           "count": 1
         }
-      ]
+      ],
+      "size": 3
     },
     {
       "id": "catalytic_reformer",
@@ -2155,7 +2183,8 @@
           "component": "motor",
           "count": 1
         }
-      ]
+      ],
+      "size": 2
     },
     {
       "id": "fcc_unit",
@@ -2174,7 +2203,8 @@
           "component": "motor",
           "count": 2
         }
-      ]
+      ],
+      "size": 3
     },
     {
       "id": "hydrotreater",
@@ -2190,7 +2220,8 @@
           "component": "pump",
           "count": 2
         }
-      ]
+      ],
+      "size": 2
     },
     {
       "id": "claus_unit",
@@ -2205,7 +2236,8 @@
           "component": "pump",
           "count": 2
         }
-      ]
+      ],
+      "size": 2
     },
     {
       "id": "coker",
@@ -2224,7 +2256,8 @@
           "component": "motor",
           "count": 1
         }
-      ]
+      ],
+      "size": 3
     },
     {
       "id": "gasifier",
@@ -2240,7 +2273,8 @@
           "component": "pump",
           "count": 1
         }
-      ]
+      ],
+      "size": 3
     },
     {
       "id": "polymerizer",
@@ -2263,7 +2297,8 @@
           "component": "motor",
           "count": 2
         }
-      ]
+      ],
+      "size": 2
     },
     {
       "id": "spinneret",
@@ -2283,7 +2318,8 @@
           "component": "conveyor",
           "count": 1
         }
-      ]
+      ],
+      "size": 1
     },
     {
       "id": "transport_belt",
@@ -2301,7 +2337,8 @@
           "component": "conveyor",
           "count": 1
         }
-      ]
+      ],
+      "size": 1
     },
     {
       "id": "underground_belt",
@@ -2318,7 +2355,8 @@
           "component": "conveyor",
           "count": 2
         }
-      ]
+      ],
+      "size": 1
     },
     {
       "id": "splitter",
@@ -2339,7 +2377,8 @@
           "component": "motor",
           "count": 1
         }
-      ]
+      ],
+      "size": 1
     },
     {
       "id": "inserter",
@@ -2357,7 +2396,8 @@
           "component": "motor",
           "count": 1
         }
-      ]
+      ],
+      "size": 1
     },
     {
       "id": "stack_inserter",
@@ -2377,7 +2417,8 @@
           "component": "conveyor",
           "count": 1
         }
-      ]
+      ],
+      "size": 1
     },
     {
       "id": "pipe",
@@ -2390,7 +2431,8 @@
         "FUS",
         "QNT"
       ],
-      "parts": []
+      "parts": [],
+      "size": 1
     },
     {
       "id": "inline_pump",
@@ -2411,7 +2453,8 @@
           "component": "motor",
           "count": 1
         }
-      ]
+      ],
+      "size": 1
     },
     {
       "id": "storage_tank",
@@ -2428,7 +2471,8 @@
           "component": "pump",
           "count": 1
         }
-      ]
+      ],
+      "size": 2
     },
     {
       "id": "prospector",
@@ -2441,7 +2485,8 @@
         "PLS"
       ],
       "parts": [],
-      "starting": true
+      "starting": true,
+      "size": 1
     },
     {
       "id": "oil_derrick",
@@ -2462,7 +2507,8 @@
           "component": "motor",
           "count": 1
         }
-      ]
+      ],
+      "size": 2
     }
   ],
   "_chemistry_comment": "Hand-written recipes that do not fit a generated pattern. These are the real tier gates.",

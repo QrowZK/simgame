@@ -265,11 +265,17 @@ def main():
 
     # ---- machines -----------------------------------------------------------
     for mach_spec in spec["machines"]:
+        size = int(mach_spec.get("size", 1))
+        area = size * size
         machines.append({
             "id": mach_spec["id"],
             "name": mach_spec["name"],
             "tiers": mach_spec["tiers"],
             "min_tier": mach_spec["tiers"][0],
+            "size": size,
+            # Batches per cycle. Derived, never authored: a machine's effect is
+            # its footprint, so the two cannot drift apart.
+            "parallelism": area,
         })
         for tier_id in mach_spec["tiers"]:
             t = tier_at[by_index[tier_id]]
@@ -292,6 +298,11 @@ def main():
                 ins.append({"item": "%s_cable" % lo, "count": 4})
                 for part in mach_spec["parts"]:
                     ins.append({"item": "%s_%s" % (lo, part["component"]), "count": part["count"]})
+                # A bigger machine is bigger to build. Without this, footprint
+                # would be free throughput and every plant would be 3x3.
+                if area > 1:
+                    for i in ins:
+                        i["count"] *= area
             add_recipe("build_%s" % item_id, builder, pt, 400, ins,
                        [{"item": item_id, "count": 1}], "fabrication")
 

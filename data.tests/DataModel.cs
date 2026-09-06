@@ -30,6 +30,8 @@ public sealed class MachineDef
     [JsonPropertyName("name")] public string Name { get; set; } = "";
     [JsonPropertyName("tiers")] public List<string> Tiers { get; set; } = new();
     [JsonPropertyName("min_tier")] public string MinTier { get; set; } = "";
+    [JsonPropertyName("size")] public int Size { get; set; } = 1;
+    [JsonPropertyName("parallelism")] public int Parallelism { get; set; } = 1;
 }
 
 public sealed class TechDef

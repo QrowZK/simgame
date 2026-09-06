@@ -1,0 +1,89 @@
+[gd_scene load_steps=5 format=3 uid="uid://c8m1n4pnl0aa"]
+
+[ext_resource type="Script" path="res://scripts/MachinePanel.cs" id="1_panel"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+bg_color = Color(0.08, 0.09, 0.11, 0.96)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.35, 0.38, 0.44, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bar_bg"]
+bg_color = Color(0.16, 0.17, 0.2, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bar_fill"]
+bg_color = Color(0.36, 0.72, 0.42, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[node name="MachinePanel" type="PanelContainer"]
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -340.0
+offset_top = -300.0
+offset_right = -16.0
+offset_bottom = -16.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+script = ExtResource("1_panel")
+
+[node name="Margin" type="MarginContainer" parent="."]
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 12
+
+[node name="Rows" type="VBoxContainer" parent="Margin"]
+size_flags_vertical = 0
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="Margin/Rows"]
+text = "Machine"
+
+[node name="Subtitle" type="Label" parent="Margin/Rows"]
+text = "recipe"
+
+[node name="Progress" type="ProgressBar" parent="Margin/Rows"]
+custom_minimum_size = Vector2(0, 14)
+theme_override_styles/background = SubResource("StyleBoxFlat_bar_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_bar_fill")
+max_value = 1.0
+step = 0.001
+show_percentage = false
+
+[node name="Status" type="Label" parent="Margin/Rows"]
+text = "Idle"
+
+[node name="Inputs" type="Label" parent="Margin/Rows"]
+text = "Inputs"
+
+[node name="Outputs" type="Label" parent="Margin/Rows"]
+text = "Outputs"
+
+[node name="Buttons" type="HBoxContainer" parent="Margin/Rows"]
+theme_override_constants/separation = 8
+
+[node name="Load" type="Button" parent="Margin/Rows/Buttons"]
+text = "Load one cycle"
+
+[node name="Take" type="Button" parent="Margin/Rows/Buttons"]
+text = "Take output"
+
+[node name="Carrying" type="Label" parent="Margin/Rows"]
+text = "Carrying"

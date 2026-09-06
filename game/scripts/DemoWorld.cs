@@ -10,6 +10,9 @@ namespace Game;
 /// the world itself stays engine-free.
 public static class DemoWorld
 {
+    /// Grid stride. Machines are square and at most this many tiles per side.
+    private const int MaxFootprint = 3;
+
     public static World Build(int machineCount, int seed)
     {
         var db = new ItemDatabase();
@@ -25,38 +28,56 @@ public static class DemoWorld
             new[] { new RecipeInput(plate, 2) },
             new[] { new RecipeOutput(gear, 1) });
 
-        var world = new World(seed);
+        var world = new World(seed, db);
         var side = (int)System.Math.Ceiling(System.Math.Sqrt(machineCount));
 
         for (var i = 0; i < machineCount; i++)
         {
-            var x = i % side;
-            var y = i / side;
-            var tier = (byte)((x / 4 + y / 4) % MeshKitTiers);
-            var category = (byte)((x + y * 3) % MeshKitCategories);
+            var cell = i % side;
+            var row = i / side;
+            var tier = (byte)((cell / 4 + row / 4) % MeshKitTiers);
+            var category = (byte)((cell + row * 3) % MeshKitCategories);
+
+            // Footprints vary, so the grid strides by the largest of them --
+            // otherwise a 3x3 would swallow its neighbours' tiles and the
+            // placement check would reject most of the demo.
+            var size = (byte)(category switch
+            {
+                3 => 3,   // stands in for the bulk process units
+                5 => 2,
+                _ => 1,
+            });
+
+            var x = cell * MaxFootprint;
+            var y = row * MaxFootprint;
             var recipe = (i % 3 == 0) ? assemble : smelt;
-            var placement = new MachinePlacement(x, y, tier, category);
+            var placement = new MachinePlacement(x, y, tier, category, size);
 
             switch (i % 4)
             {
                 case 0:
                     // Starved: placed, powered, but nothing feeding it.
-                    world.AddMachine(recipe, placement);
+                    world.TryPlaceMachine(recipe, placement);
                     break;
 
                 case 1:
                     // Backpressured: one cycle's worth of room, then it stalls
                     // with its inputs untouched.
-                    var blocked = world.AddMachine(recipe, placement, outputCapacityPerItem: 1);
-                    Feed(blocked, recipe, 64);
+                    var blocked = world.TryPlaceMachine(recipe, placement, outputCapacityPerItem: 1);
+                    if (blocked is not null) Feed(blocked, recipe, 64);
                     break;
 
                 default:
-                    var running = world.AddMachine(recipe, placement, outputCapacityPerItem: 4096);
-                    Feed(running, recipe, 100_000);
+                    var running = world.TryPlaceMachine(recipe, placement, outputCapacityPerItem: 4096);
+                    if (running is not null) Feed(running, recipe, 100_000);
                     break;
             }
         }
+
+        // Something in the player's hands, so the panel's load button has
+        // work to do on the starved machines.
+        world.PlayerInventory.Add(ore, 500);
+        world.PlayerInventory.Add(plate, 200);
 
         return world;
     }

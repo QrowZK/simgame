@@ -97,12 +97,25 @@ public sealed partial class MachineRenderer : Node3D
             var tier = Clamp(placement.Tier, MeshKit.TierCount);
             var category = Clamp(placement.Category, MeshKit.CategoryCount);
 
-            var x = placement.X * TileSize;
-            var z = placement.Y * TileSize;
+            // Placements anchor on the footprint's corner; meshes are centred
+            // on theirs. The -0.5f keeps a 1x1 exactly where it always sat.
+            var x = (placement.CentreX - 0.5f) * TileSize;
+            var z = (placement.CentreY - 0.5f) * TileSize;
 
-            Write(_hullBuffers[tier]!, _hullCursor[tier]++, x, 0f, z, MeshKit.TierColor(tier));
+            // Footprint scales the plan fully; height grows at half that rate.
+            // A 3x3 raised to three times the height reads as a tower rather
+            // than as a bigger machine, and buries its neighbours in shadow.
+            var plan = placement.Size;
+            var lift = 1f + (placement.Size - 1) * 0.5f;
+
+            Write(_hullBuffers[tier]!, _hullCursor[tier]++, x, 0f, z,
+                  MeshKit.TierColor(tier), plan, lift);
             Write(_attachBuffers[category]!, _attachCursor[category]++,
-                  x, MeshKit.DeckHeight(tier), z, MeshKit.StateColor(states[i]));
+                  x, MeshKit.DeckHeight(tier) * lift, z,
+                  // The attachment lifts with its hull, not with its plan: at
+                  // full plan scale a 3x3's drum is taller than the body it sits
+                  // on and overhangs the edge.
+                  MeshKit.StateColor(states[i]), plan, lift);
         }
 
         for (var tier = 0; tier < MeshKit.TierCount; tier++)
@@ -111,15 +124,16 @@ public sealed partial class MachineRenderer : Node3D
             Upload(_attachPools[category], _attachBuffers[category]!, _attachCounts[category]);
     }
 
-    /// Writes one instance: an axis-aligned transform plus its colour. Machines
-    /// are not rotated, so the basis is identity; a rotated instance would fill
-    /// the same 3x4 slots with its basis rows instead.
-    private static void Write(float[] buffer, int index, float x, float y, float z, Color color)
+    /// Writes one instance: an axis-aligned, axis-scaled transform plus colour.
+    /// Machines are not rotated, so the basis is diagonal; a rotated instance
+    /// would fill the same 3x4 slots with its basis rows instead.
+    private static void Write(float[] buffer, int index, float x, float y, float z, Color color,
+                              float plan = 1f, float lift = 1f)
     {
         var o = index * FloatsPerInstance;
-        buffer[o + 0] = 1f; buffer[o + 1] = 0f; buffer[o + 2] = 0f; buffer[o + 3] = x;
-        buffer[o + 4] = 0f; buffer[o + 5] = 1f; buffer[o + 6] = 0f; buffer[o + 7] = y;
-        buffer[o + 8] = 0f; buffer[o + 9] = 0f; buffer[o + 10] = 1f; buffer[o + 11] = z;
+        buffer[o + 0] = plan; buffer[o + 1] = 0f;   buffer[o + 2] = 0f;   buffer[o + 3] = x;
+        buffer[o + 4] = 0f;   buffer[o + 5] = lift; buffer[o + 6] = 0f;   buffer[o + 7] = y;
+        buffer[o + 8] = 0f;   buffer[o + 9] = 0f;   buffer[o + 10] = plan; buffer[o + 11] = z;
         buffer[o + 12] = color.R;
         buffer[o + 13] = color.G;
         buffer[o + 14] = color.B;
