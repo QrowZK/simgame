@@ -1,0 +1,14 @@
+[
+  {
+    "id": "tech_basic_smelting",
+    "tier": "LV",
+    "name": "Basic Smelting",
+    "requires": []
+  },
+  {
+    "id": "tech_basic_assembly",
+    "tier": "LV",
+    "name": "Basic Assembly",
+    "requires": ["tech_basic_smelting"]
+  }
+]

@@ -1,0 +1,17 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+
+# Godot 4
+.godot/
+.mono/
+data_export/
+export.cfg
+export_presets.cfg
+*.translation
+
+# OS
+.DS_Store
+Thumbs.db

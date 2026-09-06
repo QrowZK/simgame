@@ -1,0 +1,4 @@
+[
+  { "id": "furnace", "name": "Furnace", "tier": "LV" },
+  { "id": "assembler", "name": "Assembler", "tier": "LV" }
+]

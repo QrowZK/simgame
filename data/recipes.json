@@ -1,0 +1,32 @@
+[
+  {
+    "id": "smelt_iron_plate",
+    "machine": "furnace",
+    "tier": "LV",
+    "duration_ticks": 192,
+    "power_draw": 30,
+    "inputs": [{ "item": "iron_ore", "count": 1 }],
+    "outputs": [{ "item": "iron_plate", "count": 1 }],
+    "unlocked_by": "tech_basic_smelting"
+  },
+  {
+    "id": "smelt_copper_plate",
+    "machine": "furnace",
+    "tier": "LV",
+    "duration_ticks": 192,
+    "power_draw": 30,
+    "inputs": [{ "item": "copper_ore", "count": 1 }],
+    "outputs": [{ "item": "copper_plate", "count": 1 }],
+    "unlocked_by": "tech_basic_smelting"
+  },
+  {
+    "id": "assemble_iron_gear",
+    "machine": "assembler",
+    "tier": "LV",
+    "duration_ticks": 120,
+    "power_draw": 45,
+    "inputs": [{ "item": "iron_plate", "count": 2 }],
+    "outputs": [{ "item": "iron_gear", "count": 1 }],
+    "unlocked_by": "tech_basic_assembly"
+  }
+]
