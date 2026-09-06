@@ -23,9 +23,11 @@ public class WorldGenDataTests
         foreach (var item in Data.Items.Where(i => i.Raw && i.Category == "raw_ore"))
         {
             var ring = Math.Max(0, tierIndex[item.Tier] - 1);
+            // Further out means a longer haul, so patches out there hold more --
+            // the trip has to be worth making.
             specs.Add(new OreSpec(database.GetId(item.Id), ring,
-                                  patchRadius: 6 + (5 - Math.Min(5, ring)),
-                                  richness: 4000 - ring * 500));
+                                  patchRadius: 6 + Math.Min(5, ring),
+                                  baseAmount: 4000 + ring * 3000));
         }
 
         return specs;

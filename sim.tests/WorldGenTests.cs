@@ -8,7 +8,7 @@ public class WorldGenTests
     {
         var ores = new List<OreSpec>();
         for (var i = 0; i < count; i++)
-            ores.Add(new OreSpec(new ItemId(i), minRing: i / 6, patchRadius: 6, richness: 1000));
+            ores.Add(new OreSpec(new ItemId(i), minRing: i / 6, patchRadius: 6, baseAmount: 1000));
         return ores;
     }
 
@@ -147,6 +147,96 @@ public class WorldGenTests
     }
 
     [Fact]
+    public void DifferentResources_AreNeverPiledOnTopOfEachOther()
+    {
+        // The setting that makes hauling a real problem. Without it a region can
+        // deal copper, tin and coal within a few tiles and the answer to every
+        // logistics question is "build it here".
+        var world = new WorldGen(17, Ores(24));
+
+        for (var ry = -3; ry <= 3; ry++)
+            for (var rx = -3; rx <= 3; rx++)
+            {
+                var patches = world.PatchesInRegion(rx, ry);
+                for (var a = 0; a < patches.Count; a++)
+                    for (var b = a + 1; b < patches.Count; b++)
+                    {
+                        if (patches[a].Item.Equals(patches[b].Item)) continue;
+
+                        var dx = patches[a].X - patches[b].X;
+                        var dy = patches[a].Y - patches[b].Y;
+                        var separation = Math.Sqrt(dx * dx + dy * dy);
+
+                        Assert.True(separation >= WorldGen.MinCrossOreSeparation,
+                            $"two different resources only {separation:0} tiles apart " +
+                            $"in region {rx},{ry}");
+                    }
+            }
+    }
+
+    [Fact]
+    public void SameResource_MayStillCluster()
+    {
+        // Separation applies across resources, not within one: a copper field
+        // should still read as a field rather than as scattered singletons.
+        var ores = new List<OreSpec> { new(new ItemId(0), 0, 6, 1000) };
+        var world = new WorldGen(23, ores);
+
+        var patches = world.PatchesInRegion(0, 0);
+        Assert.True(patches.Count > 1, "a single-resource region should still deal several patches");
+    }
+
+    [Fact]
+    public void PatchContents_AreConsistentRatherThanALottery()
+    {
+        // A patch you walk to should be worth roughly what the last one was.
+        // Wide variance here is indistinguishable from luck.
+        var ores = Ores(24);
+        var expected = ores.ToDictionary(o => o.Item.Value, o => o.BaseAmount);
+
+        for (var seed = 1; seed <= 10; seed++)
+        {
+            var world = new WorldGen(seed, ores);
+
+            for (var ry = -3; ry <= 3; ry++)
+                for (var rx = -3; rx <= 3; rx++)
+                    foreach (var patch in world.PatchesInRegion(rx, ry))
+                    {
+                        var baseline = expected[patch.Item.Value];
+                        var ratio = patch.Amount / (double)baseline;
+                        Assert.InRange(ratio, 0.89, 1.11);
+                    }
+        }
+    }
+
+    [Fact]
+    public void NoSeedIsABadSeed()
+    {
+        // Total resource available near spawn should not swing wildly between
+        // seeds -- nobody should have to reroll a world.
+        var ores = Ores(24);
+        var totals = new List<long>();
+
+        for (var seed = 1; seed <= 30; seed++)
+        {
+            var world = new WorldGen(seed, ores);
+            long total = 0;
+
+            for (var ry = -1; ry <= 1; ry++)
+                for (var rx = -1; rx <= 1; rx++)
+                    foreach (var patch in world.PatchesInRegion(rx, ry))
+                        total += patch.Amount;
+
+            totals.Add(total);
+        }
+
+        var best = totals.Max();
+        var worst = totals.Min();
+        Assert.True(best <= worst * 1.35,
+            $"spawn wealth swings too far between seeds: {worst} to {best}");
+    }
+
+    [Fact]
     public void OreNeverGeneratesInOpenWater()
     {
         var world = new WorldGen(31, Ores(20));
@@ -165,7 +255,7 @@ public class ProspectorTests
     {
         var ores = new List<OreSpec>();
         for (var i = 0; i < count; i++)
-            ores.Add(new OreSpec(new ItemId(i), minRing: i / 6, patchRadius: 6, richness: 500 + i));
+            ores.Add(new OreSpec(new ItemId(i), minRing: i / 6, patchRadius: 6, baseAmount: 500));
         return ores;
     }
 

@@ -6,16 +6,16 @@ public readonly struct ProspectHit
     public readonly int X;
     public readonly int Y;
     public readonly int Distance;
-    public readonly int Richness;
+    public readonly int Amount;
     public readonly int Radius;
 
-    public ProspectHit(ItemId item, int x, int y, int distance, int richness, int radius)
+    public ProspectHit(ItemId item, int x, int y, int distance, int amount, int radius)
     {
         Item = item;
         X = x;
         Y = y;
         Distance = distance;
-        Richness = richness;
+        Amount = amount;
         Radius = radius;
     }
 }
@@ -50,7 +50,7 @@ public sealed class Prospector
                 continue;
 
             best[patch.Item.Value] =
-                new ProspectHit(patch.Item, patch.X, patch.Y, distance, patch.Richness, patch.Radius);
+                new ProspectHit(patch.Item, patch.X, patch.Y, distance, patch.Amount, patch.Radius);
         }
 
         var hits = best.Values.ToList();
@@ -63,7 +63,7 @@ public sealed class Prospector
     {
         if (world.TryPatchAt(x, y, out var patch))
         {
-            hit = new ProspectHit(patch.Item, patch.X, patch.Y, 0, patch.Richness, patch.Radius);
+            hit = new ProspectHit(patch.Item, patch.X, patch.Y, 0, patch.Amount, patch.Radius);
             return true;
         }
 
@@ -89,7 +89,7 @@ public sealed class Prospector
             if (distance >= bestDistance) continue;
 
             bestDistance = distance;
-            hit = new ProspectHit(patch.Item, patch.X, patch.Y, distance, patch.Richness, patch.Radius);
+            hit = new ProspectHit(patch.Item, patch.X, patch.Y, distance, patch.Amount, patch.Radius);
             found = true;
         }
 

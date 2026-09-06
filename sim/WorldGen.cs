@@ -18,14 +18,19 @@ public readonly struct OreSpec
     public readonly ItemId Item;
     public readonly int MinRing;
     public readonly int PatchRadius;
-    public readonly int Richness;
 
-    public OreSpec(ItemId item, int minRing, int patchRadius, int richness)
+    /// Units in a typical patch. Deliberately a flat figure rather than a
+    /// distribution: a patch you walk to should be worth roughly what the last
+    /// one was, so deciding to haul from it is a judgement about distance rather
+    /// than a bet on what you will find when you get there.
+    public readonly int BaseAmount;
+
+    public OreSpec(ItemId item, int minRing, int patchRadius, int baseAmount)
     {
         Item = item;
         MinRing = minRing;
         PatchRadius = patchRadius;
-        Richness = richness;
+        BaseAmount = baseAmount;
     }
 }
 
@@ -35,15 +40,17 @@ public readonly struct OrePatch
     public readonly int X;
     public readonly int Y;
     public readonly int Radius;
-    public readonly int Richness;
 
-    public OrePatch(ItemId item, int x, int y, int radius, int richness)
+    /// Total units this patch holds.
+    public readonly int Amount;
+
+    public OrePatch(ItemId item, int x, int y, int radius, int amount)
     {
         Item = item;
         X = x;
         Y = y;
         Radius = radius;
-        Richness = richness;
+        Amount = amount;
     }
 
     public bool Contains(int x, int y)
@@ -75,6 +82,19 @@ public sealed class WorldGen
     /// Patches dealt per region. Coverage of an eligible set of N resources is
     /// therefore complete within ceil(N / PatchesPerRegion) regions.
     public const int PatchesPerRegion = 6;
+
+    /// Minimum tiles between patches of DIFFERENT resources. This is the setting
+    /// that decides whether hauling is a real problem: without it, a region can
+    /// deal copper, tin and coal on top of each other and the answer to every
+    /// logistics question is "build it here". Patches of the SAME resource are
+    /// free to sit close together, so a copper field still reads as a field.
+    public const int MinCrossOreSeparation = 56;
+
+    /// How much a patch's size and contents may vary from its resource's
+    /// baseline. Kept tight on purpose: variance here is indistinguishable from
+    /// luck, and a seed where the nearest iron holds a third of the usual is a
+    /// seed the player did nothing to deserve.
+    private const double AmountJitter = 0.10;
 
     private const int SeaLevel = 96;
     private const int ShoreLevel = 108;
@@ -156,27 +176,49 @@ public sealed class WorldGen
                 var spec = eligible[index];
 
                 var salt = Noise.Hash(Seed ^ 0x51ED2701, rx * 977 + i, ry * 631 + i);
-                var ox = (int)(salt % RegionSize);
-                var oy = (int)((salt >> 12) % RegionSize);
+                var baseX = (int)(salt % RegionSize);
+                var baseY = (int)((salt >> 12) % RegionSize);
 
-                var x = rx * RegionSize + ox;
-                var y = ry * RegionSize + oy;
+                // Find a spot that is on land and clear of other resources.
+                // Both constraints are searched together rather than one after
+                // the other, so satisfying one cannot quietly break the other.
+                var placed = false;
+                var x = 0;
+                var y = 0;
 
-                // Ore does not sit in the sea; nudge inland rather than dropping
-                // the patch, so coverage stays guaranteed.
-                for (var attempt = 0; attempt < 8 && IsWater(x, y); attempt++)
+                for (var attempt = 0; attempt < 24 && !placed; attempt++)
                 {
-                    x = rx * RegionSize + (ox + attempt * 37) % RegionSize;
-                    y = ry * RegionSize + (oy + attempt * 53) % RegionSize;
+                    x = rx * RegionSize + (baseX + attempt * 37) % RegionSize;
+                    y = ry * RegionSize + (baseY + attempt * 53) % RegionSize;
+
+                    if (IsWater(x, y))
+                        continue;
+
+                    placed = true;
+                    foreach (var other in patches)
+                    {
+                        if (other.Item.Equals(spec.Item))
+                            continue;       // same resource may cluster
+
+                        var dx = other.X - x;
+                        var dy = other.Y - y;
+                        if (dx * dx + dy * dy < MinCrossOreSeparation * MinCrossOreSeparation)
+                        {
+                            placed = false;
+                            break;
+                        }
+                    }
                 }
 
-                if (IsWater(x, y))
+                if (!placed)
                     continue;
 
-                var jitter = (int)(salt >> 24) % 3;
-                patches.Add(new OrePatch(spec.Item, x, y,
-                                         Math.Max(2, spec.PatchRadius + jitter),
-                                         spec.Richness));
+                // Predictable size and contents: a tenth either way, no more.
+                var wobble = (salt >> 24) / 255.0 * 2.0 - 1.0;
+                var amount = (int)(spec.BaseAmount * (1.0 + AmountJitter * wobble));
+                var radius = Math.Max(2, spec.PatchRadius + (int)Math.Round(wobble));
+
+                patches.Add(new OrePatch(spec.Item, x, y, radius, Math.Max(1, amount)));
             }
         }
 
