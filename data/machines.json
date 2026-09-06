@@ -1,4 +1,541 @@
 [
-  { "id": "furnace", "name": "Furnace", "tier": "LV" },
-  { "id": "assembler", "name": "Assembler", "tier": "LV" }
+  {
+    "id": "furnace",
+    "name": "Furnace",
+    "tiers": [
+      "MAN",
+      "STM",
+      "VLT",
+      "ARC",
+      "PLS",
+      "FUS"
+    ],
+    "min_tier": "MAN"
+  },
+  {
+    "id": "manual_crafting",
+    "name": "Manual Crafting",
+    "tiers": [
+      "MAN"
+    ],
+    "min_tier": "MAN"
+  },
+  {
+    "id": "alloy_smelter",
+    "name": "Alloy Smelter",
+    "tiers": [
+      "MAN",
+      "STM",
+      "VLT",
+      "ARC",
+      "PLS",
+      "FUS"
+    ],
+    "min_tier": "MAN"
+  },
+  {
+    "id": "crusher",
+    "name": "Crusher",
+    "tiers": [
+      "STM",
+      "VLT",
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT"
+    ],
+    "min_tier": "STM"
+  },
+  {
+    "id": "macerator",
+    "name": "Macerator",
+    "tiers": [
+      "STM",
+      "VLT",
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT"
+    ],
+    "min_tier": "STM"
+  },
+  {
+    "id": "sifter",
+    "name": "Sifter",
+    "tiers": [
+      "STM",
+      "VLT",
+      "ARC"
+    ],
+    "min_tier": "STM"
+  },
+  {
+    "id": "bender",
+    "name": "Bender",
+    "tiers": [
+      "STM",
+      "VLT",
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT"
+    ],
+    "min_tier": "STM"
+  },
+  {
+    "id": "lathe",
+    "name": "Lathe",
+    "tiers": [
+      "STM",
+      "VLT",
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT"
+    ],
+    "min_tier": "STM"
+  },
+  {
+    "id": "assembler",
+    "name": "Assembler",
+    "tiers": [
+      "STM",
+      "VLT",
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT",
+      "SNG"
+    ],
+    "min_tier": "STM"
+  },
+  {
+    "id": "boiler",
+    "name": "Boiler",
+    "tiers": [
+      "STM"
+    ],
+    "min_tier": "STM"
+  },
+  {
+    "id": "miner",
+    "name": "Miner",
+    "tiers": [
+      "STM",
+      "VLT",
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT",
+      "SNG"
+    ],
+    "min_tier": "STM"
+  },
+  {
+    "id": "pump_station",
+    "name": "Pump Station",
+    "tiers": [
+      "STM",
+      "VLT",
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT"
+    ],
+    "min_tier": "STM"
+  },
+  {
+    "id": "generator",
+    "name": "Generator",
+    "tiers": [
+      "STM",
+      "VLT",
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT",
+      "SNG"
+    ],
+    "min_tier": "STM"
+  },
+  {
+    "id": "washer",
+    "name": "Ore Washer",
+    "tiers": [
+      "VLT",
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT"
+    ],
+    "min_tier": "VLT"
+  },
+  {
+    "id": "wire_mill",
+    "name": "Wire Mill",
+    "tiers": [
+      "STM",
+      "VLT",
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT"
+    ],
+    "min_tier": "STM"
+  },
+  {
+    "id": "mixer",
+    "name": "Mixer",
+    "tiers": [
+      "VLT",
+      "ARC",
+      "PLS",
+      "FUS"
+    ],
+    "min_tier": "VLT"
+  },
+  {
+    "id": "chemical_reactor",
+    "name": "Chemical Reactor",
+    "tiers": [
+      "STM",
+      "VLT",
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT",
+      "SNG"
+    ],
+    "min_tier": "STM"
+  },
+  {
+    "id": "electrolyzer",
+    "name": "Electrolyzer",
+    "tiers": [
+      "VLT",
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT",
+      "SNG"
+    ],
+    "min_tier": "VLT"
+  },
+  {
+    "id": "cutter",
+    "name": "Cutter",
+    "tiers": [
+      "VLT",
+      "ARC",
+      "PLS"
+    ],
+    "min_tier": "VLT"
+  },
+  {
+    "id": "centrifuge",
+    "name": "Centrifuge",
+    "tiers": [
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT",
+      "SNG"
+    ],
+    "min_tier": "ARC"
+  },
+  {
+    "id": "distillery",
+    "name": "Distillery",
+    "tiers": [
+      "STM",
+      "VLT",
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT"
+    ],
+    "min_tier": "STM"
+  },
+  {
+    "id": "arc_furnace",
+    "name": "Arc Furnace",
+    "tiers": [
+      "ARC",
+      "PLS",
+      "FUS"
+    ],
+    "min_tier": "ARC"
+  },
+  {
+    "id": "chemical_bath",
+    "name": "Chemical Bath",
+    "tiers": [
+      "PLS",
+      "FUS",
+      "QNT"
+    ],
+    "min_tier": "PLS"
+  },
+  {
+    "id": "vacuum_freezer",
+    "name": "Vacuum Freezer",
+    "tiers": [
+      "PLS",
+      "FUS",
+      "QNT",
+      "SNG"
+    ],
+    "min_tier": "PLS"
+  },
+  {
+    "id": "fusion_reactor",
+    "name": "Fusion Reactor",
+    "tiers": [
+      "FUS",
+      "QNT",
+      "SNG"
+    ],
+    "min_tier": "FUS"
+  },
+  {
+    "id": "replicator",
+    "name": "Matter Replicator",
+    "tiers": [
+      "SNG"
+    ],
+    "min_tier": "SNG"
+  },
+  {
+    "id": "vacuum_distillation",
+    "name": "Vacuum Distillation",
+    "tiers": [
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT"
+    ],
+    "min_tier": "ARC"
+  },
+  {
+    "id": "steam_cracker",
+    "name": "Steam Cracker",
+    "tiers": [
+      "VLT",
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT"
+    ],
+    "min_tier": "VLT"
+  },
+  {
+    "id": "catalytic_reformer",
+    "name": "Catalytic Reformer",
+    "tiers": [
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT"
+    ],
+    "min_tier": "ARC"
+  },
+  {
+    "id": "fcc_unit",
+    "name": "Catalytic Cracker",
+    "tiers": [
+      "PLS",
+      "FUS",
+      "QNT"
+    ],
+    "min_tier": "PLS"
+  },
+  {
+    "id": "hydrotreater",
+    "name": "Hydrotreater",
+    "tiers": [
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT"
+    ],
+    "min_tier": "ARC"
+  },
+  {
+    "id": "claus_unit",
+    "name": "Claus Sulfur Unit",
+    "tiers": [
+      "ARC",
+      "PLS",
+      "FUS"
+    ],
+    "min_tier": "ARC"
+  },
+  {
+    "id": "coker",
+    "name": "Delayed Coker",
+    "tiers": [
+      "PLS",
+      "FUS",
+      "QNT"
+    ],
+    "min_tier": "PLS"
+  },
+  {
+    "id": "gasifier",
+    "name": "Gasifier",
+    "tiers": [
+      "STM",
+      "VLT",
+      "ARC",
+      "PLS"
+    ],
+    "min_tier": "STM"
+  },
+  {
+    "id": "polymerizer",
+    "name": "Polymerization Reactor",
+    "tiers": [
+      "STM",
+      "VLT",
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT",
+      "SNG"
+    ],
+    "min_tier": "STM"
+  },
+  {
+    "id": "spinneret",
+    "name": "Fibre Spinneret",
+    "tiers": [
+      "PLS",
+      "FUS",
+      "QNT",
+      "SNG"
+    ],
+    "min_tier": "PLS"
+  },
+  {
+    "id": "transport_belt",
+    "name": "Transport Belt",
+    "tiers": [
+      "STM",
+      "VLT",
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT"
+    ],
+    "min_tier": "STM"
+  },
+  {
+    "id": "underground_belt",
+    "name": "Underground Belt",
+    "tiers": [
+      "VLT",
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT"
+    ],
+    "min_tier": "VLT"
+  },
+  {
+    "id": "splitter",
+    "name": "Splitter",
+    "tiers": [
+      "VLT",
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT"
+    ],
+    "min_tier": "VLT"
+  },
+  {
+    "id": "inserter",
+    "name": "Inserter",
+    "tiers": [
+      "STM",
+      "VLT",
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT"
+    ],
+    "min_tier": "STM"
+  },
+  {
+    "id": "stack_inserter",
+    "name": "Stack Inserter",
+    "tiers": [
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT"
+    ],
+    "min_tier": "ARC"
+  },
+  {
+    "id": "pipe",
+    "name": "Pipe",
+    "tiers": [
+      "STM",
+      "VLT",
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT"
+    ],
+    "min_tier": "STM"
+  },
+  {
+    "id": "inline_pump",
+    "name": "Inline Pump",
+    "tiers": [
+      "VLT",
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT"
+    ],
+    "min_tier": "VLT"
+  },
+  {
+    "id": "storage_tank",
+    "name": "Storage Tank",
+    "tiers": [
+      "VLT",
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT"
+    ],
+    "min_tier": "VLT"
+  },
+  {
+    "id": "prospector",
+    "name": "Prospector",
+    "tiers": [
+      "MAN",
+      "STM",
+      "VLT",
+      "ARC",
+      "PLS"
+    ],
+    "min_tier": "MAN"
+  },
+  {
+    "id": "oil_derrick",
+    "name": "Oil Derrick",
+    "tiers": [
+      "STM",
+      "VLT",
+      "ARC",
+      "PLS",
+      "FUS"
+    ],
+    "min_tier": "STM"
+  }
 ]

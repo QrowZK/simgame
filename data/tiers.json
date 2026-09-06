@@ -1,14 +1,90 @@
 [
   {
-    "id": "tech_basic_smelting",
-    "tier": "LV",
-    "name": "Basic Smelting",
-    "requires": []
+    "id": "MAN",
+    "index": 0,
+    "name": "Manual",
+    "power": 0,
+    "metal": null,
+    "insulator": null,
+    "wire_metal": null,
+    "magnet_metal": null,
+    "electronics": false
   },
   {
-    "id": "tech_basic_assembly",
-    "tier": "LV",
-    "name": "Basic Assembly",
-    "requires": ["tech_basic_smelting"]
+    "id": "STM",
+    "index": 1,
+    "name": "Steam",
+    "power": 8,
+    "metal": "bronze",
+    "insulator": null,
+    "wire_metal": "copper",
+    "magnet_metal": "iron",
+    "electronics": false
+  },
+  {
+    "id": "VLT",
+    "index": 2,
+    "name": "Voltaic",
+    "power": 32,
+    "metal": "steel",
+    "insulator": "bakelite",
+    "wire_metal": "copper",
+    "magnet_metal": "steel",
+    "electronics": true
+  },
+  {
+    "id": "ARC",
+    "index": 3,
+    "name": "Arc",
+    "power": 128,
+    "metal": "aluminum",
+    "insulator": "pvc",
+    "wire_metal": "gold",
+    "magnet_metal": "steel",
+    "electronics": true
+  },
+  {
+    "id": "PLS",
+    "index": 4,
+    "name": "Plasma",
+    "power": 512,
+    "metal": "titanium",
+    "insulator": "polyethylene",
+    "wire_metal": "platinum",
+    "magnet_metal": "steel",
+    "electronics": true
+  },
+  {
+    "id": "FUS",
+    "index": 5,
+    "name": "Fusion",
+    "power": 2048,
+    "metal": "tungsten_steel",
+    "insulator": "ptfe",
+    "wire_metal": "platinum",
+    "magnet_metal": "neodymium",
+    "electronics": true
+  },
+  {
+    "id": "QNT",
+    "index": 6,
+    "name": "Quantum",
+    "power": 8192,
+    "metal": "iridium",
+    "insulator": "peek",
+    "wire_metal": "iridium",
+    "magnet_metal": "neodymium",
+    "electronics": true
+  },
+  {
+    "id": "SNG",
+    "index": 7,
+    "name": "Singular",
+    "power": 32768,
+    "metal": "collapsium",
+    "insulator": "peek",
+    "wire_metal": "collapsium",
+    "magnet_metal": "neodymium",
+    "electronics": true
   }
 ]

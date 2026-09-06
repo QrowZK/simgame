@@ -3,26 +3,43 @@ using System.Text.Json.Serialization;
 
 namespace Data.Tests;
 
+public sealed class TierDef
+{
+    [JsonPropertyName("id")] public string Id { get; set; } = "";
+    [JsonPropertyName("index")] public int Index { get; set; }
+    [JsonPropertyName("name")] public string Name { get; set; } = "";
+    [JsonPropertyName("power")] public int Power { get; set; }
+    [JsonPropertyName("metal")] public string? Metal { get; set; }
+    [JsonPropertyName("electronics")] public bool Electronics { get; set; }
+}
+
 public sealed class ItemDef
 {
     [JsonPropertyName("id")] public string Id { get; set; } = "";
     [JsonPropertyName("name")] public string Name { get; set; } = "";
+    [JsonPropertyName("category")] public string Category { get; set; } = "";
+    [JsonPropertyName("tier")] public string Tier { get; set; } = "";
+    [JsonPropertyName("form")] public string Form { get; set; } = "solid";
     [JsonPropertyName("raw")] public bool Raw { get; set; }
+    [JsonPropertyName("tags")] public List<string> Tags { get; set; } = new();
 }
 
 public sealed class MachineDef
 {
     [JsonPropertyName("id")] public string Id { get; set; } = "";
     [JsonPropertyName("name")] public string Name { get; set; } = "";
-    [JsonPropertyName("tier")] public string Tier { get; set; } = "";
+    [JsonPropertyName("tiers")] public List<string> Tiers { get; set; } = new();
+    [JsonPropertyName("min_tier")] public string MinTier { get; set; } = "";
 }
 
 public sealed class TechDef
 {
     [JsonPropertyName("id")] public string Id { get; set; } = "";
-    [JsonPropertyName("tier")] public string Tier { get; set; } = "";
     [JsonPropertyName("name")] public string Name { get; set; } = "";
+    [JsonPropertyName("tier")] public string Tier { get; set; } = "";
+    [JsonPropertyName("line")] public string Line { get; set; } = "";
     [JsonPropertyName("requires")] public List<string> Requires { get; set; } = new();
+    [JsonPropertyName("requires_item")] public string? RequiresItem { get; set; }
 }
 
 public sealed class RecipeItemRef
@@ -45,19 +62,24 @@ public sealed class RecipeDef
 
 public sealed class GameData
 {
+    public required List<TierDef> Tiers { get; init; }
     public required List<ItemDef> Items { get; init; }
     public required List<MachineDef> Machines { get; init; }
     public required List<TechDef> Techs { get; init; }
     public required List<RecipeDef> Recipes { get; init; }
+
+    private static readonly Lazy<GameData> Cached = new(() => Load(DataPaths.DataDirectory));
+    public static GameData Instance => Cached.Value;
 
     public static GameData Load(string dataDirectory)
     {
         var options = new JsonSerializerOptions();
         return new GameData
         {
+            Tiers = ReadJson<List<TierDef>>(dataDirectory, "tiers.json", options),
             Items = ReadJson<List<ItemDef>>(dataDirectory, "items.json", options),
             Machines = ReadJson<List<MachineDef>>(dataDirectory, "machines.json", options),
-            Techs = ReadJson<List<TechDef>>(dataDirectory, "tiers.json", options),
+            Techs = ReadJson<List<TechDef>>(dataDirectory, "techs.json", options),
             Recipes = ReadJson<List<RecipeDef>>(dataDirectory, "recipes.json", options),
         };
     }

@@ -1,0 +1,19 @@
+; Engine configuration file.
+; Hand-edited on purpose: this file is plain text so it reviews in a diff.
+
+config_version=5
+
+[application]
+
+config/name="Automation Game"
+run/main_scene="res://scenes/main.tscn"
+config/features=PackedStringArray("4.3", "C#", "Forward Plus")
+
+[dotnet]
+
+project/assembly_name="Game"
+
+[rendering]
+
+renderer/rendering_method="forward_plus"
+lights_and_shadows/directional_shadow/size=4096
