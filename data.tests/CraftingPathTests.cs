@@ -4,26 +4,17 @@ namespace Data.Tests;
 
 /// Graph reachability says a chain *connects*. These tests say it actually
 /// *runs*: they build the production chain for a target out of the real recipe
-/// data, instantiate one machine per step in the real sim, feed only raw
-/// resources, and tick until the target appears. A recipe that is reachable on
-/// paper but stalls in the machine model fails here and nowhere else.
+/// data, instantiate every step in the real sim, and tick until the target
+/// appears. A recipe that is reachable on paper but cannot execute in the
+/// machine model fails here and nowhere else.
+///
+/// Executability and throughput are deliberately separate concerns. Produce()
+/// answers "can each step run at all"; Balance() answers "do the ratios hold",
+/// analytically. Conflating them made allocation policy decide whether chains
+/// passed, which tested the harness rather than the data.
 public class CraftingPathTests
 {
     private static readonly GameData Data = GameData.Instance;
-
-    private static Dictionary<string, List<RecipeDef>> Producers()
-    {
-        var map = new Dictionary<string, List<RecipeDef>>();
-        foreach (var recipe in Data.Recipes)
-            foreach (var output in recipe.Outputs)
-            {
-                if (!map.TryGetValue(output.Item, out var list))
-                    map[output.Item] = list = new List<RecipeDef>();
-                list.Add(recipe);
-            }
-
-        return map;
-    }
 
     /// Chooses producers by reachability order: run the whole recipe set to a
     /// fixed point from raw resources, and remember which recipe first made each
