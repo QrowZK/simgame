@@ -8,6 +8,14 @@ namespace Game;
 /// World at a fixed rate and hands the renderer a read-only view each frame.
 public sealed partial class GameRoot : Node3D
 {
+    /// Raised when the player leaves to the title screen. Boot owns the
+    /// menu/game switch; GameRoot only says that it wants to go back.
+    [Signal] public delegate void ReturnToMenuRequestedEventHandler();
+
+    /// The world to run. Set by Boot before the node enters the tree -- a new
+    /// game, or one restored from a save.
+    public World? InitialWorld { get; set; }
+
     private const int TicksPerSecond = 60;
     private const double SecondsPerTick = 1.0 / TicksPerSecond;
     /// Never advance more than this many ticks in one frame -- a long stall must
@@ -19,13 +27,17 @@ public sealed partial class GameRoot : Node3D
     private CameraRig _rig = null!;
     private Label _hud = null!;
     private MachinePanel _panel = null!;
+    private PauseMenu _pause = null!;
     private double _accumulator;
     private int _screenshotCountdown = -1;
+    private string _toast = "";
+    private int _toastFrames;
 
     public override void _Ready()
     {
-        var machineCount = ReadIntArg("--machines", 4096);
-        _world = DemoWorld.Build(machineCount, seed: 1234);
+        _world = InitialWorld ?? DemoWorld.Build(ReadIntArg("--machines", 4096), seed: 1234);
+        GameSession.Adopt(_world);
+        var machineCount = _world.MachineCount;
 
         _rig = new CameraRig { Name = "CameraRig" };
         AddChild(_rig);
@@ -36,6 +48,7 @@ public sealed partial class GameRoot : Node3D
         AddChild(BuildLighting());
         _hud = BuildHud();
         _panel = BuildPanel();
+        _pause = BuildPauseMenu();
 
         // Frame the factory.
         var side = Mathf.CeilToInt(Mathf.Sqrt(machineCount));
@@ -56,6 +69,15 @@ public sealed partial class GameRoot : Node3D
 
     public override void _Process(double delta)
     {
+        // A paused world must not tick. Saving a world mid-tick would capture a
+        // state no single tick ever produced, and the save format's whole claim
+        // is that it round-trips exactly.
+        if (_pause is { Visible: true })
+        {
+            _renderer.Sync(_world);
+            return;
+        }
+
         _accumulator += delta;
 
         var ticks = 0;
@@ -86,10 +108,14 @@ public sealed partial class GameRoot : Node3D
             GetTree().Quit();
         }
 
+        if (_toastFrames > 0) _toastFrames--;
+
         if (_hud is not null)
             _hud.Text = $"machines {_world.MachineCount}   tick {_world.TickCount}   " +
                         $"batches {_renderer.BatchCount}   fps {Engine.GetFramesPerSecond():0}\n" +
-                        "WASD pan   Q/E rotate   wheel zoom   click a machine to inspect";
+                        "WASD pan   Q/E rotate   wheel zoom   click a machine to inspect   " +
+                        "F5 save   F9 load   Esc menu" +
+                        (_toastFrames > 0 ? "\n" + _toast : "");
     }
 
     /// Headless verification: tick the sim, refill the instance buffers, and
@@ -218,9 +244,30 @@ public sealed partial class GameRoot : Node3D
     {
         if (@event is InputEventKey { Pressed: true, Keycode: Key.Escape })
         {
-            _panel.Close();
+            // Escape backs out one level at a time: the inspection panel first,
+            // then the pause menu. Jumping straight to a menu from an open panel
+            // would feel like the game ignored the panel.
+            if (_panel.IsShowing) _panel.Close();
+            else if (_pause.Visible) _pause.Close();
+            else _pause.Open();
             return;
         }
+
+        // Quick save and quick load, the bindings a factory player expects.
+        if (@event is InputEventKey { Pressed: true, Keycode: Key.F5 })
+        {
+            QuickSave();
+            return;
+        }
+
+        if (@event is InputEventKey { Pressed: true, Keycode: Key.F9 })
+        {
+            QuickLoad();
+            return;
+        }
+
+        // Clicks belong to the menu while it is open.
+        if (_pause.Visible) return;
 
         if (@event is not InputEventMouseButton
             { Pressed: true, ButtonIndex: MouseButton.Left } click)
@@ -251,6 +298,58 @@ public sealed partial class GameRoot : Node3D
 
         if (_world.MachineCount > 0)
             _panel.Show(_world.Machines[0], _world.PlacementOf(0));
+    }
+
+    private void QuickSave()
+    {
+        try
+        {
+            GameSession.Save("quicksave");
+            _toast = "Quick saved.";
+        }
+        catch (System.Exception e)
+        {
+            _toast = "Could not save: " + e.Message;
+            GD.PushWarning($"quick save failed: {e.Message}");
+        }
+
+        _toastFrames = 180;
+    }
+
+    private void QuickLoad()
+    {
+        try
+        {
+            var path = GameSession.PathFor("quicksave");
+            var world = GameSession.Load(path);
+
+            // Swap the world under the renderer rather than rebuilding the
+            // scene: the renderer holds no state of its own, so this is safe and
+            // keeps the camera where the player left it.
+            _world = world;
+            _panel.Close();
+            _panel.Bind(_world.Items, _world.PlayerInventory);
+            _renderer.Sync(_world);
+            _toast = "Quick loaded.";
+        }
+        catch (System.Exception e)
+        {
+            _toast = "Could not load: " + e.Message;
+            GD.PushWarning($"quick load failed: {e.Message}");
+        }
+
+        _toastFrames = 180;
+    }
+
+    private PauseMenu BuildPauseMenu()
+    {
+        var layer = new CanvasLayer { Name = "PauseLayer" };
+        var menu = GD.Load<PackedScene>("res://scenes/pause_menu.tscn").Instantiate<PauseMenu>();
+        menu.ResumeRequested += () => menu.Close();
+        menu.MainMenuRequested += () => EmitSignal(SignalName.ReturnToMenuRequested);
+        layer.AddChild(menu);
+        AddChild(layer);
+        return menu;
     }
 
     private MachinePanel BuildPanel()

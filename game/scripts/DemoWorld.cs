@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Sim;
 
 namespace Game;
@@ -13,6 +14,14 @@ public static class DemoWorld
     /// Grid stride. Machines are square and at most this many tiles per side.
     private const int MaxFootprint = 3;
 
+    /// The recipes this world's machines run, by id.
+    ///
+    /// Loading a save needs the game's recipe set, and until the game reads
+    /// `/data` at runtime this is that set. When it does, this becomes a lookup
+    /// into the loaded recipe table and nothing else about saving changes.
+    public static IReadOnlyDictionary<string, Recipe> Recipes { get; private set; } =
+        new Dictionary<string, Recipe>();
+
     public static World Build(int machineCount, int seed)
     {
         var db = new ItemDatabase();
@@ -27,6 +36,12 @@ public static class DemoWorld
         var assemble = new Recipe("assemble_iron_gear", 120,
             new[] { new RecipeInput(plate, 2) },
             new[] { new RecipeOutput(gear, 1) });
+
+        Recipes = new Dictionary<string, Recipe>
+        {
+            [smelt.Id] = smelt,
+            [assemble.Id] = assemble,
+        };
 
         var world = new World(seed, db);
         var side = (int)System.Math.Ceiling(System.Math.Sqrt(machineCount));
