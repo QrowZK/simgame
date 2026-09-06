@@ -1,0 +1,7 @@
+[
+  { "id": "iron_ore", "name": "Iron Ore", "raw": true },
+  { "id": "iron_plate", "name": "Iron Plate", "raw": false },
+  { "id": "iron_gear", "name": "Iron Gear", "raw": false },
+  { "id": "copper_ore", "name": "Copper Ore", "raw": true },
+  { "id": "copper_plate", "name": "Copper Plate", "raw": false }
+]
