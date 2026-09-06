@@ -14868,7 +14868,7 @@
     "unlocked_by": "tech_fus_fabrication"
   },
   {
-    "id": "build_vlt_pump",
+    "id": "build_vlt_inline_pump",
     "machine": "assembler",
     "tier": "ARC",
     "duration_ticks": 400,
@@ -14897,14 +14897,14 @@
     ],
     "outputs": [
       {
-        "item": "vlt_pump",
+        "item": "vlt_inline_pump",
         "count": 1
       }
     ],
     "unlocked_by": "tech_arc_fabrication"
   },
   {
-    "id": "build_arc_pump",
+    "id": "build_arc_inline_pump",
     "machine": "assembler",
     "tier": "ARC",
     "duration_ticks": 400,
@@ -14933,14 +14933,14 @@
     ],
     "outputs": [
       {
-        "item": "arc_pump",
+        "item": "arc_inline_pump",
         "count": 1
       }
     ],
     "unlocked_by": "tech_arc_fabrication"
   },
   {
-    "id": "build_pls_pump",
+    "id": "build_pls_inline_pump",
     "machine": "assembler",
     "tier": "ARC",
     "duration_ticks": 400,
@@ -14969,14 +14969,14 @@
     ],
     "outputs": [
       {
-        "item": "pls_pump",
+        "item": "pls_inline_pump",
         "count": 1
       }
     ],
     "unlocked_by": "tech_arc_fabrication"
   },
   {
-    "id": "build_fus_pump",
+    "id": "build_fus_inline_pump",
     "machine": "assembler",
     "tier": "PLS",
     "duration_ticks": 400,
@@ -15005,14 +15005,14 @@
     ],
     "outputs": [
       {
-        "item": "fus_pump",
+        "item": "fus_inline_pump",
         "count": 1
       }
     ],
     "unlocked_by": "tech_pls_fabrication"
   },
   {
-    "id": "build_qnt_pump",
+    "id": "build_qnt_inline_pump",
     "machine": "assembler",
     "tier": "FUS",
     "duration_ticks": 400,
@@ -15041,7 +15041,7 @@
     ],
     "outputs": [
       {
-        "item": "qnt_pump",
+        "item": "qnt_inline_pump",
         "count": 1
       }
     ],
@@ -15730,7 +15730,7 @@
     "outputs": [
       {
         "item": "refinery_gas",
-        "count": 1
+        "count": 2
       },
       {
         "item": "naphtha",
@@ -15974,6 +15974,10 @@
       },
       {
         "item": "fcc_slurry",
+        "count": 2
+      },
+      {
+        "item": "refinery_gas",
         "count": 2
       }
     ],

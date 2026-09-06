@@ -5324,6 +5324,51 @@
     "tags": []
   },
   {
+    "id": "vlt_inline_pump",
+    "name": "Voltaic Inline Pump",
+    "category": "machine",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "arc_inline_pump",
+    "name": "Arc Inline Pump",
+    "category": "machine",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "pls_inline_pump",
+    "name": "Plasma Inline Pump",
+    "category": "machine",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "fus_inline_pump",
+    "name": "Fusion Inline Pump",
+    "category": "machine",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "qnt_inline_pump",
+    "name": "Quantum Inline Pump",
+    "category": "machine",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
     "id": "vlt_storage_tank",
     "name": "Voltaic Storage Tank",
     "category": "machine",

@@ -2393,8 +2393,8 @@
       "parts": []
     },
     {
-      "id": "pump",
-      "name": "Pump",
+      "id": "inline_pump",
+      "name": "Inline Pump",
       "tiers": [
         "VLT",
         "ARC",
@@ -2737,7 +2737,7 @@
       "outputs": [
         {
           "item": "refinery_gas",
-          "count": 1
+          "count": 2
         },
         {
           "item": "naphtha",
@@ -2974,6 +2974,10 @@
         },
         {
           "item": "fcc_slurry",
+          "count": 2
+        },
+        {
+          "item": "refinery_gas",
           "count": 2
         }
       ],

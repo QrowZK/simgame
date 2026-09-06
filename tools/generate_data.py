@@ -39,7 +39,7 @@ def main():
     mats = {m["id"]: m for m in spec["materials"]}
 
     items, recipes, machines, techs = [], [], [], []
-    seen_items = set()
+    seen_items = {}
 
     # Which metals actually exist at the Manual tier, where there are no shaping
     # machines yet and plates must be hammered out by hand. Directly-smeltable
@@ -56,8 +56,15 @@ def main():
 
     def add_item(iid, name, category, tier, raw=False, form="solid", tags=None):
         if iid in seen_items:
+            # A component and a machine sharing an id silently produced an item
+            # that consumed itself and could never be built. Fail loudly instead.
+            existing = seen_items[iid]
+            if existing != category:
+                raise SystemExit(
+                    "id collision: '%s' generated as both '%s' and '%s'. "
+                    "Rename one of them in the spec." % (iid, existing, category))
             return
-        seen_items.add(iid)
+        seen_items[iid] = category
         items.append({"id": iid, "name": name, "category": category,
                       "tier": tier, "form": form, "raw": raw,
                       "tags": tags or []})

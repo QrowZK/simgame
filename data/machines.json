@@ -491,8 +491,8 @@
     "min_tier": "STM"
   },
   {
-    "id": "pump",
-    "name": "Pump",
+    "id": "inline_pump",
+    "name": "Inline Pump",
     "tiers": [
       "VLT",
       "ARC",
