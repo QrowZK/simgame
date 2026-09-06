@@ -20,6 +20,12 @@ jobs:
       - name: No-Godot-reference check
         run: ./tools/check-no-godot-reference.sh
 
+      - name: Generated data is up to date with the spec
+        run: |
+          python3 tools/generate_data.py
+          git diff --exit-code -- data/ \
+            || { echo "::error::data/ is stale. Run 'python3 tools/generate_data.py' and commit the result."; exit 1; }
+
       - name: Restore
         run: dotnet restore
 

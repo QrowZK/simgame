@@ -2,7 +2,7 @@ namespace Data.Tests;
 
 public class GraphInvariantTests
 {
-    private static readonly GameData Data = GameData.Load(DataPaths.DataDirectory);
+    private static readonly GameData Data = GameData.Instance;
 
     [Fact]
     public void EveryRecipeItem_ExistsInItemsJson()
@@ -25,19 +25,46 @@ public class GraphInvariantTests
     }
 
     [Fact]
-    public void EveryRecipeMachine_ExistsInMachinesJson()
+    public void EveryRecipeMachine_ExistsAndSupportsTheRecipeTier()
     {
-        var machineIds = Data.Machines.Select(m => m.Id).ToHashSet();
-        var missing = Data.Recipes
-            .Where(r => !machineIds.Contains(r.Machine))
-            .Select(r => $"{r.Id}: machine '{r.Machine}'")
-            .ToList();
+        var machines = Data.Machines.ToDictionary(m => m.Id);
+        var problems = new List<string>();
 
-        Assert.True(missing.Count == 0, "Dangling machine references:\n" + string.Join("\n", missing));
+        foreach (var recipe in Data.Recipes)
+        {
+            if (!machines.TryGetValue(recipe.Machine, out var machine))
+            {
+                problems.Add($"{recipe.Id}: machine '{recipe.Machine}' does not exist");
+                continue;
+            }
+
+            // A recipe must be runnable by a machine that actually exists at its tier.
+            if (!machine.Tiers.Contains(recipe.Tier))
+                problems.Add($"{recipe.Id}: needs '{recipe.Machine}' at tier {recipe.Tier}, " +
+                             $"but that machine only exists at [{string.Join(", ", machine.Tiers)}]");
+        }
+
+        Assert.True(problems.Count == 0, "Machine/tier problems:\n" + string.Join("\n", problems));
     }
 
     [Fact]
-    public void EveryRecipeUnlock_ExistsInTiersJson()
+    public void EveryRecipeTierAndItemTier_ExistsInTiersJson()
+    {
+        var tierIds = Data.Tiers.Select(t => t.Id).ToHashSet();
+        var problems = new List<string>();
+
+        foreach (var recipe in Data.Recipes.Where(r => !tierIds.Contains(r.Tier)))
+            problems.Add($"recipe {recipe.Id}: tier '{recipe.Tier}'");
+        foreach (var item in Data.Items.Where(i => !tierIds.Contains(i.Tier)))
+            problems.Add($"item {item.Id}: tier '{item.Tier}'");
+        foreach (var tech in Data.Techs.Where(t => !tierIds.Contains(t.Tier)))
+            problems.Add($"tech {tech.Id}: tier '{tech.Tier}'");
+
+        Assert.True(problems.Count == 0, "Dangling tier references:\n" + string.Join("\n", problems));
+    }
+
+    [Fact]
+    public void EveryRecipeUnlock_ExistsInTechsJson()
     {
         var techIds = Data.Techs.Select(t => t.Id).ToHashSet();
         var missing = Data.Recipes
@@ -49,15 +76,21 @@ public class GraphInvariantTests
     }
 
     [Fact]
-    public void EveryTechRequirement_ExistsInTiersJson()
+    public void EveryTechRequirement_ExistsAndResolves()
     {
         var techIds = Data.Techs.Select(t => t.Id).ToHashSet();
+        var itemIds = Data.Items.Select(i => i.Id).ToHashSet();
         var missing = new List<string>();
 
         foreach (var tech in Data.Techs)
+        {
             foreach (var req in tech.Requires)
                 if (!techIds.Contains(req))
-                    missing.Add($"{tech.Id}: requires '{req}'");
+                    missing.Add($"{tech.Id}: requires tech '{req}'");
+
+            if (tech.RequiresItem is not null && !itemIds.Contains(tech.RequiresItem))
+                missing.Add($"{tech.Id}: requires_item '{tech.RequiresItem}'");
+        }
 
         Assert.True(missing.Count == 0, "Dangling tech requirements:\n" + string.Join("\n", missing));
     }
@@ -95,71 +128,143 @@ public class GraphInvariantTests
         }
 
         foreach (var tech in Data.Techs)
-        {
             if (!Visit(tech.Id, new List<string>()))
-            {
                 Assert.Fail("Circular tech dependency: " + string.Join(" -> ", cycle));
-            }
-        }
     }
 
-    [Fact]
-    public void EveryItem_IsReachableFromRawResourcesViaUnlockedRecipes()
+    /// Walks the ladder tier by tier, accumulating everything craftable using only
+    /// recipes available at or below that tier. This is the model the tier-gating
+    /// invariants below are checked against.
+    private static Dictionary<string, HashSet<string>> ReachableByTier()
     {
-        // An item is reachable if it is raw, or produced by some recipe whose inputs
-        // are all already reachable. Iterate to a fixed point (topological closure).
+        var ordered = Data.Tiers.OrderBy(t => t.Index).ToList();
         var reachable = Data.Items.Where(i => i.Raw).Select(i => i.Id).ToHashSet();
-        bool changed;
-        do
+        var tierIndex = Data.Tiers.ToDictionary(t => t.Id, t => t.Index);
+        var snapshots = new Dictionary<string, HashSet<string>>();
+
+        foreach (var tier in ordered)
         {
-            changed = false;
-            foreach (var recipe in Data.Recipes)
+            var usable = Data.Recipes.Where(r => tierIndex[r.Tier] <= tier.Index).ToList();
+            bool changed;
+            do
             {
-                if (recipe.Inputs.All(i => reachable.Contains(i.Item)))
+                changed = false;
+                foreach (var recipe in usable)
                 {
+                    if (!recipe.Inputs.All(i => reachable.Contains(i.Item)))
+                        continue;
                     foreach (var output in recipe.Outputs)
                         if (reachable.Add(output.Item))
                             changed = true;
                 }
-            }
-        } while (changed);
+            } while (changed);
 
-        var unreachable = Data.Items.Select(i => i.Id).Where(id => !reachable.Contains(id)).ToList();
+            snapshots[tier.Id] = new HashSet<string>(reachable);
+        }
 
-        Assert.True(unreachable.Count == 0, "Unreachable items:\n" + string.Join("\n", unreachable));
+        return snapshots;
     }
 
     [Fact]
-    public void EveryTiersEntryComponentChain_TerminatesInRawResources()
+    public void EveryItem_IsReachableFromRawResources()
     {
-        // For each tier's recipes, walking the input chain backwards must bottom out
-        // at raw items rather than looping or dead-ending on an unproduced intermediate.
-        var rawIds = Data.Items.Where(i => i.Raw).Select(i => i.Id).ToHashSet();
-        var recipesByOutput = Data.Recipes
-            .SelectMany(r => r.Outputs.Select(o => (o.Item, Recipe: r)))
-            .GroupBy(x => x.Item)
-            .ToDictionary(g => g.Key, g => g.Select(x => x.Recipe).ToList());
+        var snapshots = ReachableByTier();
+        var final = snapshots[Data.Tiers.OrderBy(t => t.Index).Last().Id];
 
-        var unresolved = new List<string>();
+        var unreachable = Data.Items
+            .Where(i => !final.Contains(i.Id))
+            .Select(i => $"{i.Id} ({i.Category})")
+            .ToList();
 
-        bool CanTerminate(string itemId, HashSet<string> visiting)
+        Assert.True(unreachable.Count == 0,
+            $"{unreachable.Count} unreachable items:\n" + string.Join("\n", unreachable.Take(40)));
+    }
+
+    [Fact]
+    public void EveryRecipe_HasInputsReachableAtItsOwnTier()
+    {
+        var snapshots = ReachableByTier();
+        var dead = new List<string>();
+
+        foreach (var recipe in Data.Recipes)
         {
-            if (rawIds.Contains(itemId)) return true;
-            if (!visiting.Add(itemId)) return false; // cycle
-            if (!recipesByOutput.TryGetValue(itemId, out var recipes))
-                return false;
-
-            var result = recipes.Any(r => r.Inputs.All(i => CanTerminate(i.Item, visiting)));
-            visiting.Remove(itemId);
-            return result;
+            var available = snapshots[recipe.Tier];
+            var blocked = recipe.Inputs.Where(i => !available.Contains(i.Item)).Select(i => i.Item).ToList();
+            if (blocked.Count > 0)
+                dead.Add($"{recipe.Id} (tier {recipe.Tier}) blocked on: {string.Join(", ", blocked)}");
         }
 
-        foreach (var item in Data.Items.Where(i => !i.Raw))
+        Assert.True(dead.Count == 0,
+            $"{dead.Count} recipes cannot run at the tier they are gated to:\n" + string.Join("\n", dead.Take(40)));
+    }
+
+    /// The invariant that keeps the ladder climbable: you must be able to build a
+    /// tier's entry component using only the tier below it. Violating this is the
+    /// silent-unplayability failure mode a deep tier ladder is most prone to --
+    /// tier N's gate metal ending up only producible by a tier N machine.
+    [Fact]
+    public void EveryTierGateComponent_IsBuildableWithThePreviousTiersMachines()
+    {
+        var snapshots = ReachableByTier();
+        var ordered = Data.Tiers.OrderBy(t => t.Index).ToList();
+        var problems = new List<string>();
+
+        foreach (var tier in ordered.Where(t => t.Index >= 1))
         {
-            if (!CanTerminate(item.Id, new HashSet<string>()))
-                unresolved.Add(item.Id);
+            var previous = ordered[tier.Index - 1];
+            var hull = $"{tier.Id.ToLowerInvariant()}_machine_hull";
+
+            if (!snapshots[previous.Id].Contains(hull))
+                problems.Add($"{tier.Id} ({tier.Name}): '{hull}' is not craftable using only " +
+                             $"{previous.Id} and below -- the tier cannot be entered.");
         }
 
-        Assert.True(unresolved.Count == 0, "Items whose production chain does not terminate in raw resources:\n" + string.Join("\n", unresolved));
+        Assert.True(problems.Count == 0,
+            "Tier gating is circular:\n" + string.Join("\n", problems));
+    }
+
+    [Fact]
+    public void EveryTierAboveManual_HasAGateHullAndPositivePower()
+    {
+        var itemIds = Data.Items.Select(i => i.Id).ToHashSet();
+        var problems = new List<string>();
+
+        foreach (var tier in Data.Tiers.Where(t => t.Index >= 1))
+        {
+            var hull = $"{tier.Id.ToLowerInvariant()}_machine_hull";
+            if (!itemIds.Contains(hull))
+                problems.Add($"{tier.Id}: missing gate component '{hull}'");
+            if (tier.Power <= 0)
+                problems.Add($"{tier.Id}: power must be positive, was {tier.Power}");
+            if (string.IsNullOrEmpty(tier.Metal))
+                problems.Add($"{tier.Id}: no structural metal declared");
+        }
+
+        Assert.True(problems.Count == 0, "Tier definition problems:\n" + string.Join("\n", problems));
+    }
+
+    [Fact]
+    public void RecipeIds_AreUnique()
+    {
+        var duplicates = Data.Recipes.GroupBy(r => r.Id).Where(g => g.Count() > 1).Select(g => g.Key).ToList();
+        Assert.True(duplicates.Count == 0, "Duplicate recipe ids:\n" + string.Join("\n", duplicates));
+    }
+
+    [Fact]
+    public void ItemIds_AreUnique()
+    {
+        var duplicates = Data.Items.GroupBy(i => i.Id).Where(g => g.Count() > 1).Select(g => g.Key).ToList();
+        Assert.True(duplicates.Count == 0, "Duplicate item ids:\n" + string.Join("\n", duplicates));
+    }
+
+    [Fact]
+    public void EveryRecipe_HasPositiveDurationAndNonNegativePower()
+    {
+        var problems = Data.Recipes
+            .Where(r => r.DurationTicks <= 0 || r.PowerDraw < 0)
+            .Select(r => $"{r.Id}: duration={r.DurationTicks} power={r.PowerDraw}")
+            .ToList();
+
+        Assert.True(problems.Count == 0, "Invalid recipe timings:\n" + string.Join("\n", problems));
     }
 }

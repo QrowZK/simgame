@@ -1,4 +1,307 @@
 [
-  { "id": "furnace", "name": "Furnace", "tier": "LV" },
-  { "id": "assembler", "name": "Assembler", "tier": "LV" }
+  {
+    "id": "furnace",
+    "name": "Furnace",
+    "tiers": [
+      "MAN",
+      "STM",
+      "VLT",
+      "ARC",
+      "PLS",
+      "FUS"
+    ],
+    "min_tier": "MAN"
+  },
+  {
+    "id": "manual_crafting",
+    "name": "Manual Crafting",
+    "tiers": [
+      "MAN"
+    ],
+    "min_tier": "MAN"
+  },
+  {
+    "id": "alloy_smelter",
+    "name": "Alloy Smelter",
+    "tiers": [
+      "MAN",
+      "STM",
+      "VLT",
+      "ARC",
+      "PLS",
+      "FUS"
+    ],
+    "min_tier": "MAN"
+  },
+  {
+    "id": "crusher",
+    "name": "Crusher",
+    "tiers": [
+      "STM",
+      "VLT",
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT"
+    ],
+    "min_tier": "STM"
+  },
+  {
+    "id": "macerator",
+    "name": "Macerator",
+    "tiers": [
+      "STM",
+      "VLT",
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT"
+    ],
+    "min_tier": "STM"
+  },
+  {
+    "id": "sifter",
+    "name": "Sifter",
+    "tiers": [
+      "STM",
+      "VLT",
+      "ARC"
+    ],
+    "min_tier": "STM"
+  },
+  {
+    "id": "bender",
+    "name": "Bender",
+    "tiers": [
+      "STM",
+      "VLT",
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT"
+    ],
+    "min_tier": "STM"
+  },
+  {
+    "id": "lathe",
+    "name": "Lathe",
+    "tiers": [
+      "STM",
+      "VLT",
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT"
+    ],
+    "min_tier": "STM"
+  },
+  {
+    "id": "assembler",
+    "name": "Assembler",
+    "tiers": [
+      "STM",
+      "VLT",
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT",
+      "SNG"
+    ],
+    "min_tier": "STM"
+  },
+  {
+    "id": "boiler",
+    "name": "Boiler",
+    "tiers": [
+      "STM"
+    ],
+    "min_tier": "STM"
+  },
+  {
+    "id": "miner",
+    "name": "Miner",
+    "tiers": [
+      "STM",
+      "VLT",
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT",
+      "SNG"
+    ],
+    "min_tier": "STM"
+  },
+  {
+    "id": "pump_station",
+    "name": "Pump Station",
+    "tiers": [
+      "STM",
+      "VLT",
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT"
+    ],
+    "min_tier": "STM"
+  },
+  {
+    "id": "generator",
+    "name": "Generator",
+    "tiers": [
+      "STM",
+      "VLT",
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT",
+      "SNG"
+    ],
+    "min_tier": "STM"
+  },
+  {
+    "id": "washer",
+    "name": "Ore Washer",
+    "tiers": [
+      "VLT",
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT"
+    ],
+    "min_tier": "VLT"
+  },
+  {
+    "id": "wire_mill",
+    "name": "Wire Mill",
+    "tiers": [
+      "STM",
+      "VLT",
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT"
+    ],
+    "min_tier": "STM"
+  },
+  {
+    "id": "mixer",
+    "name": "Mixer",
+    "tiers": [
+      "VLT",
+      "ARC",
+      "PLS",
+      "FUS"
+    ],
+    "min_tier": "VLT"
+  },
+  {
+    "id": "chemical_reactor",
+    "name": "Chemical Reactor",
+    "tiers": [
+      "STM",
+      "VLT",
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT",
+      "SNG"
+    ],
+    "min_tier": "STM"
+  },
+  {
+    "id": "electrolyzer",
+    "name": "Electrolyzer",
+    "tiers": [
+      "VLT",
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT",
+      "SNG"
+    ],
+    "min_tier": "VLT"
+  },
+  {
+    "id": "cutter",
+    "name": "Cutter",
+    "tiers": [
+      "VLT",
+      "ARC",
+      "PLS"
+    ],
+    "min_tier": "VLT"
+  },
+  {
+    "id": "centrifuge",
+    "name": "Centrifuge",
+    "tiers": [
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT",
+      "SNG"
+    ],
+    "min_tier": "ARC"
+  },
+  {
+    "id": "distillery",
+    "name": "Distillery",
+    "tiers": [
+      "VLT",
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT"
+    ],
+    "min_tier": "VLT"
+  },
+  {
+    "id": "arc_furnace",
+    "name": "Arc Furnace",
+    "tiers": [
+      "ARC",
+      "PLS",
+      "FUS"
+    ],
+    "min_tier": "ARC"
+  },
+  {
+    "id": "chemical_bath",
+    "name": "Chemical Bath",
+    "tiers": [
+      "PLS",
+      "FUS",
+      "QNT"
+    ],
+    "min_tier": "PLS"
+  },
+  {
+    "id": "vacuum_freezer",
+    "name": "Vacuum Freezer",
+    "tiers": [
+      "PLS",
+      "FUS",
+      "QNT",
+      "SNG"
+    ],
+    "min_tier": "PLS"
+  },
+  {
+    "id": "fusion_reactor",
+    "name": "Fusion Reactor",
+    "tiers": [
+      "FUS",
+      "QNT",
+      "SNG"
+    ],
+    "min_tier": "FUS"
+  },
+  {
+    "id": "replicator",
+    "name": "Matter Replicator",
+    "tiers": [
+      "SNG"
+    ],
+    "min_tier": "SNG"
+  }
 ]

@@ -1,7 +1,3362 @@
 [
-  { "id": "iron_ore", "name": "Iron Ore", "raw": true },
-  { "id": "iron_plate", "name": "Iron Plate", "raw": false },
-  { "id": "iron_gear", "name": "Iron Gear", "raw": false },
-  { "id": "copper_ore", "name": "Copper Ore", "raw": true },
-  { "id": "copper_plate", "name": "Copper Plate", "raw": false }
+  {
+    "id": "water",
+    "name": "Water",
+    "category": "fluid",
+    "tier": "MAN",
+    "form": "fluid",
+    "raw": true
+  },
+  {
+    "id": "crude_oil",
+    "name": "Crude Oil",
+    "category": "fluid",
+    "tier": "STM",
+    "form": "fluid",
+    "raw": true
+  },
+  {
+    "id": "steam",
+    "name": "Steam",
+    "category": "fluid",
+    "tier": "STM",
+    "form": "fluid",
+    "raw": false
+  },
+  {
+    "id": "oxygen",
+    "name": "Oxygen",
+    "category": "fluid",
+    "tier": "VLT",
+    "form": "fluid",
+    "raw": false
+  },
+  {
+    "id": "hydrogen",
+    "name": "Hydrogen",
+    "category": "fluid",
+    "tier": "VLT",
+    "form": "fluid",
+    "raw": false
+  },
+  {
+    "id": "chlorine",
+    "name": "Chlorine",
+    "category": "fluid",
+    "tier": "VLT",
+    "form": "fluid",
+    "raw": false
+  },
+  {
+    "id": "sodium_hydroxide",
+    "name": "Sodium Hydroxide",
+    "category": "fluid",
+    "tier": "VLT",
+    "form": "fluid",
+    "raw": false
+  },
+  {
+    "id": "sulfuric_acid",
+    "name": "Sulfuric Acid",
+    "category": "fluid",
+    "tier": "VLT",
+    "form": "fluid",
+    "raw": false
+  },
+  {
+    "id": "naphtha",
+    "name": "Naphtha",
+    "category": "fluid",
+    "tier": "ARC",
+    "form": "fluid",
+    "raw": false
+  },
+  {
+    "id": "lubricant",
+    "name": "Lubricant",
+    "category": "fluid",
+    "tier": "ARC",
+    "form": "fluid",
+    "raw": false
+  },
+  {
+    "id": "fuel_oil",
+    "name": "Fuel Oil",
+    "category": "fluid",
+    "tier": "ARC",
+    "form": "fluid",
+    "raw": false
+  },
+  {
+    "id": "titanium_tetrachloride",
+    "name": "Titanium Tetrachloride",
+    "category": "fluid",
+    "tier": "PLS",
+    "form": "fluid",
+    "raw": false
+  },
+  {
+    "id": "magnesium_chloride",
+    "name": "Magnesium Chloride",
+    "category": "fluid",
+    "tier": "PLS",
+    "form": "fluid",
+    "raw": false
+  },
+  {
+    "id": "fluorine",
+    "name": "Fluorine",
+    "category": "fluid",
+    "tier": "FUS",
+    "form": "fluid",
+    "raw": false
+  },
+  {
+    "id": "deuterium",
+    "name": "Deuterium",
+    "category": "fluid",
+    "tier": "FUS",
+    "form": "fluid",
+    "raw": false
+  },
+  {
+    "id": "tritium",
+    "name": "Tritium",
+    "category": "fluid",
+    "tier": "FUS",
+    "form": "fluid",
+    "raw": false
+  },
+  {
+    "id": "helium3",
+    "name": "Helium-3",
+    "category": "fluid",
+    "tier": "FUS",
+    "form": "fluid",
+    "raw": false
+  },
+  {
+    "id": "alumina",
+    "name": "Alumina",
+    "category": "intermediate",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "copper_dust",
+    "name": "Copper Dust",
+    "category": "dust",
+    "tier": "MAN",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "copper_ingot",
+    "name": "Copper Ingot",
+    "category": "ingot",
+    "tier": "MAN",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "copper_plate",
+    "name": "Copper Plate",
+    "category": "plate",
+    "tier": "MAN",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "copper_rod",
+    "name": "Copper Rod",
+    "category": "rod",
+    "tier": "MAN",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "copper_wire",
+    "name": "Copper Wire",
+    "category": "wire",
+    "tier": "MAN",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "copper_fine_wire",
+    "name": "Copper Fine Wire",
+    "category": "fine_wire",
+    "tier": "MAN",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "chalcopyrite",
+    "name": "Chalcopyrite",
+    "category": "raw_ore",
+    "tier": "MAN",
+    "form": "solid",
+    "raw": true
+  },
+  {
+    "id": "chalcopyrite_crushed",
+    "name": "Crushed Chalcopyrite",
+    "category": "crushed_ore",
+    "tier": "MAN",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "chalcopyrite_purified",
+    "name": "Purified Chalcopyrite",
+    "category": "purified_ore",
+    "tier": "MAN",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "tin_dust",
+    "name": "Tin Dust",
+    "category": "dust",
+    "tier": "MAN",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "tin_ingot",
+    "name": "Tin Ingot",
+    "category": "ingot",
+    "tier": "MAN",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "tin_plate",
+    "name": "Tin Plate",
+    "category": "plate",
+    "tier": "MAN",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "tin_rod",
+    "name": "Tin Rod",
+    "category": "rod",
+    "tier": "MAN",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "tin_wire",
+    "name": "Tin Wire",
+    "category": "wire",
+    "tier": "MAN",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "cassiterite",
+    "name": "Cassiterite",
+    "category": "raw_ore",
+    "tier": "MAN",
+    "form": "solid",
+    "raw": true
+  },
+  {
+    "id": "cassiterite_crushed",
+    "name": "Crushed Cassiterite",
+    "category": "crushed_ore",
+    "tier": "MAN",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "cassiterite_purified",
+    "name": "Purified Cassiterite",
+    "category": "purified_ore",
+    "tier": "MAN",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "iron_dust",
+    "name": "Iron Dust",
+    "category": "dust",
+    "tier": "MAN",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "iron_ingot",
+    "name": "Iron Ingot",
+    "category": "ingot",
+    "tier": "MAN",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "iron_plate",
+    "name": "Iron Plate",
+    "category": "plate",
+    "tier": "MAN",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "iron_rod",
+    "name": "Iron Rod",
+    "category": "rod",
+    "tier": "MAN",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "iron_wire",
+    "name": "Iron Wire",
+    "category": "wire",
+    "tier": "MAN",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "iron_gear",
+    "name": "Iron Gear",
+    "category": "gear",
+    "tier": "MAN",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "magnetite",
+    "name": "Magnetite",
+    "category": "raw_ore",
+    "tier": "MAN",
+    "form": "solid",
+    "raw": true
+  },
+  {
+    "id": "magnetite_crushed",
+    "name": "Crushed Magnetite",
+    "category": "crushed_ore",
+    "tier": "MAN",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "magnetite_purified",
+    "name": "Purified Magnetite",
+    "category": "purified_ore",
+    "tier": "MAN",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "coal_dust",
+    "name": "Coal Dust",
+    "category": "dust",
+    "tier": "MAN",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "coal_deposit",
+    "name": "Coal Deposit",
+    "category": "raw_ore",
+    "tier": "MAN",
+    "form": "solid",
+    "raw": true
+  },
+  {
+    "id": "coal_deposit_crushed",
+    "name": "Crushed Coal Deposit",
+    "category": "crushed_ore",
+    "tier": "MAN",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "coal_deposit_purified",
+    "name": "Purified Coal Deposit",
+    "category": "purified_ore",
+    "tier": "MAN",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "stone_dust",
+    "name": "Stone Dust",
+    "category": "dust",
+    "tier": "MAN",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "stone_deposit",
+    "name": "Stone Deposit",
+    "category": "raw_ore",
+    "tier": "MAN",
+    "form": "solid",
+    "raw": true
+  },
+  {
+    "id": "stone_deposit_crushed",
+    "name": "Crushed Stone Deposit",
+    "category": "crushed_ore",
+    "tier": "MAN",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "stone_deposit_purified",
+    "name": "Purified Stone Deposit",
+    "category": "purified_ore",
+    "tier": "MAN",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "limestone_dust",
+    "name": "Limestone Dust",
+    "category": "dust",
+    "tier": "MAN",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "limestone_deposit",
+    "name": "Limestone Deposit",
+    "category": "raw_ore",
+    "tier": "MAN",
+    "form": "solid",
+    "raw": true
+  },
+  {
+    "id": "limestone_deposit_crushed",
+    "name": "Crushed Limestone Deposit",
+    "category": "crushed_ore",
+    "tier": "MAN",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "limestone_deposit_purified",
+    "name": "Purified Limestone Deposit",
+    "category": "purified_ore",
+    "tier": "MAN",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "quartz_dust",
+    "name": "Quartz Dust",
+    "category": "dust",
+    "tier": "MAN",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "quartz_deposit",
+    "name": "Quartz Deposit",
+    "category": "raw_ore",
+    "tier": "MAN",
+    "form": "solid",
+    "raw": true
+  },
+  {
+    "id": "quartz_deposit_crushed",
+    "name": "Crushed Quartz Deposit",
+    "category": "crushed_ore",
+    "tier": "MAN",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "quartz_deposit_purified",
+    "name": "Purified Quartz Deposit",
+    "category": "purified_ore",
+    "tier": "MAN",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "bronze_dust",
+    "name": "Bronze Dust",
+    "category": "dust",
+    "tier": "STM",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "bronze_ingot",
+    "name": "Bronze Ingot",
+    "category": "ingot",
+    "tier": "STM",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "bronze_plate",
+    "name": "Bronze Plate",
+    "category": "plate",
+    "tier": "STM",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "bronze_rod",
+    "name": "Bronze Rod",
+    "category": "rod",
+    "tier": "STM",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "bronze_gear",
+    "name": "Bronze Gear",
+    "category": "gear",
+    "tier": "STM",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "lead_dust",
+    "name": "Lead Dust",
+    "category": "dust",
+    "tier": "STM",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "lead_ingot",
+    "name": "Lead Ingot",
+    "category": "ingot",
+    "tier": "STM",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "lead_plate",
+    "name": "Lead Plate",
+    "category": "plate",
+    "tier": "STM",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "galena",
+    "name": "Galena",
+    "category": "raw_ore",
+    "tier": "STM",
+    "form": "solid",
+    "raw": true
+  },
+  {
+    "id": "galena_crushed",
+    "name": "Crushed Galena",
+    "category": "crushed_ore",
+    "tier": "STM",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "galena_purified",
+    "name": "Purified Galena",
+    "category": "purified_ore",
+    "tier": "STM",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "silver_dust",
+    "name": "Silver Dust",
+    "category": "dust",
+    "tier": "STM",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "silver_ingot",
+    "name": "Silver Ingot",
+    "category": "ingot",
+    "tier": "STM",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "silver_plate",
+    "name": "Silver Plate",
+    "category": "plate",
+    "tier": "STM",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "silver_wire",
+    "name": "Silver Wire",
+    "category": "wire",
+    "tier": "STM",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "silver_fine_wire",
+    "name": "Silver Fine Wire",
+    "category": "fine_wire",
+    "tier": "STM",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "zinc_dust",
+    "name": "Zinc Dust",
+    "category": "dust",
+    "tier": "STM",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "zinc_ingot",
+    "name": "Zinc Ingot",
+    "category": "ingot",
+    "tier": "STM",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "zinc_plate",
+    "name": "Zinc Plate",
+    "category": "plate",
+    "tier": "STM",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "sphalerite",
+    "name": "Sphalerite",
+    "category": "raw_ore",
+    "tier": "STM",
+    "form": "solid",
+    "raw": true
+  },
+  {
+    "id": "sphalerite_crushed",
+    "name": "Crushed Sphalerite",
+    "category": "crushed_ore",
+    "tier": "STM",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "sphalerite_purified",
+    "name": "Purified Sphalerite",
+    "category": "purified_ore",
+    "tier": "STM",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "brass_dust",
+    "name": "Brass Dust",
+    "category": "dust",
+    "tier": "STM",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "brass_ingot",
+    "name": "Brass Ingot",
+    "category": "ingot",
+    "tier": "STM",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "brass_plate",
+    "name": "Brass Plate",
+    "category": "plate",
+    "tier": "STM",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "brass_rod",
+    "name": "Brass Rod",
+    "category": "rod",
+    "tier": "STM",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "steel_dust",
+    "name": "Steel Dust",
+    "category": "dust",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "steel_ingot",
+    "name": "Steel Ingot",
+    "category": "ingot",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "steel_plate",
+    "name": "Steel Plate",
+    "category": "plate",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "steel_rod",
+    "name": "Steel Rod",
+    "category": "rod",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "steel_wire",
+    "name": "Steel Wire",
+    "category": "wire",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "steel_gear",
+    "name": "Steel Gear",
+    "category": "gear",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "steel_foil",
+    "name": "Steel Foil",
+    "category": "foil",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "nickel_dust",
+    "name": "Nickel Dust",
+    "category": "dust",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "nickel_ingot",
+    "name": "Nickel Ingot",
+    "category": "ingot",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "nickel_plate",
+    "name": "Nickel Plate",
+    "category": "plate",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "garnierite",
+    "name": "Garnierite",
+    "category": "raw_ore",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": true
+  },
+  {
+    "id": "garnierite_crushed",
+    "name": "Crushed Garnierite",
+    "category": "crushed_ore",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "garnierite_purified",
+    "name": "Purified Garnierite",
+    "category": "purified_ore",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "cobalt_dust",
+    "name": "Cobalt Dust",
+    "category": "dust",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "cobalt_ingot",
+    "name": "Cobalt Ingot",
+    "category": "ingot",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "gold_dust",
+    "name": "Gold Dust",
+    "category": "dust",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "gold_ingot",
+    "name": "Gold Ingot",
+    "category": "ingot",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "gold_plate",
+    "name": "Gold Plate",
+    "category": "plate",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "gold_wire",
+    "name": "Gold Wire",
+    "category": "wire",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "gold_fine_wire",
+    "name": "Gold Fine Wire",
+    "category": "fine_wire",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "gold_foil",
+    "name": "Gold Foil",
+    "category": "foil",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "native_gold",
+    "name": "Native Gold",
+    "category": "raw_ore",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": true
+  },
+  {
+    "id": "native_gold_crushed",
+    "name": "Crushed Native Gold",
+    "category": "crushed_ore",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "native_gold_purified",
+    "name": "Purified Native Gold",
+    "category": "purified_ore",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "sulfur_dust",
+    "name": "Sulfur Dust",
+    "category": "dust",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "sulfur_deposit",
+    "name": "Sulfur Deposit",
+    "category": "raw_ore",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": true
+  },
+  {
+    "id": "sulfur_deposit_crushed",
+    "name": "Crushed Sulfur Deposit",
+    "category": "crushed_ore",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "sulfur_deposit_purified",
+    "name": "Purified Sulfur Deposit",
+    "category": "purified_ore",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "salt_dust",
+    "name": "Salt Dust",
+    "category": "dust",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "halite",
+    "name": "Halite",
+    "category": "raw_ore",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": true
+  },
+  {
+    "id": "halite_crushed",
+    "name": "Crushed Halite",
+    "category": "crushed_ore",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "halite_purified",
+    "name": "Purified Halite",
+    "category": "purified_ore",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "gallium_dust",
+    "name": "Gallium Dust",
+    "category": "dust",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "gallium_ingot",
+    "name": "Gallium Ingot",
+    "category": "ingot",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "silicon_dust",
+    "name": "Silicon Dust",
+    "category": "dust",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "silicon_ingot",
+    "name": "Silicon Ingot",
+    "category": "ingot",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "silicon_plate",
+    "name": "Silicon Plate",
+    "category": "plate",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "rubber_ingot",
+    "name": "Rubber Ingot",
+    "category": "ingot",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "rubber_plate",
+    "name": "Rubber Plate",
+    "category": "plate",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "magnesium_dust",
+    "name": "Magnesium Dust",
+    "category": "dust",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "magnesium_ingot",
+    "name": "Magnesium Ingot",
+    "category": "ingot",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "dolomite",
+    "name": "Dolomite",
+    "category": "raw_ore",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": true
+  },
+  {
+    "id": "dolomite_crushed",
+    "name": "Crushed Dolomite",
+    "category": "crushed_ore",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "dolomite_purified",
+    "name": "Purified Dolomite",
+    "category": "purified_ore",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "aluminum_dust",
+    "name": "Aluminum Dust",
+    "category": "dust",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "aluminum_ingot",
+    "name": "Aluminum Ingot",
+    "category": "ingot",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "aluminum_plate",
+    "name": "Aluminum Plate",
+    "category": "plate",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "aluminum_rod",
+    "name": "Aluminum Rod",
+    "category": "rod",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "aluminum_wire",
+    "name": "Aluminum Wire",
+    "category": "wire",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "aluminum_foil",
+    "name": "Aluminum Foil",
+    "category": "foil",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "bauxite",
+    "name": "Bauxite",
+    "category": "raw_ore",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": true
+  },
+  {
+    "id": "bauxite_crushed",
+    "name": "Crushed Bauxite",
+    "category": "crushed_ore",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "bauxite_purified",
+    "name": "Purified Bauxite",
+    "category": "purified_ore",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "chromium_dust",
+    "name": "Chromium Dust",
+    "category": "dust",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "chromium_ingot",
+    "name": "Chromium Ingot",
+    "category": "ingot",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "chromium_plate",
+    "name": "Chromium Plate",
+    "category": "plate",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "chromite",
+    "name": "Chromite",
+    "category": "raw_ore",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": true
+  },
+  {
+    "id": "chromite_crushed",
+    "name": "Crushed Chromite",
+    "category": "crushed_ore",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "chromite_purified",
+    "name": "Purified Chromite",
+    "category": "purified_ore",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "manganese_dust",
+    "name": "Manganese Dust",
+    "category": "dust",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "manganese_ingot",
+    "name": "Manganese Ingot",
+    "category": "ingot",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "pyrolusite",
+    "name": "Pyrolusite",
+    "category": "raw_ore",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": true
+  },
+  {
+    "id": "pyrolusite_crushed",
+    "name": "Crushed Pyrolusite",
+    "category": "crushed_ore",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "pyrolusite_purified",
+    "name": "Purified Pyrolusite",
+    "category": "purified_ore",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "stainless_steel_dust",
+    "name": "Stainless Steel Dust",
+    "category": "dust",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "stainless_steel_ingot",
+    "name": "Stainless Steel Ingot",
+    "category": "ingot",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "stainless_steel_plate",
+    "name": "Stainless Steel Plate",
+    "category": "plate",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "stainless_steel_rod",
+    "name": "Stainless Steel Rod",
+    "category": "rod",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "stainless_steel_gear",
+    "name": "Stainless Steel Gear",
+    "category": "gear",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "stainless_steel_foil",
+    "name": "Stainless Steel Foil",
+    "category": "foil",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "plastic_ingot",
+    "name": "Plastic Ingot",
+    "category": "ingot",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "plastic_plate",
+    "name": "Plastic Plate",
+    "category": "plate",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "fluorite_dust",
+    "name": "Fluorite Dust",
+    "category": "dust",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "fluorite_deposit",
+    "name": "Fluorite Deposit",
+    "category": "raw_ore",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": true
+  },
+  {
+    "id": "fluorite_deposit_crushed",
+    "name": "Crushed Fluorite Deposit",
+    "category": "crushed_ore",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "fluorite_deposit_purified",
+    "name": "Purified Fluorite Deposit",
+    "category": "purified_ore",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "titanium_dust",
+    "name": "Titanium Dust",
+    "category": "dust",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "titanium_ingot",
+    "name": "Titanium Ingot",
+    "category": "ingot",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "titanium_plate",
+    "name": "Titanium Plate",
+    "category": "plate",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "titanium_rod",
+    "name": "Titanium Rod",
+    "category": "rod",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "titanium_gear",
+    "name": "Titanium Gear",
+    "category": "gear",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "titanium_foil",
+    "name": "Titanium Foil",
+    "category": "foil",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "ilmenite",
+    "name": "Ilmenite",
+    "category": "raw_ore",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": true
+  },
+  {
+    "id": "ilmenite_crushed",
+    "name": "Crushed Ilmenite",
+    "category": "crushed_ore",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "ilmenite_purified",
+    "name": "Purified Ilmenite",
+    "category": "purified_ore",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "platinum_dust",
+    "name": "Platinum Dust",
+    "category": "dust",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "platinum_ingot",
+    "name": "Platinum Ingot",
+    "category": "ingot",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "platinum_plate",
+    "name": "Platinum Plate",
+    "category": "plate",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "platinum_wire",
+    "name": "Platinum Wire",
+    "category": "wire",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "platinum_fine_wire",
+    "name": "Platinum Fine Wire",
+    "category": "fine_wire",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "sperrylite",
+    "name": "Sperrylite",
+    "category": "raw_ore",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": true
+  },
+  {
+    "id": "sperrylite_crushed",
+    "name": "Crushed Sperrylite",
+    "category": "crushed_ore",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "sperrylite_purified",
+    "name": "Purified Sperrylite",
+    "category": "purified_ore",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "palladium_dust",
+    "name": "Palladium Dust",
+    "category": "dust",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "palladium_ingot",
+    "name": "Palladium Ingot",
+    "category": "ingot",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "palladium_plate",
+    "name": "Palladium Plate",
+    "category": "plate",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "lithium_dust",
+    "name": "Lithium Dust",
+    "category": "dust",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "lithium_ingot",
+    "name": "Lithium Ingot",
+    "category": "ingot",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "spodumene",
+    "name": "Spodumene",
+    "category": "raw_ore",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": true
+  },
+  {
+    "id": "spodumene_crushed",
+    "name": "Crushed Spodumene",
+    "category": "crushed_ore",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "spodumene_purified",
+    "name": "Purified Spodumene",
+    "category": "purified_ore",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "silicone_ingot",
+    "name": "Silicone Ingot",
+    "category": "ingot",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "silicone_plate",
+    "name": "Silicone Plate",
+    "category": "plate",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "tungsten_dust",
+    "name": "Tungsten Dust",
+    "category": "dust",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "tungsten_ingot",
+    "name": "Tungsten Ingot",
+    "category": "ingot",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "tungsten_plate",
+    "name": "Tungsten Plate",
+    "category": "plate",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "tungsten_rod",
+    "name": "Tungsten Rod",
+    "category": "rod",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "tungsten_wire",
+    "name": "Tungsten Wire",
+    "category": "wire",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "scheelite",
+    "name": "Scheelite",
+    "category": "raw_ore",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": true
+  },
+  {
+    "id": "scheelite_crushed",
+    "name": "Crushed Scheelite",
+    "category": "crushed_ore",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "scheelite_purified",
+    "name": "Purified Scheelite",
+    "category": "purified_ore",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "tungsten_steel_dust",
+    "name": "Tungsten Steel Dust",
+    "category": "dust",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "tungsten_steel_ingot",
+    "name": "Tungsten Steel Ingot",
+    "category": "ingot",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "tungsten_steel_plate",
+    "name": "Tungsten Steel Plate",
+    "category": "plate",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "tungsten_steel_rod",
+    "name": "Tungsten Steel Rod",
+    "category": "rod",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "tungsten_steel_gear",
+    "name": "Tungsten Steel Gear",
+    "category": "gear",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "tungsten_steel_foil",
+    "name": "Tungsten Steel Foil",
+    "category": "foil",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "neodymium_dust",
+    "name": "Neodymium Dust",
+    "category": "dust",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "neodymium_ingot",
+    "name": "Neodymium Ingot",
+    "category": "ingot",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "neodymium_rod",
+    "name": "Neodymium Rod",
+    "category": "rod",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "monazite",
+    "name": "Monazite",
+    "category": "raw_ore",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": true
+  },
+  {
+    "id": "monazite_crushed",
+    "name": "Crushed Monazite",
+    "category": "crushed_ore",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "monazite_purified",
+    "name": "Purified Monazite",
+    "category": "purified_ore",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "cerium_dust",
+    "name": "Cerium Dust",
+    "category": "dust",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "cerium_ingot",
+    "name": "Cerium Ingot",
+    "category": "ingot",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "niobium_dust",
+    "name": "Niobium Dust",
+    "category": "dust",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "niobium_ingot",
+    "name": "Niobium Ingot",
+    "category": "ingot",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "niobium_plate",
+    "name": "Niobium Plate",
+    "category": "plate",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "pyrochlore",
+    "name": "Pyrochlore",
+    "category": "raw_ore",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": true
+  },
+  {
+    "id": "pyrochlore_crushed",
+    "name": "Crushed Pyrochlore",
+    "category": "crushed_ore",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "pyrochlore_purified",
+    "name": "Purified Pyrochlore",
+    "category": "purified_ore",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "ptfe_ingot",
+    "name": "PTFE Ingot",
+    "category": "ingot",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "ptfe_plate",
+    "name": "PTFE Plate",
+    "category": "plate",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "iridium_dust",
+    "name": "Iridium Dust",
+    "category": "dust",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "iridium_ingot",
+    "name": "Iridium Ingot",
+    "category": "ingot",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "iridium_plate",
+    "name": "Iridium Plate",
+    "category": "plate",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "iridium_rod",
+    "name": "Iridium Rod",
+    "category": "rod",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "iridium_wire",
+    "name": "Iridium Wire",
+    "category": "wire",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "iridium_fine_wire",
+    "name": "Iridium Fine Wire",
+    "category": "fine_wire",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "iridium_foil",
+    "name": "Iridium Foil",
+    "category": "foil",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "osmium_dust",
+    "name": "Osmium Dust",
+    "category": "dust",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "osmium_ingot",
+    "name": "Osmium Ingot",
+    "category": "ingot",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "osmium_plate",
+    "name": "Osmium Plate",
+    "category": "plate",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "osmium_wire",
+    "name": "Osmium Wire",
+    "category": "wire",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "xenite_dust",
+    "name": "Xenite Dust",
+    "category": "dust",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "xenite_ingot",
+    "name": "Xenite Ingot",
+    "category": "ingot",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "xenite_plate",
+    "name": "Xenite Plate",
+    "category": "plate",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "xenite_rod",
+    "name": "Xenite Rod",
+    "category": "rod",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "xenite_deposit",
+    "name": "Xenite Deposit",
+    "category": "raw_ore",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": true
+  },
+  {
+    "id": "xenite_deposit_crushed",
+    "name": "Crushed Xenite Deposit",
+    "category": "crushed_ore",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "xenite_deposit_purified",
+    "name": "Purified Xenite Deposit",
+    "category": "purified_ore",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "collapsium_dust",
+    "name": "Collapsium Dust",
+    "category": "dust",
+    "tier": "SNG",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "collapsium_ingot",
+    "name": "Collapsium Ingot",
+    "category": "ingot",
+    "tier": "SNG",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "collapsium_plate",
+    "name": "Collapsium Plate",
+    "category": "plate",
+    "tier": "SNG",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "collapsium_rod",
+    "name": "Collapsium Rod",
+    "category": "rod",
+    "tier": "SNG",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "collapsium_wire",
+    "name": "Collapsium Wire",
+    "category": "wire",
+    "tier": "SNG",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "collapsium_fine_wire",
+    "name": "Collapsium Fine Wire",
+    "category": "fine_wire",
+    "tier": "SNG",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "stm_cable",
+    "name": "Steam Cable",
+    "category": "component",
+    "tier": "STM",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "stm_machine_hull",
+    "name": "Steam Machine Hull",
+    "category": "component",
+    "tier": "STM",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "stm_motor",
+    "name": "Steam Motor",
+    "category": "component",
+    "tier": "STM",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "stm_piston",
+    "name": "Steam Piston",
+    "category": "component",
+    "tier": "STM",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "stm_pump",
+    "name": "Steam Pump",
+    "category": "component",
+    "tier": "STM",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "stm_conveyor",
+    "name": "Steam Conveyor",
+    "category": "component",
+    "tier": "STM",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "vlt_cable",
+    "name": "Voltaic Cable",
+    "category": "component",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "vlt_machine_hull",
+    "name": "Voltaic Machine Hull",
+    "category": "component",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "vlt_motor",
+    "name": "Voltaic Motor",
+    "category": "component",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "vlt_piston",
+    "name": "Voltaic Piston",
+    "category": "component",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "vlt_pump",
+    "name": "Voltaic Pump",
+    "category": "component",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "vlt_conveyor",
+    "name": "Voltaic Conveyor",
+    "category": "component",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "vlt_board",
+    "name": "Voltaic Circuit Board",
+    "category": "component",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "vlt_circuit",
+    "name": "Voltaic Circuit",
+    "category": "component",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "arc_cable",
+    "name": "Arc Cable",
+    "category": "component",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "arc_machine_hull",
+    "name": "Arc Machine Hull",
+    "category": "component",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "arc_motor",
+    "name": "Arc Motor",
+    "category": "component",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "arc_piston",
+    "name": "Arc Piston",
+    "category": "component",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "arc_pump",
+    "name": "Arc Pump",
+    "category": "component",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "arc_conveyor",
+    "name": "Arc Conveyor",
+    "category": "component",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "arc_board",
+    "name": "Arc Circuit Board",
+    "category": "component",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "arc_circuit",
+    "name": "Arc Circuit",
+    "category": "component",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "pls_cable",
+    "name": "Plasma Cable",
+    "category": "component",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "pls_machine_hull",
+    "name": "Plasma Machine Hull",
+    "category": "component",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "pls_motor",
+    "name": "Plasma Motor",
+    "category": "component",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "pls_piston",
+    "name": "Plasma Piston",
+    "category": "component",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "pls_pump",
+    "name": "Plasma Pump",
+    "category": "component",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "pls_conveyor",
+    "name": "Plasma Conveyor",
+    "category": "component",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "pls_board",
+    "name": "Plasma Circuit Board",
+    "category": "component",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "pls_circuit",
+    "name": "Plasma Circuit",
+    "category": "component",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "fus_cable",
+    "name": "Fusion Cable",
+    "category": "component",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "fus_machine_hull",
+    "name": "Fusion Machine Hull",
+    "category": "component",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "fus_motor",
+    "name": "Fusion Motor",
+    "category": "component",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "fus_piston",
+    "name": "Fusion Piston",
+    "category": "component",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "fus_pump",
+    "name": "Fusion Pump",
+    "category": "component",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "fus_conveyor",
+    "name": "Fusion Conveyor",
+    "category": "component",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "fus_board",
+    "name": "Fusion Circuit Board",
+    "category": "component",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "fus_circuit",
+    "name": "Fusion Circuit",
+    "category": "component",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "qnt_cable",
+    "name": "Quantum Cable",
+    "category": "component",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "qnt_machine_hull",
+    "name": "Quantum Machine Hull",
+    "category": "component",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "qnt_motor",
+    "name": "Quantum Motor",
+    "category": "component",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "qnt_piston",
+    "name": "Quantum Piston",
+    "category": "component",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "qnt_pump",
+    "name": "Quantum Pump",
+    "category": "component",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "qnt_conveyor",
+    "name": "Quantum Conveyor",
+    "category": "component",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "qnt_board",
+    "name": "Quantum Circuit Board",
+    "category": "component",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "qnt_circuit",
+    "name": "Quantum Circuit",
+    "category": "component",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "sng_cable",
+    "name": "Singular Cable",
+    "category": "component",
+    "tier": "SNG",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "sng_machine_hull",
+    "name": "Singular Machine Hull",
+    "category": "component",
+    "tier": "SNG",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "sng_motor",
+    "name": "Singular Motor",
+    "category": "component",
+    "tier": "SNG",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "sng_piston",
+    "name": "Singular Piston",
+    "category": "component",
+    "tier": "SNG",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "sng_pump",
+    "name": "Singular Pump",
+    "category": "component",
+    "tier": "SNG",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "sng_conveyor",
+    "name": "Singular Conveyor",
+    "category": "component",
+    "tier": "SNG",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "sng_board",
+    "name": "Singular Circuit Board",
+    "category": "component",
+    "tier": "SNG",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "sng_circuit",
+    "name": "Singular Circuit",
+    "category": "component",
+    "tier": "SNG",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "man_furnace",
+    "name": "Manual Furnace",
+    "category": "machine",
+    "tier": "MAN",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "stm_furnace",
+    "name": "Steam Furnace",
+    "category": "machine",
+    "tier": "STM",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "vlt_furnace",
+    "name": "Voltaic Furnace",
+    "category": "machine",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "arc_furnace",
+    "name": "Arc Furnace",
+    "category": "machine",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "pls_furnace",
+    "name": "Plasma Furnace",
+    "category": "machine",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "fus_furnace",
+    "name": "Fusion Furnace",
+    "category": "machine",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "man_manual_crafting",
+    "name": "Manual Manual Crafting",
+    "category": "machine",
+    "tier": "MAN",
+    "form": "solid",
+    "raw": true
+  },
+  {
+    "id": "man_alloy_smelter",
+    "name": "Manual Alloy Smelter",
+    "category": "machine",
+    "tier": "MAN",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "stm_alloy_smelter",
+    "name": "Steam Alloy Smelter",
+    "category": "machine",
+    "tier": "STM",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "vlt_alloy_smelter",
+    "name": "Voltaic Alloy Smelter",
+    "category": "machine",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "arc_alloy_smelter",
+    "name": "Arc Alloy Smelter",
+    "category": "machine",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "pls_alloy_smelter",
+    "name": "Plasma Alloy Smelter",
+    "category": "machine",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "fus_alloy_smelter",
+    "name": "Fusion Alloy Smelter",
+    "category": "machine",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "stm_crusher",
+    "name": "Steam Crusher",
+    "category": "machine",
+    "tier": "STM",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "vlt_crusher",
+    "name": "Voltaic Crusher",
+    "category": "machine",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "arc_crusher",
+    "name": "Arc Crusher",
+    "category": "machine",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "pls_crusher",
+    "name": "Plasma Crusher",
+    "category": "machine",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "fus_crusher",
+    "name": "Fusion Crusher",
+    "category": "machine",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "qnt_crusher",
+    "name": "Quantum Crusher",
+    "category": "machine",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "stm_macerator",
+    "name": "Steam Macerator",
+    "category": "machine",
+    "tier": "STM",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "vlt_macerator",
+    "name": "Voltaic Macerator",
+    "category": "machine",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "arc_macerator",
+    "name": "Arc Macerator",
+    "category": "machine",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "pls_macerator",
+    "name": "Plasma Macerator",
+    "category": "machine",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "fus_macerator",
+    "name": "Fusion Macerator",
+    "category": "machine",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "qnt_macerator",
+    "name": "Quantum Macerator",
+    "category": "machine",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "stm_sifter",
+    "name": "Steam Sifter",
+    "category": "machine",
+    "tier": "STM",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "vlt_sifter",
+    "name": "Voltaic Sifter",
+    "category": "machine",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "arc_sifter",
+    "name": "Arc Sifter",
+    "category": "machine",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "stm_bender",
+    "name": "Steam Bender",
+    "category": "machine",
+    "tier": "STM",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "vlt_bender",
+    "name": "Voltaic Bender",
+    "category": "machine",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "arc_bender",
+    "name": "Arc Bender",
+    "category": "machine",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "pls_bender",
+    "name": "Plasma Bender",
+    "category": "machine",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "fus_bender",
+    "name": "Fusion Bender",
+    "category": "machine",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "qnt_bender",
+    "name": "Quantum Bender",
+    "category": "machine",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "stm_lathe",
+    "name": "Steam Lathe",
+    "category": "machine",
+    "tier": "STM",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "vlt_lathe",
+    "name": "Voltaic Lathe",
+    "category": "machine",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "arc_lathe",
+    "name": "Arc Lathe",
+    "category": "machine",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "pls_lathe",
+    "name": "Plasma Lathe",
+    "category": "machine",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "fus_lathe",
+    "name": "Fusion Lathe",
+    "category": "machine",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "qnt_lathe",
+    "name": "Quantum Lathe",
+    "category": "machine",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "stm_assembler",
+    "name": "Steam Assembler",
+    "category": "machine",
+    "tier": "STM",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "vlt_assembler",
+    "name": "Voltaic Assembler",
+    "category": "machine",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "arc_assembler",
+    "name": "Arc Assembler",
+    "category": "machine",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "pls_assembler",
+    "name": "Plasma Assembler",
+    "category": "machine",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "fus_assembler",
+    "name": "Fusion Assembler",
+    "category": "machine",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "qnt_assembler",
+    "name": "Quantum Assembler",
+    "category": "machine",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "sng_assembler",
+    "name": "Singular Assembler",
+    "category": "machine",
+    "tier": "SNG",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "stm_boiler",
+    "name": "Steam Boiler",
+    "category": "machine",
+    "tier": "STM",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "stm_miner",
+    "name": "Steam Miner",
+    "category": "machine",
+    "tier": "STM",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "vlt_miner",
+    "name": "Voltaic Miner",
+    "category": "machine",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "arc_miner",
+    "name": "Arc Miner",
+    "category": "machine",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "pls_miner",
+    "name": "Plasma Miner",
+    "category": "machine",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "fus_miner",
+    "name": "Fusion Miner",
+    "category": "machine",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "qnt_miner",
+    "name": "Quantum Miner",
+    "category": "machine",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "sng_miner",
+    "name": "Singular Miner",
+    "category": "machine",
+    "tier": "SNG",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "stm_pump_station",
+    "name": "Steam Pump Station",
+    "category": "machine",
+    "tier": "STM",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "vlt_pump_station",
+    "name": "Voltaic Pump Station",
+    "category": "machine",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "arc_pump_station",
+    "name": "Arc Pump Station",
+    "category": "machine",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "pls_pump_station",
+    "name": "Plasma Pump Station",
+    "category": "machine",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "fus_pump_station",
+    "name": "Fusion Pump Station",
+    "category": "machine",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "qnt_pump_station",
+    "name": "Quantum Pump Station",
+    "category": "machine",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "stm_generator",
+    "name": "Steam Generator",
+    "category": "machine",
+    "tier": "STM",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "vlt_generator",
+    "name": "Voltaic Generator",
+    "category": "machine",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "arc_generator",
+    "name": "Arc Generator",
+    "category": "machine",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "pls_generator",
+    "name": "Plasma Generator",
+    "category": "machine",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "fus_generator",
+    "name": "Fusion Generator",
+    "category": "machine",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "qnt_generator",
+    "name": "Quantum Generator",
+    "category": "machine",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "sng_generator",
+    "name": "Singular Generator",
+    "category": "machine",
+    "tier": "SNG",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "vlt_washer",
+    "name": "Voltaic Ore Washer",
+    "category": "machine",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "arc_washer",
+    "name": "Arc Ore Washer",
+    "category": "machine",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "pls_washer",
+    "name": "Plasma Ore Washer",
+    "category": "machine",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "fus_washer",
+    "name": "Fusion Ore Washer",
+    "category": "machine",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "qnt_washer",
+    "name": "Quantum Ore Washer",
+    "category": "machine",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "stm_wire_mill",
+    "name": "Steam Wire Mill",
+    "category": "machine",
+    "tier": "STM",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "vlt_wire_mill",
+    "name": "Voltaic Wire Mill",
+    "category": "machine",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "arc_wire_mill",
+    "name": "Arc Wire Mill",
+    "category": "machine",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "pls_wire_mill",
+    "name": "Plasma Wire Mill",
+    "category": "machine",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "fus_wire_mill",
+    "name": "Fusion Wire Mill",
+    "category": "machine",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "qnt_wire_mill",
+    "name": "Quantum Wire Mill",
+    "category": "machine",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "vlt_mixer",
+    "name": "Voltaic Mixer",
+    "category": "machine",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "arc_mixer",
+    "name": "Arc Mixer",
+    "category": "machine",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "pls_mixer",
+    "name": "Plasma Mixer",
+    "category": "machine",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "fus_mixer",
+    "name": "Fusion Mixer",
+    "category": "machine",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "stm_chemical_reactor",
+    "name": "Steam Chemical Reactor",
+    "category": "machine",
+    "tier": "STM",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "vlt_chemical_reactor",
+    "name": "Voltaic Chemical Reactor",
+    "category": "machine",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "arc_chemical_reactor",
+    "name": "Arc Chemical Reactor",
+    "category": "machine",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "pls_chemical_reactor",
+    "name": "Plasma Chemical Reactor",
+    "category": "machine",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "fus_chemical_reactor",
+    "name": "Fusion Chemical Reactor",
+    "category": "machine",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "qnt_chemical_reactor",
+    "name": "Quantum Chemical Reactor",
+    "category": "machine",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "sng_chemical_reactor",
+    "name": "Singular Chemical Reactor",
+    "category": "machine",
+    "tier": "SNG",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "vlt_electrolyzer",
+    "name": "Voltaic Electrolyzer",
+    "category": "machine",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "arc_electrolyzer",
+    "name": "Arc Electrolyzer",
+    "category": "machine",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "pls_electrolyzer",
+    "name": "Plasma Electrolyzer",
+    "category": "machine",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "fus_electrolyzer",
+    "name": "Fusion Electrolyzer",
+    "category": "machine",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "qnt_electrolyzer",
+    "name": "Quantum Electrolyzer",
+    "category": "machine",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "sng_electrolyzer",
+    "name": "Singular Electrolyzer",
+    "category": "machine",
+    "tier": "SNG",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "vlt_cutter",
+    "name": "Voltaic Cutter",
+    "category": "machine",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "arc_cutter",
+    "name": "Arc Cutter",
+    "category": "machine",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "pls_cutter",
+    "name": "Plasma Cutter",
+    "category": "machine",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "arc_centrifuge",
+    "name": "Arc Centrifuge",
+    "category": "machine",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "pls_centrifuge",
+    "name": "Plasma Centrifuge",
+    "category": "machine",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "fus_centrifuge",
+    "name": "Fusion Centrifuge",
+    "category": "machine",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "qnt_centrifuge",
+    "name": "Quantum Centrifuge",
+    "category": "machine",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "sng_centrifuge",
+    "name": "Singular Centrifuge",
+    "category": "machine",
+    "tier": "SNG",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "vlt_distillery",
+    "name": "Voltaic Distillery",
+    "category": "machine",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "arc_distillery",
+    "name": "Arc Distillery",
+    "category": "machine",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "pls_distillery",
+    "name": "Plasma Distillery",
+    "category": "machine",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "fus_distillery",
+    "name": "Fusion Distillery",
+    "category": "machine",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "qnt_distillery",
+    "name": "Quantum Distillery",
+    "category": "machine",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "arc_arc_furnace",
+    "name": "Arc Arc Furnace",
+    "category": "machine",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "pls_arc_furnace",
+    "name": "Plasma Arc Furnace",
+    "category": "machine",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "fus_arc_furnace",
+    "name": "Fusion Arc Furnace",
+    "category": "machine",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "pls_chemical_bath",
+    "name": "Plasma Chemical Bath",
+    "category": "machine",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "fus_chemical_bath",
+    "name": "Fusion Chemical Bath",
+    "category": "machine",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "qnt_chemical_bath",
+    "name": "Quantum Chemical Bath",
+    "category": "machine",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "pls_vacuum_freezer",
+    "name": "Plasma Vacuum Freezer",
+    "category": "machine",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "fus_vacuum_freezer",
+    "name": "Fusion Vacuum Freezer",
+    "category": "machine",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "qnt_vacuum_freezer",
+    "name": "Quantum Vacuum Freezer",
+    "category": "machine",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "sng_vacuum_freezer",
+    "name": "Singular Vacuum Freezer",
+    "category": "machine",
+    "tier": "SNG",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "fus_fusion_reactor",
+    "name": "Fusion Fusion Reactor",
+    "category": "machine",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "qnt_fusion_reactor",
+    "name": "Quantum Fusion Reactor",
+    "category": "machine",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "sng_fusion_reactor",
+    "name": "Singular Fusion Reactor",
+    "category": "machine",
+    "tier": "SNG",
+    "form": "solid",
+    "raw": false
+  },
+  {
+    "id": "sng_replicator",
+    "name": "Singular Matter Replicator",
+    "category": "machine",
+    "tier": "SNG",
+    "form": "solid",
+    "raw": false
+  }
 ]
