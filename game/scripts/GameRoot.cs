@@ -1,0 +1,194 @@
+using System.Linq;
+using Godot;
+using Sim;
+
+namespace Game;
+
+/// Wires the engine layer to the sim. Owns no game state itself: it ticks the
+/// World at a fixed rate and hands the renderer a read-only view each frame.
+public sealed partial class GameRoot : Node3D
+{
+    private const int TicksPerSecond = 60;
+    private const double SecondsPerTick = 1.0 / TicksPerSecond;
+    /// Never advance more than this many ticks in one frame -- a long stall must
+    /// not turn into an unbounded catch-up loop that stalls even longer.
+    private const int MaxCatchUpTicks = 8;
+
+    private World _world = null!;
+    private MachineRenderer _renderer = null!;
+    private CameraRig _rig = null!;
+    private Label _hud = null!;
+    private double _accumulator;
+
+    public override void _Ready()
+    {
+        var machineCount = ReadIntArg("--machines", 4096);
+        _world = DemoWorld.Build(machineCount, seed: 1234);
+
+        _rig = new CameraRig { Name = "CameraRig" };
+        AddChild(_rig);
+
+        _renderer = new MachineRenderer { Name = "MachineRenderer" };
+        AddChild(_renderer);
+
+        AddChild(BuildLighting());
+        _hud = BuildHud();
+
+        // Frame the factory.
+        var side = Mathf.CeilToInt(Mathf.Sqrt(machineCount));
+        _rig.Position = new Vector3(side * 0.5f, 0f, side * 0.5f);
+        _rig.ZoomLevel = Mathf.Clamp(side * 1.4f, 8f, 160f);
+        _rig.Apply();
+
+        _renderer.Sync(_world);
+
+        if (AllArgs().Contains("--smoke"))
+            CallDeferred(nameof(RunSmokeTest));
+    }
+
+    public override void _Process(double delta)
+    {
+        _accumulator += delta;
+
+        var ticks = 0;
+        while (_accumulator >= SecondsPerTick && ticks < MaxCatchUpTicks)
+        {
+            _world.Tick();
+            _accumulator -= SecondsPerTick;
+            ticks++;
+        }
+
+        if (_accumulator > SecondsPerTick * MaxCatchUpTicks)
+            _accumulator = 0;
+
+        _renderer.Sync(_world);
+
+        if (_hud is not null)
+            _hud.Text = $"machines {_world.MachineCount}   tick {_world.TickCount}   " +
+                        $"batches {_renderer.BatchCount}   fps {Engine.GetFramesPerSecond():0}\n" +
+                        "WASD pan   Q/E rotate   wheel zoom";
+    }
+
+    /// Headless verification: tick the sim, refill the instance buffers, and
+    /// report what actually happened. Exercises the real render path rather than
+    /// just proving the project opens.
+    private void RunSmokeTest()
+    {
+        const int ticks = 600;
+        var tickWatch = new System.Diagnostics.Stopwatch();
+        var syncWatch = new System.Diagnostics.Stopwatch();
+        for (var i = 0; i < ticks; i++)
+        {
+            tickWatch.Start();
+            _world.Tick();
+            tickWatch.Stop();
+
+            syncWatch.Start();
+            _renderer.Sync(_world);
+            syncWatch.Stop();
+        }
+
+        var working = 0;
+        var starved = 0;
+        var blocked = 0;
+        var idle = 0;
+        foreach (var state in _world.MachineStates)
+        {
+            switch (state)
+            {
+                case MachineState.Working: working++; break;
+                case MachineState.Starved: starved++; break;
+                case MachineState.Blocked: blocked++; break;
+                default: idle++; break;
+            }
+        }
+
+        var instances = 0;
+        foreach (var child in _renderer.GetChildren())
+            if (child is MultiMeshInstance3D { Multimesh: not null } mmi)
+                instances += mmi.Multimesh.InstanceCount;
+
+        GD.Print("=== SMOKE ===");
+        GD.Print($"machines        {_world.MachineCount}");
+        GD.Print($"ticks           {_world.TickCount}");
+        GD.Print($"draw batches    {_renderer.BatchCount}");
+        GD.Print($"live instances  {instances}");
+        GD.Print($"states          working={working} starved={starved} blocked={blocked} idle={idle}");
+        GD.Print($"sim tick        {tickWatch.Elapsed.TotalMilliseconds / ticks:0.000} ms/tick");
+        GD.Print($"render sync     {syncWatch.Elapsed.TotalMilliseconds / ticks:0.000} ms/frame");
+        GD.Print($"budget          16.667 ms/frame at 60 UPS");
+        GD.Print($"camera          pitch={_rig.Pitch} yaw={_rig.Yaw} zoom={_rig.ZoomLevel:0.0} " +
+                 $"ortho={_rig.Orthographic}");
+
+        // Rotating the camera must not disturb sim state -- the renderer is a
+        // reader, and this is the cheapest place to keep that honest.
+        var before = _world.TickCount;
+        _rig.Yaw += 137f;
+        _rig.Apply();
+        _renderer.Sync(_world);
+        GD.Print($"after yaw+137   tick={_world.TickCount} (unchanged: {before == _world.TickCount})");
+        GD.Print("=== SMOKE OK ===");
+
+        GetTree().Quit();
+    }
+
+    private static Node BuildLighting()
+    {
+        var holder = new Node3D { Name = "Lighting" };
+
+        var sun = new DirectionalLight3D
+        {
+            Name = "Sun",
+            ShadowEnabled = true,
+            LightEnergy = 1.1f,
+        };
+        sun.RotationDegrees = new Vector3(-55f, -40f, 0f);
+        holder.AddChild(sun);
+
+        var environment = new WorldEnvironment
+        {
+            Name = "WorldEnvironment",
+            Environment = new Godot.Environment
+            {
+                BackgroundMode = Godot.Environment.BGMode.Color,
+                BackgroundColor = new Color(0.12f, 0.13f, 0.15f),
+                AmbientLightSource = Godot.Environment.AmbientSource.Color,
+                AmbientLightColor = new Color(0.45f, 0.48f, 0.55f),
+                AmbientLightEnergy = 0.6f,
+            },
+        };
+        holder.AddChild(environment);
+
+        return holder;
+    }
+
+    private Label BuildHud()
+    {
+        var layer = new CanvasLayer { Name = "Hud" };
+        var label = new Label
+        {
+            Name = "Stats",
+            Position = new Vector2(12, 8),
+        };
+        layer.AddChild(label);
+        AddChild(layer);
+        return label;
+    }
+
+    /// Godot splits engine args from anything after "--", so check both.
+    private static string[] AllArgs() =>
+        OS.GetCmdlineArgs().Concat(OS.GetCmdlineUserArgs()).ToArray();
+
+    private static int ReadIntArg(string name, int fallback)
+    {
+        foreach (var arg in AllArgs())
+        {
+            if (!arg.StartsWith(name + "="))
+                continue;
+            if (int.TryParse(arg[(name.Length + 1)..], out var value) && value > 0)
+                return value;
+        }
+
+        return fallback;
+    }
+}

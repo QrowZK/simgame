@@ -34,3 +34,57 @@ jobs:
 
       - name: Test
         run: dotnet test --no-build
+
+  godot:
+    name: Godot layer launches
+    runs-on: ubuntu-latest
+    env:
+      GODOT_VERSION: 4.3-stable
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Cache Godot
+        id: cache-godot
+        uses: actions/cache@v4
+        with:
+          path: ~/godot
+          key: godot-${{ env.GODOT_VERSION }}-mono-linux
+
+      - name: Download Godot
+        if: steps.cache-godot.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/godot && cd ~/godot
+          NAME="Godot_v${GODOT_VERSION}_mono_linux_x86_64"
+          curl -sSL -o godot.zip \
+            "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/${NAME}.zip"
+          unzip -q godot.zip
+          chmod +x "${NAME}/Godot_v${GODOT_VERSION}_mono_linux.x86_64"
+
+      - name: Build game assembly
+        run: dotnet build game/Game.csproj -warnaserror
+
+      - name: Import assets
+        working-directory: game
+        run: |
+          GODOT=~/godot/Godot_v${GODOT_VERSION}_mono_linux_x86_64/Godot_v${GODOT_VERSION}_mono_linux.x86_64
+          "$GODOT" --headless --import
+
+      # Definition of done: the project must actually launch, not just compile.
+      - name: Launch headless
+        working-directory: game
+        run: |
+          GODOT=~/godot/Godot_v${GODOT_VERSION}_mono_linux_x86_64/Godot_v${GODOT_VERSION}_mono_linux.x86_64
+          "$GODOT" --headless --quit
+
+      # Drives the real render path: ticks the sim and refills instance buffers.
+      - name: Headless smoke test
+        working-directory: game
+        run: |
+          GODOT=~/godot/Godot_v${GODOT_VERSION}_mono_linux_x86_64/Godot_v${GODOT_VERSION}_mono_linux.x86_64
+          "$GODOT" --headless -- --smoke --machines=4096 | tee smoke.log
+          grep -q "=== SMOKE OK ===" smoke.log
