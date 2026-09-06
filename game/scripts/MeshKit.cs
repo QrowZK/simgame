@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Godot;
 
 namespace Game;
@@ -45,7 +46,7 @@ public static class MeshKit
 
             var resource = ResourceLoader.Load(path);
             if (resource is Mesh mesh)
-                return mesh;
+                return PrepareAuthored(mesh);
 
             // .glb imports as a scene; lift the first mesh out of it.
             if (resource is PackedScene scene)
@@ -54,12 +55,37 @@ public static class MeshKit
                 var found = FindFirstMesh(root);
                 root.QueueFree();
                 if (found is not null)
-                    return found;
+                    return PrepareAuthored(found);
             }
         }
 
         return null;
     }
+
+    /// An authored mesh keeps its own texture, but its material has to be told
+    /// to multiply the per-instance colour through, or the renderer loses the
+    /// tier and status tint it uses to make a stalled factory visible.
+    private static Mesh PrepareAuthored(Mesh mesh)
+    {
+        AuthoredMeshes.Add(mesh);
+
+        for (var surface = 0; surface < mesh.GetSurfaceCount(); surface++)
+        {
+            if (mesh.SurfaceGetMaterial(surface) is StandardMaterial3D material)
+            {
+                material.VertexColorUseAsAlbedo = true;
+                material.Roughness = 0.62f;
+                material.Metallic = 0.35f;
+            }
+        }
+
+        return mesh;
+    }
+
+    /// Meshes that came from disk. The renderer must not override their material.
+    public static readonly HashSet<Mesh> AuthoredMeshes = new();
+
+    public static bool IsAuthored(Mesh mesh) => AuthoredMeshes.Contains(mesh);
 
     private static Mesh? FindFirstMesh(Node node)
     {
@@ -127,6 +153,12 @@ public static class MeshKit
         Attachments[category] = mesh;
         return mesh;
     }
+
+    /// Top of a tier's hull, where its attachment sits. Mirrors hull_height() in
+    /// tools/generate_models.py; a fixed height left attachments floating above
+    /// the short tiers and buried in the tall ones.
+    public static float DeckHeight(int tier) =>
+        0.42f + Mathf.Clamp(tier, 0, TierCount - 1) * 0.06f + 0.05f;
 
     /// Tier tint, dark and industrial low down, brighter and more exotic high up.
     public static Color TierColor(int tier) => tier switch

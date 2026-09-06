@@ -30,6 +30,7 @@ dotnet test       # sim + data invariant tests
 ```
 python3 tools/generate_data.py     # regenerate data/*.json
 python3 tools/dump_progression.py  # human-readable ladder + critical paths
+python3 tools/factory_plan.py      # machines needed to build any target
 ```
 
 CI regenerates and diffs, so committed data cannot drift from the spec.
@@ -47,4 +48,20 @@ godot --path game -- --machines=100000         # stress the renderer
 ```
 
 Controls: WASD pan, Q/E rotate yaw, mouse wheel zoom.
+
+```
+godot --path game --headless -- --screenshot     # save a frame (needs a display or xvfb-run)
+```
+
+## Art
+
+Machine models are generated, not hand-modelled:
+
+```
+blender --background --python tools/generate_models.py
+```
+
+This writes the whole kit — 8 tier hulls, 10 function attachments, a belt and a
+pipe — into `game/models/` as `.glb`. One tile is 1.0 unit and every part is
+grid-aligned, so machines snap to integer tile coordinates.
 Rendering and art-pipeline decisions are in `docs/0003-3d-rendering-and-art-pipeline.md`.

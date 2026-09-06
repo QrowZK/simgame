@@ -37,16 +37,38 @@ Items get the same treatment: the form ladder means an iron plate and a copper
 plate are one mesh with different per-instance colour, so ~10 form meshes cover
 all 420 items.
 
-**Authoring should be parametric** — a Blender script that emits hull and
-attachment variants from parameters, so the kit stays coherent by construction
-and can be regenerated when the look changes. Blender is not available in the
-CI container, so this pipeline runs on the desktop; nothing in the engine layer
-depends on it.
+**Authoring is parametric** — `tools/generate_models.py` runs Blender headless
+and emits the whole kit from parameters, so it stays coherent by construction
+and the entire look can be regenerated when the art direction changes:
+
+```
+blender --background --python tools/generate_models.py
+```
+
+It writes 8 hulls, 10 attachments, a belt and a pipe as `.glb` into
+`game/models/`, with a generated plate-and-rivet texture (deterministic, so
+regenerating produces no spurious diff). One tile is 1.0 unit; every part is
+centred on X/Z, sits on Y=0 and stays inside a 1x1 footprint, so placing at
+integer tile coordinates lines up exactly.
+
+Blender is not in CI, so the committed `.glb` files are the artefact and the
+script is how they are reproduced.
+
+Two details the first render exposed. Corner posts standing proud of the body
+read as spikes rather than structure, so they are now flush. And attachments
+were seated at a fixed height, which left them floating above the short tiers
+and buried in the tall ones — `MeshKit.DeckHeight` now mirrors `hull_height()`
+from the generator, which prints the expected values on every run.
 
 `MeshKit` loads `res://models/hull_{tier}` and `res://models/attach_{category}`
 (`.tres`, `.res`, `.glb` or `.gltf`) when present and falls back to procedural
-placeholders otherwise. Real parts can therefore land one at a time with no
-renderer change.
+placeholders otherwise, so parts can land one at a time with no renderer change.
+
+An authored mesh keeps its own material — that is where the texture lives — so
+the renderer only applies its shared material override to placeholders. The
+authored material has `VertexColorUseAsAlbedo` switched on at load, so
+per-instance tier and status colour still multiplies through the texture rather
+than being lost.
 
 ## Measured: why instances are uploaded as buffers
 
@@ -67,9 +89,11 @@ At 100k machines the frame costs 11.9 ms of the 16.67 ms budget.
 
 **What that number does not prove:** these runs are headless, so no
 rasterisation happened — the GPU cost of 200k instanced draws is still
-untested. The sim tick is also still Phase 0's dictionary-backed machine
+untested. The game *has* now been seen: `--screenshot` under `xvfb-run` with the
+OpenGL driver renders and saves a frame, which is how the two issues above were
+found. That path is software-rasterised, so its frame rate means nothing. The sim tick is also still Phase 0's dictionary-backed machine
 storage, and chunked updates (skipping idle chunks) are not implemented yet.
-Both are known headroom, and belts have not been built at all.
+Both are known headroom.
 
 ## Structure
 

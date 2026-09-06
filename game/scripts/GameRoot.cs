@@ -19,6 +19,7 @@ public sealed partial class GameRoot : Node3D
     private CameraRig _rig = null!;
     private Label _hud = null!;
     private double _accumulator;
+    private int _screenshotCountdown = -1;
 
     public override void _Ready()
     {
@@ -44,6 +45,9 @@ public sealed partial class GameRoot : Node3D
 
         if (AllArgs().Contains("--smoke"))
             CallDeferred(nameof(RunSmokeTest));
+
+        if (AllArgs().Contains("--screenshot"))
+            _screenshotCountdown = 12;      // let a few frames draw first
     }
 
     public override void _Process(double delta)
@@ -62,6 +66,15 @@ public sealed partial class GameRoot : Node3D
             _accumulator = 0;
 
         _renderer.Sync(_world);
+
+        if (_screenshotCountdown > 0 && --_screenshotCountdown == 0)
+        {
+            var image = GetViewport().GetTexture().GetImage();
+            var path = "user://shot.png";
+            image.SavePng(path);
+            GD.Print($"screenshot {image.GetWidth()}x{image.GetHeight()} -> {ProjectSettings.GlobalizePath(path)}");
+            GetTree().Quit();
+        }
 
         if (_hud is not null)
             _hud.Text = $"machines {_world.MachineCount}   tick {_world.TickCount}   " +
@@ -112,6 +125,7 @@ public sealed partial class GameRoot : Node3D
         GD.Print($"machines        {_world.MachineCount}");
         GD.Print($"ticks           {_world.TickCount}");
         GD.Print($"draw batches    {_renderer.BatchCount}");
+        GD.Print($"authored meshes {MeshKit.AuthoredMeshes.Count} of {MeshKit.TierCount + MeshKit.CategoryCount}");
         GD.Print($"live instances  {instances}");
         GD.Print($"states          working={working} starved={starved} blocked={blocked} idle={idle}");
         GD.Print($"sim tick        {tickWatch.Elapsed.TotalMilliseconds / ticks:0.000} ms/tick");

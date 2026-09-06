@@ -32,7 +32,6 @@ public sealed partial class MachineRenderer : Node3D
     private readonly int[] _attachCursor = new int[MeshKit.CategoryCount];
 
     public float TileSize { get; set; } = 1.0f;
-    public float AttachmentHeight { get; set; } = 0.5f;
 
     public override void _Ready()
     {
@@ -57,7 +56,9 @@ public sealed partial class MachineRenderer : Node3D
         {
             Name = name,
             Multimesh = multiMesh,
-            MaterialOverride = MeshKit.Material,
+            // Placeholders share one material; authored meshes keep their own,
+            // which is where the texture lives.
+            MaterialOverride = MeshKit.IsAuthored(mesh) ? null : MeshKit.Material,
             CastShadow = GeometryInstance3D.ShadowCastingSetting.On,
         };
 
@@ -101,7 +102,7 @@ public sealed partial class MachineRenderer : Node3D
 
             Write(_hullBuffers[tier]!, _hullCursor[tier]++, x, 0f, z, MeshKit.TierColor(tier));
             Write(_attachBuffers[category]!, _attachCursor[category]++,
-                  x, AttachmentHeight, z, MeshKit.StateColor(states[i]));
+                  x, MeshKit.DeckHeight(tier), z, MeshKit.StateColor(states[i]));
         }
 
         for (var tier = 0; tier < MeshKit.TierCount; tier++)
