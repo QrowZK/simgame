@@ -415,5 +415,103 @@
       "SNG"
     ],
     "min_tier": "PLS"
+  },
+  {
+    "id": "transport_belt",
+    "name": "Transport Belt",
+    "tiers": [
+      "STM",
+      "VLT",
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT"
+    ],
+    "min_tier": "STM"
+  },
+  {
+    "id": "underground_belt",
+    "name": "Underground Belt",
+    "tiers": [
+      "VLT",
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT"
+    ],
+    "min_tier": "VLT"
+  },
+  {
+    "id": "splitter",
+    "name": "Splitter",
+    "tiers": [
+      "VLT",
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT"
+    ],
+    "min_tier": "VLT"
+  },
+  {
+    "id": "inserter",
+    "name": "Inserter",
+    "tiers": [
+      "STM",
+      "VLT",
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT"
+    ],
+    "min_tier": "STM"
+  },
+  {
+    "id": "stack_inserter",
+    "name": "Stack Inserter",
+    "tiers": [
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT"
+    ],
+    "min_tier": "ARC"
+  },
+  {
+    "id": "pipe",
+    "name": "Pipe",
+    "tiers": [
+      "STM",
+      "VLT",
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT"
+    ],
+    "min_tier": "STM"
+  },
+  {
+    "id": "pump",
+    "name": "Pump",
+    "tiers": [
+      "VLT",
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT"
+    ],
+    "min_tier": "VLT"
+  },
+  {
+    "id": "storage_tank",
+    "name": "Storage Tank",
+    "tiers": [
+      "VLT",
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT"
+    ],
+    "min_tier": "VLT"
   }
 ]

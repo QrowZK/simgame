@@ -13844,6 +13844,1370 @@
     "unlocked_by": "tech_qnt_fabrication"
   },
   {
+    "id": "build_stm_transport_belt",
+    "machine": "manual_crafting",
+    "tier": "MAN",
+    "duration_ticks": 400,
+    "power_draw": 0,
+    "inputs": [
+      {
+        "item": "stm_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "stm_cable",
+        "count": 4
+      },
+      {
+        "item": "stm_conveyor",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "stm_transport_belt",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_man_fabrication"
+  },
+  {
+    "id": "build_vlt_transport_belt",
+    "machine": "assembler",
+    "tier": "ARC",
+    "duration_ticks": 400,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "vlt_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "vlt_circuit",
+        "count": 2
+      },
+      {
+        "item": "vlt_cable",
+        "count": 4
+      },
+      {
+        "item": "vlt_conveyor",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "vlt_transport_belt",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_fabrication"
+  },
+  {
+    "id": "build_arc_transport_belt",
+    "machine": "assembler",
+    "tier": "ARC",
+    "duration_ticks": 400,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "arc_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "arc_circuit",
+        "count": 2
+      },
+      {
+        "item": "arc_cable",
+        "count": 4
+      },
+      {
+        "item": "arc_conveyor",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "arc_transport_belt",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_fabrication"
+  },
+  {
+    "id": "build_pls_transport_belt",
+    "machine": "assembler",
+    "tier": "ARC",
+    "duration_ticks": 400,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "pls_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "pls_circuit",
+        "count": 2
+      },
+      {
+        "item": "pls_cable",
+        "count": 4
+      },
+      {
+        "item": "pls_conveyor",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "pls_transport_belt",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_fabrication"
+  },
+  {
+    "id": "build_fus_transport_belt",
+    "machine": "assembler",
+    "tier": "PLS",
+    "duration_ticks": 400,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "fus_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "fus_circuit",
+        "count": 2
+      },
+      {
+        "item": "fus_cable",
+        "count": 4
+      },
+      {
+        "item": "fus_conveyor",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "fus_transport_belt",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_pls_fabrication"
+  },
+  {
+    "id": "build_qnt_transport_belt",
+    "machine": "assembler",
+    "tier": "FUS",
+    "duration_ticks": 400,
+    "power_draw": 2048,
+    "inputs": [
+      {
+        "item": "qnt_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "qnt_circuit",
+        "count": 2
+      },
+      {
+        "item": "qnt_cable",
+        "count": 4
+      },
+      {
+        "item": "qnt_conveyor",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "qnt_transport_belt",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_fus_fabrication"
+  },
+  {
+    "id": "build_vlt_underground_belt",
+    "machine": "assembler",
+    "tier": "ARC",
+    "duration_ticks": 400,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "vlt_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "vlt_circuit",
+        "count": 2
+      },
+      {
+        "item": "vlt_cable",
+        "count": 4
+      },
+      {
+        "item": "vlt_conveyor",
+        "count": 2
+      }
+    ],
+    "outputs": [
+      {
+        "item": "vlt_underground_belt",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_fabrication"
+  },
+  {
+    "id": "build_arc_underground_belt",
+    "machine": "assembler",
+    "tier": "ARC",
+    "duration_ticks": 400,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "arc_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "arc_circuit",
+        "count": 2
+      },
+      {
+        "item": "arc_cable",
+        "count": 4
+      },
+      {
+        "item": "arc_conveyor",
+        "count": 2
+      }
+    ],
+    "outputs": [
+      {
+        "item": "arc_underground_belt",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_fabrication"
+  },
+  {
+    "id": "build_pls_underground_belt",
+    "machine": "assembler",
+    "tier": "ARC",
+    "duration_ticks": 400,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "pls_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "pls_circuit",
+        "count": 2
+      },
+      {
+        "item": "pls_cable",
+        "count": 4
+      },
+      {
+        "item": "pls_conveyor",
+        "count": 2
+      }
+    ],
+    "outputs": [
+      {
+        "item": "pls_underground_belt",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_fabrication"
+  },
+  {
+    "id": "build_fus_underground_belt",
+    "machine": "assembler",
+    "tier": "PLS",
+    "duration_ticks": 400,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "fus_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "fus_circuit",
+        "count": 2
+      },
+      {
+        "item": "fus_cable",
+        "count": 4
+      },
+      {
+        "item": "fus_conveyor",
+        "count": 2
+      }
+    ],
+    "outputs": [
+      {
+        "item": "fus_underground_belt",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_pls_fabrication"
+  },
+  {
+    "id": "build_qnt_underground_belt",
+    "machine": "assembler",
+    "tier": "FUS",
+    "duration_ticks": 400,
+    "power_draw": 2048,
+    "inputs": [
+      {
+        "item": "qnt_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "qnt_circuit",
+        "count": 2
+      },
+      {
+        "item": "qnt_cable",
+        "count": 4
+      },
+      {
+        "item": "qnt_conveyor",
+        "count": 2
+      }
+    ],
+    "outputs": [
+      {
+        "item": "qnt_underground_belt",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_fus_fabrication"
+  },
+  {
+    "id": "build_vlt_splitter",
+    "machine": "assembler",
+    "tier": "ARC",
+    "duration_ticks": 400,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "vlt_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "vlt_circuit",
+        "count": 2
+      },
+      {
+        "item": "vlt_cable",
+        "count": 4
+      },
+      {
+        "item": "vlt_conveyor",
+        "count": 2
+      },
+      {
+        "item": "vlt_motor",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "vlt_splitter",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_fabrication"
+  },
+  {
+    "id": "build_arc_splitter",
+    "machine": "assembler",
+    "tier": "ARC",
+    "duration_ticks": 400,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "arc_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "arc_circuit",
+        "count": 2
+      },
+      {
+        "item": "arc_cable",
+        "count": 4
+      },
+      {
+        "item": "arc_conveyor",
+        "count": 2
+      },
+      {
+        "item": "arc_motor",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "arc_splitter",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_fabrication"
+  },
+  {
+    "id": "build_pls_splitter",
+    "machine": "assembler",
+    "tier": "ARC",
+    "duration_ticks": 400,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "pls_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "pls_circuit",
+        "count": 2
+      },
+      {
+        "item": "pls_cable",
+        "count": 4
+      },
+      {
+        "item": "pls_conveyor",
+        "count": 2
+      },
+      {
+        "item": "pls_motor",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "pls_splitter",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_fabrication"
+  },
+  {
+    "id": "build_fus_splitter",
+    "machine": "assembler",
+    "tier": "PLS",
+    "duration_ticks": 400,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "fus_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "fus_circuit",
+        "count": 2
+      },
+      {
+        "item": "fus_cable",
+        "count": 4
+      },
+      {
+        "item": "fus_conveyor",
+        "count": 2
+      },
+      {
+        "item": "fus_motor",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "fus_splitter",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_pls_fabrication"
+  },
+  {
+    "id": "build_qnt_splitter",
+    "machine": "assembler",
+    "tier": "FUS",
+    "duration_ticks": 400,
+    "power_draw": 2048,
+    "inputs": [
+      {
+        "item": "qnt_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "qnt_circuit",
+        "count": 2
+      },
+      {
+        "item": "qnt_cable",
+        "count": 4
+      },
+      {
+        "item": "qnt_conveyor",
+        "count": 2
+      },
+      {
+        "item": "qnt_motor",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "qnt_splitter",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_fus_fabrication"
+  },
+  {
+    "id": "build_stm_inserter",
+    "machine": "manual_crafting",
+    "tier": "MAN",
+    "duration_ticks": 400,
+    "power_draw": 0,
+    "inputs": [
+      {
+        "item": "stm_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "stm_cable",
+        "count": 4
+      },
+      {
+        "item": "stm_motor",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "stm_inserter",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_man_fabrication"
+  },
+  {
+    "id": "build_vlt_inserter",
+    "machine": "assembler",
+    "tier": "ARC",
+    "duration_ticks": 400,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "vlt_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "vlt_circuit",
+        "count": 2
+      },
+      {
+        "item": "vlt_cable",
+        "count": 4
+      },
+      {
+        "item": "vlt_motor",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "vlt_inserter",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_fabrication"
+  },
+  {
+    "id": "build_arc_inserter",
+    "machine": "assembler",
+    "tier": "ARC",
+    "duration_ticks": 400,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "arc_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "arc_circuit",
+        "count": 2
+      },
+      {
+        "item": "arc_cable",
+        "count": 4
+      },
+      {
+        "item": "arc_motor",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "arc_inserter",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_fabrication"
+  },
+  {
+    "id": "build_pls_inserter",
+    "machine": "assembler",
+    "tier": "ARC",
+    "duration_ticks": 400,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "pls_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "pls_circuit",
+        "count": 2
+      },
+      {
+        "item": "pls_cable",
+        "count": 4
+      },
+      {
+        "item": "pls_motor",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "pls_inserter",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_fabrication"
+  },
+  {
+    "id": "build_fus_inserter",
+    "machine": "assembler",
+    "tier": "PLS",
+    "duration_ticks": 400,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "fus_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "fus_circuit",
+        "count": 2
+      },
+      {
+        "item": "fus_cable",
+        "count": 4
+      },
+      {
+        "item": "fus_motor",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "fus_inserter",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_pls_fabrication"
+  },
+  {
+    "id": "build_qnt_inserter",
+    "machine": "assembler",
+    "tier": "FUS",
+    "duration_ticks": 400,
+    "power_draw": 2048,
+    "inputs": [
+      {
+        "item": "qnt_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "qnt_circuit",
+        "count": 2
+      },
+      {
+        "item": "qnt_cable",
+        "count": 4
+      },
+      {
+        "item": "qnt_motor",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "qnt_inserter",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_fus_fabrication"
+  },
+  {
+    "id": "build_arc_stack_inserter",
+    "machine": "assembler",
+    "tier": "ARC",
+    "duration_ticks": 400,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "arc_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "arc_circuit",
+        "count": 2
+      },
+      {
+        "item": "arc_cable",
+        "count": 4
+      },
+      {
+        "item": "arc_motor",
+        "count": 2
+      },
+      {
+        "item": "arc_conveyor",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "arc_stack_inserter",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_fabrication"
+  },
+  {
+    "id": "build_pls_stack_inserter",
+    "machine": "assembler",
+    "tier": "ARC",
+    "duration_ticks": 400,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "pls_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "pls_circuit",
+        "count": 2
+      },
+      {
+        "item": "pls_cable",
+        "count": 4
+      },
+      {
+        "item": "pls_motor",
+        "count": 2
+      },
+      {
+        "item": "pls_conveyor",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "pls_stack_inserter",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_fabrication"
+  },
+  {
+    "id": "build_fus_stack_inserter",
+    "machine": "assembler",
+    "tier": "PLS",
+    "duration_ticks": 400,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "fus_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "fus_circuit",
+        "count": 2
+      },
+      {
+        "item": "fus_cable",
+        "count": 4
+      },
+      {
+        "item": "fus_motor",
+        "count": 2
+      },
+      {
+        "item": "fus_conveyor",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "fus_stack_inserter",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_pls_fabrication"
+  },
+  {
+    "id": "build_qnt_stack_inserter",
+    "machine": "assembler",
+    "tier": "FUS",
+    "duration_ticks": 400,
+    "power_draw": 2048,
+    "inputs": [
+      {
+        "item": "qnt_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "qnt_circuit",
+        "count": 2
+      },
+      {
+        "item": "qnt_cable",
+        "count": 4
+      },
+      {
+        "item": "qnt_motor",
+        "count": 2
+      },
+      {
+        "item": "qnt_conveyor",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "qnt_stack_inserter",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_fus_fabrication"
+  },
+  {
+    "id": "build_stm_pipe",
+    "machine": "manual_crafting",
+    "tier": "MAN",
+    "duration_ticks": 400,
+    "power_draw": 0,
+    "inputs": [
+      {
+        "item": "stm_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "stm_cable",
+        "count": 4
+      }
+    ],
+    "outputs": [
+      {
+        "item": "stm_pipe",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_man_fabrication"
+  },
+  {
+    "id": "build_vlt_pipe",
+    "machine": "assembler",
+    "tier": "ARC",
+    "duration_ticks": 400,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "vlt_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "vlt_circuit",
+        "count": 2
+      },
+      {
+        "item": "vlt_cable",
+        "count": 4
+      }
+    ],
+    "outputs": [
+      {
+        "item": "vlt_pipe",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_fabrication"
+  },
+  {
+    "id": "build_arc_pipe",
+    "machine": "assembler",
+    "tier": "ARC",
+    "duration_ticks": 400,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "arc_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "arc_circuit",
+        "count": 2
+      },
+      {
+        "item": "arc_cable",
+        "count": 4
+      }
+    ],
+    "outputs": [
+      {
+        "item": "arc_pipe",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_fabrication"
+  },
+  {
+    "id": "build_pls_pipe",
+    "machine": "assembler",
+    "tier": "ARC",
+    "duration_ticks": 400,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "pls_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "pls_circuit",
+        "count": 2
+      },
+      {
+        "item": "pls_cable",
+        "count": 4
+      }
+    ],
+    "outputs": [
+      {
+        "item": "pls_pipe",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_fabrication"
+  },
+  {
+    "id": "build_fus_pipe",
+    "machine": "assembler",
+    "tier": "PLS",
+    "duration_ticks": 400,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "fus_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "fus_circuit",
+        "count": 2
+      },
+      {
+        "item": "fus_cable",
+        "count": 4
+      }
+    ],
+    "outputs": [
+      {
+        "item": "fus_pipe",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_pls_fabrication"
+  },
+  {
+    "id": "build_qnt_pipe",
+    "machine": "assembler",
+    "tier": "FUS",
+    "duration_ticks": 400,
+    "power_draw": 2048,
+    "inputs": [
+      {
+        "item": "qnt_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "qnt_circuit",
+        "count": 2
+      },
+      {
+        "item": "qnt_cable",
+        "count": 4
+      }
+    ],
+    "outputs": [
+      {
+        "item": "qnt_pipe",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_fus_fabrication"
+  },
+  {
+    "id": "build_vlt_pump",
+    "machine": "assembler",
+    "tier": "ARC",
+    "duration_ticks": 400,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "vlt_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "vlt_circuit",
+        "count": 2
+      },
+      {
+        "item": "vlt_cable",
+        "count": 4
+      },
+      {
+        "item": "vlt_pump",
+        "count": 1
+      },
+      {
+        "item": "vlt_motor",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "vlt_pump",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_fabrication"
+  },
+  {
+    "id": "build_arc_pump",
+    "machine": "assembler",
+    "tier": "ARC",
+    "duration_ticks": 400,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "arc_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "arc_circuit",
+        "count": 2
+      },
+      {
+        "item": "arc_cable",
+        "count": 4
+      },
+      {
+        "item": "arc_pump",
+        "count": 1
+      },
+      {
+        "item": "arc_motor",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "arc_pump",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_fabrication"
+  },
+  {
+    "id": "build_pls_pump",
+    "machine": "assembler",
+    "tier": "ARC",
+    "duration_ticks": 400,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "pls_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "pls_circuit",
+        "count": 2
+      },
+      {
+        "item": "pls_cable",
+        "count": 4
+      },
+      {
+        "item": "pls_pump",
+        "count": 1
+      },
+      {
+        "item": "pls_motor",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "pls_pump",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_fabrication"
+  },
+  {
+    "id": "build_fus_pump",
+    "machine": "assembler",
+    "tier": "PLS",
+    "duration_ticks": 400,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "fus_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "fus_circuit",
+        "count": 2
+      },
+      {
+        "item": "fus_cable",
+        "count": 4
+      },
+      {
+        "item": "fus_pump",
+        "count": 1
+      },
+      {
+        "item": "fus_motor",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "fus_pump",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_pls_fabrication"
+  },
+  {
+    "id": "build_qnt_pump",
+    "machine": "assembler",
+    "tier": "FUS",
+    "duration_ticks": 400,
+    "power_draw": 2048,
+    "inputs": [
+      {
+        "item": "qnt_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "qnt_circuit",
+        "count": 2
+      },
+      {
+        "item": "qnt_cable",
+        "count": 4
+      },
+      {
+        "item": "qnt_pump",
+        "count": 1
+      },
+      {
+        "item": "qnt_motor",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "qnt_pump",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_fus_fabrication"
+  },
+  {
+    "id": "build_vlt_storage_tank",
+    "machine": "assembler",
+    "tier": "ARC",
+    "duration_ticks": 400,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "vlt_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "vlt_circuit",
+        "count": 2
+      },
+      {
+        "item": "vlt_cable",
+        "count": 4
+      },
+      {
+        "item": "vlt_pump",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "vlt_storage_tank",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_fabrication"
+  },
+  {
+    "id": "build_arc_storage_tank",
+    "machine": "assembler",
+    "tier": "ARC",
+    "duration_ticks": 400,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "arc_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "arc_circuit",
+        "count": 2
+      },
+      {
+        "item": "arc_cable",
+        "count": 4
+      },
+      {
+        "item": "arc_pump",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "arc_storage_tank",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_fabrication"
+  },
+  {
+    "id": "build_pls_storage_tank",
+    "machine": "assembler",
+    "tier": "ARC",
+    "duration_ticks": 400,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "pls_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "pls_circuit",
+        "count": 2
+      },
+      {
+        "item": "pls_cable",
+        "count": 4
+      },
+      {
+        "item": "pls_pump",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "pls_storage_tank",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_fabrication"
+  },
+  {
+    "id": "build_fus_storage_tank",
+    "machine": "assembler",
+    "tier": "PLS",
+    "duration_ticks": 400,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "fus_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "fus_circuit",
+        "count": 2
+      },
+      {
+        "item": "fus_cable",
+        "count": 4
+      },
+      {
+        "item": "fus_pump",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "fus_storage_tank",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_pls_fabrication"
+  },
+  {
+    "id": "build_qnt_storage_tank",
+    "machine": "assembler",
+    "tier": "FUS",
+    "duration_ticks": 400,
+    "power_draw": 2048,
+    "inputs": [
+      {
+        "item": "qnt_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "qnt_circuit",
+        "count": 2
+      },
+      {
+        "item": "qnt_cable",
+        "count": 4
+      },
+      {
+        "item": "qnt_pump",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "qnt_storage_tank",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_fus_fabrication"
+  },
+  {
     "id": "build_pressure_hull_assembly",
     "machine": "assembler",
     "tier": "SNG",

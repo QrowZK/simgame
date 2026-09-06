@@ -10,6 +10,14 @@ public sealed class World
 
     public readonly Random Rng;
 
+    /// Belts, splitters and inserters. Owned here so the whole world advances
+    /// under one deterministic tick.
+    public BeltNetwork Belts { get; } = new();
+
+    /// Pipe networks. Fluids move by network flow rather than as discrete items,
+    /// so this costs one budget reset per network per tick.
+    public FluidSystem Fluids { get; } = new();
+
     public long TickCount { get; private set; }
 
     public World(int seed)
@@ -52,6 +60,10 @@ public sealed class World
             machine.Tick();
             _states[i] = machine.State;
         }
+
+        // Machines first, then transport: fixed order, so the tick is reproducible.
+        Fluids.Tick();
+        Belts.Tick(_machines);
 
         TickCount++;
     }

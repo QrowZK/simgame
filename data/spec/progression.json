@@ -2284,6 +2284,151 @@
           "count": 1
         }
       ]
+    },
+    {
+      "id": "transport_belt",
+      "name": "Transport Belt",
+      "tiers": [
+        "STM",
+        "VLT",
+        "ARC",
+        "PLS",
+        "FUS",
+        "QNT"
+      ],
+      "parts": [
+        {
+          "component": "conveyor",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "underground_belt",
+      "name": "Underground Belt",
+      "tiers": [
+        "VLT",
+        "ARC",
+        "PLS",
+        "FUS",
+        "QNT"
+      ],
+      "parts": [
+        {
+          "component": "conveyor",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "splitter",
+      "name": "Splitter",
+      "tiers": [
+        "VLT",
+        "ARC",
+        "PLS",
+        "FUS",
+        "QNT"
+      ],
+      "parts": [
+        {
+          "component": "conveyor",
+          "count": 2
+        },
+        {
+          "component": "motor",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "inserter",
+      "name": "Inserter",
+      "tiers": [
+        "STM",
+        "VLT",
+        "ARC",
+        "PLS",
+        "FUS",
+        "QNT"
+      ],
+      "parts": [
+        {
+          "component": "motor",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "stack_inserter",
+      "name": "Stack Inserter",
+      "tiers": [
+        "ARC",
+        "PLS",
+        "FUS",
+        "QNT"
+      ],
+      "parts": [
+        {
+          "component": "motor",
+          "count": 2
+        },
+        {
+          "component": "conveyor",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "pipe",
+      "name": "Pipe",
+      "tiers": [
+        "STM",
+        "VLT",
+        "ARC",
+        "PLS",
+        "FUS",
+        "QNT"
+      ],
+      "parts": []
+    },
+    {
+      "id": "pump",
+      "name": "Pump",
+      "tiers": [
+        "VLT",
+        "ARC",
+        "PLS",
+        "FUS",
+        "QNT"
+      ],
+      "parts": [
+        {
+          "component": "pump",
+          "count": 1
+        },
+        {
+          "component": "motor",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "storage_tank",
+      "name": "Storage Tank",
+      "tiers": [
+        "VLT",
+        "ARC",
+        "PLS",
+        "FUS",
+        "QNT"
+      ],
+      "parts": [
+        {
+          "component": "pump",
+          "count": 1
+        }
+      ]
     }
   ],
   "_chemistry_comment": "Hand-written recipes that do not fit a generated pattern. These are the real tier gates.",
