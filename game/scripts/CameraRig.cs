@@ -106,4 +106,26 @@ public sealed partial class CameraRig : Node3D
     }
 
     public Camera3D Camera => _camera;
+
+    /// Where a screen position lands on the ground plane. Ray-plane rather than
+    /// physics picking: machines are MultiMesh instances with no colliders, and
+    /// giving 100k of them collision shapes to support a click would cost more
+    /// than the entire sim tick.
+    public bool TryGroundPoint(Vector2 screen, out Vector3 point)
+    {
+        point = Vector3.Zero;
+        if (_camera is null) return false;
+
+        var origin = _camera.ProjectRayOrigin(screen);
+        var direction = _camera.ProjectRayNormal(screen);
+
+        // Parallel to the ground: no intersection to report.
+        if (Mathf.Abs(direction.Y) < 0.0001f) return false;
+
+        var distance = -origin.Y / direction.Y;
+        if (distance < 0f) return false;        // the plane is behind the camera
+
+        point = origin + direction * distance;
+        return true;
+    }
 }

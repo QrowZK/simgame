@@ -10,7 +10,9 @@
       "PLS",
       "FUS"
     ],
-    "min_tier": "MAN"
+    "min_tier": "MAN",
+    "size": 1,
+    "parallelism": 1
   },
   {
     "id": "manual_crafting",
@@ -18,7 +20,9 @@
     "tiers": [
       "MAN"
     ],
-    "min_tier": "MAN"
+    "min_tier": "MAN",
+    "size": 1,
+    "parallelism": 1
   },
   {
     "id": "alloy_smelter",
@@ -31,7 +35,9 @@
       "PLS",
       "FUS"
     ],
-    "min_tier": "MAN"
+    "min_tier": "MAN",
+    "size": 1,
+    "parallelism": 1
   },
   {
     "id": "crusher",
@@ -44,7 +50,9 @@
       "FUS",
       "QNT"
     ],
-    "min_tier": "STM"
+    "min_tier": "STM",
+    "size": 1,
+    "parallelism": 1
   },
   {
     "id": "macerator",
@@ -57,7 +65,9 @@
       "FUS",
       "QNT"
     ],
-    "min_tier": "STM"
+    "min_tier": "STM",
+    "size": 1,
+    "parallelism": 1
   },
   {
     "id": "sifter",
@@ -67,7 +77,9 @@
       "VLT",
       "ARC"
     ],
-    "min_tier": "STM"
+    "min_tier": "STM",
+    "size": 1,
+    "parallelism": 1
   },
   {
     "id": "bender",
@@ -80,7 +92,9 @@
       "FUS",
       "QNT"
     ],
-    "min_tier": "STM"
+    "min_tier": "STM",
+    "size": 1,
+    "parallelism": 1
   },
   {
     "id": "lathe",
@@ -93,7 +107,9 @@
       "FUS",
       "QNT"
     ],
-    "min_tier": "STM"
+    "min_tier": "STM",
+    "size": 1,
+    "parallelism": 1
   },
   {
     "id": "assembler",
@@ -107,7 +123,9 @@
       "QNT",
       "SNG"
     ],
-    "min_tier": "STM"
+    "min_tier": "STM",
+    "size": 1,
+    "parallelism": 1
   },
   {
     "id": "boiler",
@@ -115,7 +133,9 @@
     "tiers": [
       "STM"
     ],
-    "min_tier": "STM"
+    "min_tier": "STM",
+    "size": 2,
+    "parallelism": 4
   },
   {
     "id": "miner",
@@ -129,7 +149,9 @@
       "QNT",
       "SNG"
     ],
-    "min_tier": "STM"
+    "min_tier": "STM",
+    "size": 1,
+    "parallelism": 1
   },
   {
     "id": "pump_station",
@@ -142,7 +164,9 @@
       "FUS",
       "QNT"
     ],
-    "min_tier": "STM"
+    "min_tier": "STM",
+    "size": 1,
+    "parallelism": 1
   },
   {
     "id": "generator",
@@ -156,7 +180,9 @@
       "QNT",
       "SNG"
     ],
-    "min_tier": "STM"
+    "min_tier": "STM",
+    "size": 1,
+    "parallelism": 1
   },
   {
     "id": "washer",
@@ -168,7 +194,9 @@
       "FUS",
       "QNT"
     ],
-    "min_tier": "VLT"
+    "min_tier": "VLT",
+    "size": 1,
+    "parallelism": 1
   },
   {
     "id": "wire_mill",
@@ -181,7 +209,9 @@
       "FUS",
       "QNT"
     ],
-    "min_tier": "STM"
+    "min_tier": "STM",
+    "size": 1,
+    "parallelism": 1
   },
   {
     "id": "mixer",
@@ -192,7 +222,9 @@
       "PLS",
       "FUS"
     ],
-    "min_tier": "VLT"
+    "min_tier": "VLT",
+    "size": 2,
+    "parallelism": 4
   },
   {
     "id": "chemical_reactor",
@@ -206,7 +238,9 @@
       "QNT",
       "SNG"
     ],
-    "min_tier": "STM"
+    "min_tier": "STM",
+    "size": 2,
+    "parallelism": 4
   },
   {
     "id": "electrolyzer",
@@ -219,7 +253,9 @@
       "QNT",
       "SNG"
     ],
-    "min_tier": "VLT"
+    "min_tier": "VLT",
+    "size": 2,
+    "parallelism": 4
   },
   {
     "id": "cutter",
@@ -229,7 +265,9 @@
       "ARC",
       "PLS"
     ],
-    "min_tier": "VLT"
+    "min_tier": "VLT",
+    "size": 1,
+    "parallelism": 1
   },
   {
     "id": "centrifuge",
@@ -241,7 +279,9 @@
       "QNT",
       "SNG"
     ],
-    "min_tier": "ARC"
+    "min_tier": "ARC",
+    "size": 2,
+    "parallelism": 4
   },
   {
     "id": "distillery",
@@ -254,7 +294,9 @@
       "FUS",
       "QNT"
     ],
-    "min_tier": "STM"
+    "min_tier": "STM",
+    "size": 2,
+    "parallelism": 4
   },
   {
     "id": "arc_furnace",
@@ -264,7 +306,9 @@
       "PLS",
       "FUS"
     ],
-    "min_tier": "ARC"
+    "min_tier": "ARC",
+    "size": 3,
+    "parallelism": 9
   },
   {
     "id": "chemical_bath",
@@ -274,7 +318,9 @@
       "FUS",
       "QNT"
     ],
-    "min_tier": "PLS"
+    "min_tier": "PLS",
+    "size": 2,
+    "parallelism": 4
   },
   {
     "id": "vacuum_freezer",
@@ -285,7 +331,9 @@
       "QNT",
       "SNG"
     ],
-    "min_tier": "PLS"
+    "min_tier": "PLS",
+    "size": 2,
+    "parallelism": 4
   },
   {
     "id": "fusion_reactor",
@@ -295,7 +343,9 @@
       "QNT",
       "SNG"
     ],
-    "min_tier": "FUS"
+    "min_tier": "FUS",
+    "size": 3,
+    "parallelism": 9
   },
   {
     "id": "replicator",
@@ -303,7 +353,9 @@
     "tiers": [
       "SNG"
     ],
-    "min_tier": "SNG"
+    "min_tier": "SNG",
+    "size": 3,
+    "parallelism": 9
   },
   {
     "id": "vacuum_distillation",
@@ -314,7 +366,9 @@
       "FUS",
       "QNT"
     ],
-    "min_tier": "ARC"
+    "min_tier": "ARC",
+    "size": 3,
+    "parallelism": 9
   },
   {
     "id": "steam_cracker",
@@ -326,7 +380,9 @@
       "FUS",
       "QNT"
     ],
-    "min_tier": "VLT"
+    "min_tier": "VLT",
+    "size": 3,
+    "parallelism": 9
   },
   {
     "id": "catalytic_reformer",
@@ -337,7 +393,9 @@
       "FUS",
       "QNT"
     ],
-    "min_tier": "ARC"
+    "min_tier": "ARC",
+    "size": 2,
+    "parallelism": 4
   },
   {
     "id": "fcc_unit",
@@ -347,7 +405,9 @@
       "FUS",
       "QNT"
     ],
-    "min_tier": "PLS"
+    "min_tier": "PLS",
+    "size": 3,
+    "parallelism": 9
   },
   {
     "id": "hydrotreater",
@@ -358,7 +418,9 @@
       "FUS",
       "QNT"
     ],
-    "min_tier": "ARC"
+    "min_tier": "ARC",
+    "size": 2,
+    "parallelism": 4
   },
   {
     "id": "claus_unit",
@@ -368,7 +430,9 @@
       "PLS",
       "FUS"
     ],
-    "min_tier": "ARC"
+    "min_tier": "ARC",
+    "size": 2,
+    "parallelism": 4
   },
   {
     "id": "coker",
@@ -378,7 +442,9 @@
       "FUS",
       "QNT"
     ],
-    "min_tier": "PLS"
+    "min_tier": "PLS",
+    "size": 3,
+    "parallelism": 9
   },
   {
     "id": "gasifier",
@@ -389,7 +455,9 @@
       "ARC",
       "PLS"
     ],
-    "min_tier": "STM"
+    "min_tier": "STM",
+    "size": 3,
+    "parallelism": 9
   },
   {
     "id": "polymerizer",
@@ -403,7 +471,9 @@
       "QNT",
       "SNG"
     ],
-    "min_tier": "STM"
+    "min_tier": "STM",
+    "size": 2,
+    "parallelism": 4
   },
   {
     "id": "spinneret",
@@ -414,7 +484,9 @@
       "QNT",
       "SNG"
     ],
-    "min_tier": "PLS"
+    "min_tier": "PLS",
+    "size": 1,
+    "parallelism": 1
   },
   {
     "id": "transport_belt",
@@ -427,7 +499,9 @@
       "FUS",
       "QNT"
     ],
-    "min_tier": "STM"
+    "min_tier": "STM",
+    "size": 1,
+    "parallelism": 1
   },
   {
     "id": "underground_belt",
@@ -439,7 +513,9 @@
       "FUS",
       "QNT"
     ],
-    "min_tier": "VLT"
+    "min_tier": "VLT",
+    "size": 1,
+    "parallelism": 1
   },
   {
     "id": "splitter",
@@ -451,7 +527,9 @@
       "FUS",
       "QNT"
     ],
-    "min_tier": "VLT"
+    "min_tier": "VLT",
+    "size": 1,
+    "parallelism": 1
   },
   {
     "id": "inserter",
@@ -464,7 +542,9 @@
       "FUS",
       "QNT"
     ],
-    "min_tier": "STM"
+    "min_tier": "STM",
+    "size": 1,
+    "parallelism": 1
   },
   {
     "id": "stack_inserter",
@@ -475,7 +555,9 @@
       "FUS",
       "QNT"
     ],
-    "min_tier": "ARC"
+    "min_tier": "ARC",
+    "size": 1,
+    "parallelism": 1
   },
   {
     "id": "pipe",
@@ -488,7 +570,9 @@
       "FUS",
       "QNT"
     ],
-    "min_tier": "STM"
+    "min_tier": "STM",
+    "size": 1,
+    "parallelism": 1
   },
   {
     "id": "inline_pump",
@@ -500,7 +584,9 @@
       "FUS",
       "QNT"
     ],
-    "min_tier": "VLT"
+    "min_tier": "VLT",
+    "size": 1,
+    "parallelism": 1
   },
   {
     "id": "storage_tank",
@@ -512,7 +598,9 @@
       "FUS",
       "QNT"
     ],
-    "min_tier": "VLT"
+    "min_tier": "VLT",
+    "size": 2,
+    "parallelism": 4
   },
   {
     "id": "prospector",
@@ -524,7 +612,9 @@
       "ARC",
       "PLS"
     ],
-    "min_tier": "MAN"
+    "min_tier": "MAN",
+    "size": 1,
+    "parallelism": 1
   },
   {
     "id": "oil_derrick",
@@ -536,6 +626,8 @@
       "PLS",
       "FUS"
     ],
-    "min_tier": "STM"
+    "min_tier": "STM",
+    "size": 2,
+    "parallelism": 4
   }
 ]

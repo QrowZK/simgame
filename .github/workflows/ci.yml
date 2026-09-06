@@ -88,3 +88,6 @@ jobs:
           GODOT=~/godot/Godot_v${GODOT_VERSION}_mono_linux_x86_64/Godot_v${GODOT_VERSION}_mono_linux.x86_64
           "$GODOT" --headless -- --smoke --machines=4096 | tee smoke.log
           grep -q "=== SMOKE OK ===" smoke.log
+          # Clicking a large machine must resolve to that one machine from any
+          # of its tiles -- the whole inspection GUI hangs off this.
+          grep -q "all tiles resolve to one machine: True" smoke.log

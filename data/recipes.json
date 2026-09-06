@@ -9908,15 +9908,15 @@
     "inputs": [
       {
         "item": "stm_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "stm_cable",
         "count": 4
       },
       {
+        "item": "stm_cable",
+        "count": 16
+      },
+      {
         "item": "stm_pump",
-        "count": 1
+        "count": 4
       }
     ],
     "outputs": [
@@ -10940,19 +10940,19 @@
     "inputs": [
       {
         "item": "vlt_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "vlt_circuit",
-        "count": 2
-      },
-      {
-        "item": "vlt_cable",
         "count": 4
       },
       {
+        "item": "vlt_circuit",
+        "count": 8
+      },
+      {
+        "item": "vlt_cable",
+        "count": 16
+      },
+      {
         "item": "vlt_motor",
-        "count": 1
+        "count": 4
       }
     ],
     "outputs": [
@@ -10972,19 +10972,19 @@
     "inputs": [
       {
         "item": "arc_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "arc_circuit",
-        "count": 2
-      },
-      {
-        "item": "arc_cable",
         "count": 4
       },
       {
+        "item": "arc_circuit",
+        "count": 8
+      },
+      {
+        "item": "arc_cable",
+        "count": 16
+      },
+      {
         "item": "arc_motor",
-        "count": 1
+        "count": 4
       }
     ],
     "outputs": [
@@ -11004,19 +11004,19 @@
     "inputs": [
       {
         "item": "pls_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "pls_circuit",
-        "count": 2
-      },
-      {
-        "item": "pls_cable",
         "count": 4
       },
       {
+        "item": "pls_circuit",
+        "count": 8
+      },
+      {
+        "item": "pls_cable",
+        "count": 16
+      },
+      {
         "item": "pls_motor",
-        "count": 1
+        "count": 4
       }
     ],
     "outputs": [
@@ -11036,19 +11036,19 @@
     "inputs": [
       {
         "item": "fus_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "fus_circuit",
-        "count": 2
-      },
-      {
-        "item": "fus_cable",
         "count": 4
       },
       {
+        "item": "fus_circuit",
+        "count": 8
+      },
+      {
+        "item": "fus_cable",
+        "count": 16
+      },
+      {
         "item": "fus_motor",
-        "count": 1
+        "count": 4
       }
     ],
     "outputs": [
@@ -11068,19 +11068,19 @@
     "inputs": [
       {
         "item": "stm_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "stm_cable",
         "count": 4
       },
       {
+        "item": "stm_cable",
+        "count": 16
+      },
+      {
         "item": "stm_pump",
-        "count": 1
+        "count": 4
       },
       {
         "item": "stm_motor",
-        "count": 1
+        "count": 4
       }
     ],
     "outputs": [
@@ -11100,23 +11100,23 @@
     "inputs": [
       {
         "item": "vlt_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "vlt_circuit",
-        "count": 2
-      },
-      {
-        "item": "vlt_cable",
         "count": 4
       },
       {
+        "item": "vlt_circuit",
+        "count": 8
+      },
+      {
+        "item": "vlt_cable",
+        "count": 16
+      },
+      {
         "item": "vlt_pump",
-        "count": 1
+        "count": 4
       },
       {
         "item": "vlt_motor",
-        "count": 1
+        "count": 4
       }
     ],
     "outputs": [
@@ -11136,23 +11136,23 @@
     "inputs": [
       {
         "item": "arc_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "arc_circuit",
-        "count": 2
-      },
-      {
-        "item": "arc_cable",
         "count": 4
       },
       {
+        "item": "arc_circuit",
+        "count": 8
+      },
+      {
+        "item": "arc_cable",
+        "count": 16
+      },
+      {
         "item": "arc_pump",
-        "count": 1
+        "count": 4
       },
       {
         "item": "arc_motor",
-        "count": 1
+        "count": 4
       }
     ],
     "outputs": [
@@ -11172,23 +11172,23 @@
     "inputs": [
       {
         "item": "pls_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "pls_circuit",
-        "count": 2
-      },
-      {
-        "item": "pls_cable",
         "count": 4
       },
       {
+        "item": "pls_circuit",
+        "count": 8
+      },
+      {
+        "item": "pls_cable",
+        "count": 16
+      },
+      {
         "item": "pls_pump",
-        "count": 1
+        "count": 4
       },
       {
         "item": "pls_motor",
-        "count": 1
+        "count": 4
       }
     ],
     "outputs": [
@@ -11208,23 +11208,23 @@
     "inputs": [
       {
         "item": "fus_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "fus_circuit",
-        "count": 2
-      },
-      {
-        "item": "fus_cable",
         "count": 4
       },
       {
+        "item": "fus_circuit",
+        "count": 8
+      },
+      {
+        "item": "fus_cable",
+        "count": 16
+      },
+      {
         "item": "fus_pump",
-        "count": 1
+        "count": 4
       },
       {
         "item": "fus_motor",
-        "count": 1
+        "count": 4
       }
     ],
     "outputs": [
@@ -11244,23 +11244,23 @@
     "inputs": [
       {
         "item": "qnt_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "qnt_circuit",
-        "count": 2
-      },
-      {
-        "item": "qnt_cable",
         "count": 4
       },
       {
+        "item": "qnt_circuit",
+        "count": 8
+      },
+      {
+        "item": "qnt_cable",
+        "count": 16
+      },
+      {
         "item": "qnt_pump",
-        "count": 1
+        "count": 4
       },
       {
         "item": "qnt_motor",
-        "count": 1
+        "count": 4
       }
     ],
     "outputs": [
@@ -11280,23 +11280,23 @@
     "inputs": [
       {
         "item": "sng_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "sng_circuit",
-        "count": 2
-      },
-      {
-        "item": "sng_cable",
         "count": 4
       },
       {
+        "item": "sng_circuit",
+        "count": 8
+      },
+      {
+        "item": "sng_cable",
+        "count": 16
+      },
+      {
         "item": "sng_pump",
-        "count": 1
+        "count": 4
       },
       {
         "item": "sng_motor",
-        "count": 1
+        "count": 4
       }
     ],
     "outputs": [
@@ -11316,19 +11316,19 @@
     "inputs": [
       {
         "item": "vlt_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "vlt_circuit",
-        "count": 2
-      },
-      {
-        "item": "vlt_cable",
         "count": 4
       },
       {
+        "item": "vlt_circuit",
+        "count": 8
+      },
+      {
+        "item": "vlt_cable",
+        "count": 16
+      },
+      {
         "item": "vlt_pump",
-        "count": 1
+        "count": 4
       }
     ],
     "outputs": [
@@ -11348,19 +11348,19 @@
     "inputs": [
       {
         "item": "arc_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "arc_circuit",
-        "count": 2
-      },
-      {
-        "item": "arc_cable",
         "count": 4
       },
       {
+        "item": "arc_circuit",
+        "count": 8
+      },
+      {
+        "item": "arc_cable",
+        "count": 16
+      },
+      {
         "item": "arc_pump",
-        "count": 1
+        "count": 4
       }
     ],
     "outputs": [
@@ -11380,19 +11380,19 @@
     "inputs": [
       {
         "item": "pls_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "pls_circuit",
-        "count": 2
-      },
-      {
-        "item": "pls_cable",
         "count": 4
       },
       {
+        "item": "pls_circuit",
+        "count": 8
+      },
+      {
+        "item": "pls_cable",
+        "count": 16
+      },
+      {
         "item": "pls_pump",
-        "count": 1
+        "count": 4
       }
     ],
     "outputs": [
@@ -11412,19 +11412,19 @@
     "inputs": [
       {
         "item": "fus_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "fus_circuit",
-        "count": 2
-      },
-      {
-        "item": "fus_cable",
         "count": 4
       },
       {
+        "item": "fus_circuit",
+        "count": 8
+      },
+      {
+        "item": "fus_cable",
+        "count": 16
+      },
+      {
         "item": "fus_pump",
-        "count": 1
+        "count": 4
       }
     ],
     "outputs": [
@@ -11444,19 +11444,19 @@
     "inputs": [
       {
         "item": "qnt_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "qnt_circuit",
-        "count": 2
-      },
-      {
-        "item": "qnt_cable",
         "count": 4
       },
       {
+        "item": "qnt_circuit",
+        "count": 8
+      },
+      {
+        "item": "qnt_cable",
+        "count": 16
+      },
+      {
         "item": "qnt_pump",
-        "count": 1
+        "count": 4
       }
     ],
     "outputs": [
@@ -11476,19 +11476,19 @@
     "inputs": [
       {
         "item": "sng_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "sng_circuit",
-        "count": 2
-      },
-      {
-        "item": "sng_cable",
         "count": 4
       },
       {
+        "item": "sng_circuit",
+        "count": 8
+      },
+      {
+        "item": "sng_cable",
+        "count": 16
+      },
+      {
         "item": "sng_pump",
-        "count": 1
+        "count": 4
       }
     ],
     "outputs": [
@@ -11616,19 +11616,19 @@
     "inputs": [
       {
         "item": "arc_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "arc_circuit",
-        "count": 2
-      },
-      {
-        "item": "arc_cable",
         "count": 4
       },
       {
+        "item": "arc_circuit",
+        "count": 8
+      },
+      {
+        "item": "arc_cable",
+        "count": 16
+      },
+      {
         "item": "arc_motor",
-        "count": 2
+        "count": 8
       }
     ],
     "outputs": [
@@ -11648,19 +11648,19 @@
     "inputs": [
       {
         "item": "pls_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "pls_circuit",
-        "count": 2
-      },
-      {
-        "item": "pls_cable",
         "count": 4
       },
       {
+        "item": "pls_circuit",
+        "count": 8
+      },
+      {
+        "item": "pls_cable",
+        "count": 16
+      },
+      {
         "item": "pls_motor",
-        "count": 2
+        "count": 8
       }
     ],
     "outputs": [
@@ -11680,19 +11680,19 @@
     "inputs": [
       {
         "item": "fus_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "fus_circuit",
-        "count": 2
-      },
-      {
-        "item": "fus_cable",
         "count": 4
       },
       {
+        "item": "fus_circuit",
+        "count": 8
+      },
+      {
+        "item": "fus_cable",
+        "count": 16
+      },
+      {
         "item": "fus_motor",
-        "count": 2
+        "count": 8
       }
     ],
     "outputs": [
@@ -11712,19 +11712,19 @@
     "inputs": [
       {
         "item": "qnt_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "qnt_circuit",
-        "count": 2
-      },
-      {
-        "item": "qnt_cable",
         "count": 4
       },
       {
+        "item": "qnt_circuit",
+        "count": 8
+      },
+      {
+        "item": "qnt_cable",
+        "count": 16
+      },
+      {
         "item": "qnt_motor",
-        "count": 2
+        "count": 8
       }
     ],
     "outputs": [
@@ -11744,19 +11744,19 @@
     "inputs": [
       {
         "item": "sng_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "sng_circuit",
-        "count": 2
-      },
-      {
-        "item": "sng_cable",
         "count": 4
       },
       {
+        "item": "sng_circuit",
+        "count": 8
+      },
+      {
+        "item": "sng_cable",
+        "count": 16
+      },
+      {
         "item": "sng_motor",
-        "count": 2
+        "count": 8
       }
     ],
     "outputs": [
@@ -11776,15 +11776,15 @@
     "inputs": [
       {
         "item": "stm_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "stm_cable",
         "count": 4
       },
       {
+        "item": "stm_cable",
+        "count": 16
+      },
+      {
         "item": "stm_pump",
-        "count": 2
+        "count": 8
       }
     ],
     "outputs": [
@@ -11804,19 +11804,19 @@
     "inputs": [
       {
         "item": "vlt_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "vlt_circuit",
-        "count": 2
-      },
-      {
-        "item": "vlt_cable",
         "count": 4
       },
       {
+        "item": "vlt_circuit",
+        "count": 8
+      },
+      {
+        "item": "vlt_cable",
+        "count": 16
+      },
+      {
         "item": "vlt_pump",
-        "count": 2
+        "count": 8
       }
     ],
     "outputs": [
@@ -11836,19 +11836,19 @@
     "inputs": [
       {
         "item": "arc_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "arc_circuit",
-        "count": 2
-      },
-      {
-        "item": "arc_cable",
         "count": 4
       },
       {
+        "item": "arc_circuit",
+        "count": 8
+      },
+      {
+        "item": "arc_cable",
+        "count": 16
+      },
+      {
         "item": "arc_pump",
-        "count": 2
+        "count": 8
       }
     ],
     "outputs": [
@@ -11868,19 +11868,19 @@
     "inputs": [
       {
         "item": "pls_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "pls_circuit",
-        "count": 2
-      },
-      {
-        "item": "pls_cable",
         "count": 4
       },
       {
+        "item": "pls_circuit",
+        "count": 8
+      },
+      {
+        "item": "pls_cable",
+        "count": 16
+      },
+      {
         "item": "pls_pump",
-        "count": 2
+        "count": 8
       }
     ],
     "outputs": [
@@ -11900,19 +11900,19 @@
     "inputs": [
       {
         "item": "fus_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "fus_circuit",
-        "count": 2
-      },
-      {
-        "item": "fus_cable",
         "count": 4
       },
       {
+        "item": "fus_circuit",
+        "count": 8
+      },
+      {
+        "item": "fus_cable",
+        "count": 16
+      },
+      {
         "item": "fus_pump",
-        "count": 2
+        "count": 8
       }
     ],
     "outputs": [
@@ -11932,19 +11932,19 @@
     "inputs": [
       {
         "item": "qnt_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "qnt_circuit",
-        "count": 2
-      },
-      {
-        "item": "qnt_cable",
         "count": 4
       },
       {
+        "item": "qnt_circuit",
+        "count": 8
+      },
+      {
+        "item": "qnt_cable",
+        "count": 16
+      },
+      {
         "item": "qnt_pump",
-        "count": 2
+        "count": 8
       }
     ],
     "outputs": [
@@ -11964,19 +11964,19 @@
     "inputs": [
       {
         "item": "arc_machine_hull",
-        "count": 1
+        "count": 9
       },
       {
         "item": "arc_circuit",
-        "count": 2
+        "count": 18
       },
       {
         "item": "arc_cable",
-        "count": 4
+        "count": 36
       },
       {
         "item": "arc_motor",
-        "count": 1
+        "count": 9
       }
     ],
     "outputs": [
@@ -11996,19 +11996,19 @@
     "inputs": [
       {
         "item": "pls_machine_hull",
-        "count": 1
+        "count": 9
       },
       {
         "item": "pls_circuit",
-        "count": 2
+        "count": 18
       },
       {
         "item": "pls_cable",
-        "count": 4
+        "count": 36
       },
       {
         "item": "pls_motor",
-        "count": 1
+        "count": 9
       }
     ],
     "outputs": [
@@ -12028,19 +12028,19 @@
     "inputs": [
       {
         "item": "fus_machine_hull",
-        "count": 1
+        "count": 9
       },
       {
         "item": "fus_circuit",
-        "count": 2
+        "count": 18
       },
       {
         "item": "fus_cable",
-        "count": 4
+        "count": 36
       },
       {
         "item": "fus_motor",
-        "count": 1
+        "count": 9
       }
     ],
     "outputs": [
@@ -12060,19 +12060,19 @@
     "inputs": [
       {
         "item": "pls_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "pls_circuit",
-        "count": 2
-      },
-      {
-        "item": "pls_cable",
         "count": 4
       },
       {
+        "item": "pls_circuit",
+        "count": 8
+      },
+      {
+        "item": "pls_cable",
+        "count": 16
+      },
+      {
         "item": "pls_pump",
-        "count": 2
+        "count": 8
       }
     ],
     "outputs": [
@@ -12092,19 +12092,19 @@
     "inputs": [
       {
         "item": "fus_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "fus_circuit",
-        "count": 2
-      },
-      {
-        "item": "fus_cable",
         "count": 4
       },
       {
+        "item": "fus_circuit",
+        "count": 8
+      },
+      {
+        "item": "fus_cable",
+        "count": 16
+      },
+      {
         "item": "fus_pump",
-        "count": 2
+        "count": 8
       }
     ],
     "outputs": [
@@ -12124,19 +12124,19 @@
     "inputs": [
       {
         "item": "qnt_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "qnt_circuit",
-        "count": 2
-      },
-      {
-        "item": "qnt_cable",
         "count": 4
       },
       {
+        "item": "qnt_circuit",
+        "count": 8
+      },
+      {
+        "item": "qnt_cable",
+        "count": 16
+      },
+      {
         "item": "qnt_pump",
-        "count": 2
+        "count": 8
       }
     ],
     "outputs": [
@@ -12156,23 +12156,23 @@
     "inputs": [
       {
         "item": "pls_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "pls_circuit",
-        "count": 2
-      },
-      {
-        "item": "pls_cable",
         "count": 4
       },
       {
+        "item": "pls_circuit",
+        "count": 8
+      },
+      {
+        "item": "pls_cable",
+        "count": 16
+      },
+      {
         "item": "pls_pump",
-        "count": 2
+        "count": 8
       },
       {
         "item": "pls_motor",
-        "count": 1
+        "count": 4
       }
     ],
     "outputs": [
@@ -12192,23 +12192,23 @@
     "inputs": [
       {
         "item": "fus_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "fus_circuit",
-        "count": 2
-      },
-      {
-        "item": "fus_cable",
         "count": 4
       },
       {
+        "item": "fus_circuit",
+        "count": 8
+      },
+      {
+        "item": "fus_cable",
+        "count": 16
+      },
+      {
         "item": "fus_pump",
-        "count": 2
+        "count": 8
       },
       {
         "item": "fus_motor",
-        "count": 1
+        "count": 4
       }
     ],
     "outputs": [
@@ -12228,23 +12228,23 @@
     "inputs": [
       {
         "item": "qnt_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "qnt_circuit",
-        "count": 2
-      },
-      {
-        "item": "qnt_cable",
         "count": 4
       },
       {
+        "item": "qnt_circuit",
+        "count": 8
+      },
+      {
+        "item": "qnt_cable",
+        "count": 16
+      },
+      {
         "item": "qnt_pump",
-        "count": 2
+        "count": 8
       },
       {
         "item": "qnt_motor",
-        "count": 1
+        "count": 4
       }
     ],
     "outputs": [
@@ -12264,23 +12264,23 @@
     "inputs": [
       {
         "item": "sng_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "sng_circuit",
-        "count": 2
-      },
-      {
-        "item": "sng_cable",
         "count": 4
       },
       {
+        "item": "sng_circuit",
+        "count": 8
+      },
+      {
+        "item": "sng_cable",
+        "count": 16
+      },
+      {
         "item": "sng_pump",
-        "count": 2
+        "count": 8
       },
       {
         "item": "sng_motor",
-        "count": 1
+        "count": 4
       }
     ],
     "outputs": [
@@ -12300,23 +12300,23 @@
     "inputs": [
       {
         "item": "fus_machine_hull",
-        "count": 1
+        "count": 9
       },
       {
         "item": "fus_circuit",
-        "count": 2
+        "count": 18
       },
       {
         "item": "fus_cable",
-        "count": 4
+        "count": 36
       },
       {
         "item": "fus_pump",
-        "count": 4
+        "count": 36
       },
       {
         "item": "fus_motor",
-        "count": 4
+        "count": 36
       }
     ],
     "outputs": [
@@ -12336,23 +12336,23 @@
     "inputs": [
       {
         "item": "qnt_machine_hull",
-        "count": 1
+        "count": 9
       },
       {
         "item": "qnt_circuit",
-        "count": 2
+        "count": 18
       },
       {
         "item": "qnt_cable",
-        "count": 4
+        "count": 36
       },
       {
         "item": "qnt_pump",
-        "count": 4
+        "count": 36
       },
       {
         "item": "qnt_motor",
-        "count": 4
+        "count": 36
       }
     ],
     "outputs": [
@@ -12372,23 +12372,23 @@
     "inputs": [
       {
         "item": "sng_machine_hull",
-        "count": 1
+        "count": 9
       },
       {
         "item": "sng_circuit",
-        "count": 2
+        "count": 18
       },
       {
         "item": "sng_cable",
-        "count": 4
+        "count": 36
       },
       {
         "item": "sng_pump",
-        "count": 4
+        "count": 36
       },
       {
         "item": "sng_motor",
-        "count": 4
+        "count": 36
       }
     ],
     "outputs": [
@@ -12408,23 +12408,23 @@
     "inputs": [
       {
         "item": "sng_machine_hull",
-        "count": 1
+        "count": 9
       },
       {
         "item": "sng_circuit",
-        "count": 2
+        "count": 18
       },
       {
         "item": "sng_cable",
-        "count": 4
+        "count": 36
       },
       {
         "item": "sng_pump",
-        "count": 2
+        "count": 18
       },
       {
         "item": "sng_motor",
-        "count": 4
+        "count": 36
       }
     ],
     "outputs": [
@@ -12444,19 +12444,19 @@
     "inputs": [
       {
         "item": "arc_machine_hull",
-        "count": 1
+        "count": 9
       },
       {
         "item": "arc_circuit",
-        "count": 2
+        "count": 18
       },
       {
         "item": "arc_cable",
-        "count": 4
+        "count": 36
       },
       {
         "item": "arc_pump",
-        "count": 3
+        "count": 27
       }
     ],
     "outputs": [
@@ -12476,19 +12476,19 @@
     "inputs": [
       {
         "item": "pls_machine_hull",
-        "count": 1
+        "count": 9
       },
       {
         "item": "pls_circuit",
-        "count": 2
+        "count": 18
       },
       {
         "item": "pls_cable",
-        "count": 4
+        "count": 36
       },
       {
         "item": "pls_pump",
-        "count": 3
+        "count": 27
       }
     ],
     "outputs": [
@@ -12508,19 +12508,19 @@
     "inputs": [
       {
         "item": "fus_machine_hull",
-        "count": 1
+        "count": 9
       },
       {
         "item": "fus_circuit",
-        "count": 2
+        "count": 18
       },
       {
         "item": "fus_cable",
-        "count": 4
+        "count": 36
       },
       {
         "item": "fus_pump",
-        "count": 3
+        "count": 27
       }
     ],
     "outputs": [
@@ -12540,19 +12540,19 @@
     "inputs": [
       {
         "item": "qnt_machine_hull",
-        "count": 1
+        "count": 9
       },
       {
         "item": "qnt_circuit",
-        "count": 2
+        "count": 18
       },
       {
         "item": "qnt_cable",
-        "count": 4
+        "count": 36
       },
       {
         "item": "qnt_pump",
-        "count": 3
+        "count": 27
       }
     ],
     "outputs": [
@@ -12572,23 +12572,23 @@
     "inputs": [
       {
         "item": "vlt_machine_hull",
-        "count": 1
+        "count": 9
       },
       {
         "item": "vlt_circuit",
-        "count": 2
+        "count": 18
       },
       {
         "item": "vlt_cable",
-        "count": 4
+        "count": 36
       },
       {
         "item": "vlt_pump",
-        "count": 2
+        "count": 18
       },
       {
         "item": "vlt_motor",
-        "count": 1
+        "count": 9
       }
     ],
     "outputs": [
@@ -12608,23 +12608,23 @@
     "inputs": [
       {
         "item": "arc_machine_hull",
-        "count": 1
+        "count": 9
       },
       {
         "item": "arc_circuit",
-        "count": 2
+        "count": 18
       },
       {
         "item": "arc_cable",
-        "count": 4
+        "count": 36
       },
       {
         "item": "arc_pump",
-        "count": 2
+        "count": 18
       },
       {
         "item": "arc_motor",
-        "count": 1
+        "count": 9
       }
     ],
     "outputs": [
@@ -12644,23 +12644,23 @@
     "inputs": [
       {
         "item": "pls_machine_hull",
-        "count": 1
+        "count": 9
       },
       {
         "item": "pls_circuit",
-        "count": 2
+        "count": 18
       },
       {
         "item": "pls_cable",
-        "count": 4
+        "count": 36
       },
       {
         "item": "pls_pump",
-        "count": 2
+        "count": 18
       },
       {
         "item": "pls_motor",
-        "count": 1
+        "count": 9
       }
     ],
     "outputs": [
@@ -12680,23 +12680,23 @@
     "inputs": [
       {
         "item": "fus_machine_hull",
-        "count": 1
+        "count": 9
       },
       {
         "item": "fus_circuit",
-        "count": 2
+        "count": 18
       },
       {
         "item": "fus_cable",
-        "count": 4
+        "count": 36
       },
       {
         "item": "fus_pump",
-        "count": 2
+        "count": 18
       },
       {
         "item": "fus_motor",
-        "count": 1
+        "count": 9
       }
     ],
     "outputs": [
@@ -12716,23 +12716,23 @@
     "inputs": [
       {
         "item": "qnt_machine_hull",
-        "count": 1
+        "count": 9
       },
       {
         "item": "qnt_circuit",
-        "count": 2
+        "count": 18
       },
       {
         "item": "qnt_cable",
-        "count": 4
+        "count": 36
       },
       {
         "item": "qnt_pump",
-        "count": 2
+        "count": 18
       },
       {
         "item": "qnt_motor",
-        "count": 1
+        "count": 9
       }
     ],
     "outputs": [
@@ -12752,23 +12752,23 @@
     "inputs": [
       {
         "item": "arc_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "arc_circuit",
-        "count": 2
-      },
-      {
-        "item": "arc_cable",
         "count": 4
       },
       {
+        "item": "arc_circuit",
+        "count": 8
+      },
+      {
+        "item": "arc_cable",
+        "count": 16
+      },
+      {
         "item": "arc_pump",
-        "count": 2
+        "count": 8
       },
       {
         "item": "arc_motor",
-        "count": 1
+        "count": 4
       }
     ],
     "outputs": [
@@ -12788,23 +12788,23 @@
     "inputs": [
       {
         "item": "pls_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "pls_circuit",
-        "count": 2
-      },
-      {
-        "item": "pls_cable",
         "count": 4
       },
       {
+        "item": "pls_circuit",
+        "count": 8
+      },
+      {
+        "item": "pls_cable",
+        "count": 16
+      },
+      {
         "item": "pls_pump",
-        "count": 2
+        "count": 8
       },
       {
         "item": "pls_motor",
-        "count": 1
+        "count": 4
       }
     ],
     "outputs": [
@@ -12824,23 +12824,23 @@
     "inputs": [
       {
         "item": "fus_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "fus_circuit",
-        "count": 2
-      },
-      {
-        "item": "fus_cable",
         "count": 4
       },
       {
+        "item": "fus_circuit",
+        "count": 8
+      },
+      {
+        "item": "fus_cable",
+        "count": 16
+      },
+      {
         "item": "fus_pump",
-        "count": 2
+        "count": 8
       },
       {
         "item": "fus_motor",
-        "count": 1
+        "count": 4
       }
     ],
     "outputs": [
@@ -12860,23 +12860,23 @@
     "inputs": [
       {
         "item": "qnt_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "qnt_circuit",
-        "count": 2
-      },
-      {
-        "item": "qnt_cable",
         "count": 4
       },
       {
+        "item": "qnt_circuit",
+        "count": 8
+      },
+      {
+        "item": "qnt_cable",
+        "count": 16
+      },
+      {
         "item": "qnt_pump",
-        "count": 2
+        "count": 8
       },
       {
         "item": "qnt_motor",
-        "count": 1
+        "count": 4
       }
     ],
     "outputs": [
@@ -12896,23 +12896,23 @@
     "inputs": [
       {
         "item": "pls_machine_hull",
-        "count": 1
+        "count": 9
       },
       {
         "item": "pls_circuit",
-        "count": 2
+        "count": 18
       },
       {
         "item": "pls_cable",
-        "count": 4
+        "count": 36
       },
       {
         "item": "pls_pump",
-        "count": 3
+        "count": 27
       },
       {
         "item": "pls_motor",
-        "count": 2
+        "count": 18
       }
     ],
     "outputs": [
@@ -12932,23 +12932,23 @@
     "inputs": [
       {
         "item": "fus_machine_hull",
-        "count": 1
+        "count": 9
       },
       {
         "item": "fus_circuit",
-        "count": 2
+        "count": 18
       },
       {
         "item": "fus_cable",
-        "count": 4
+        "count": 36
       },
       {
         "item": "fus_pump",
-        "count": 3
+        "count": 27
       },
       {
         "item": "fus_motor",
-        "count": 2
+        "count": 18
       }
     ],
     "outputs": [
@@ -12968,23 +12968,23 @@
     "inputs": [
       {
         "item": "qnt_machine_hull",
-        "count": 1
+        "count": 9
       },
       {
         "item": "qnt_circuit",
-        "count": 2
+        "count": 18
       },
       {
         "item": "qnt_cable",
-        "count": 4
+        "count": 36
       },
       {
         "item": "qnt_pump",
-        "count": 3
+        "count": 27
       },
       {
         "item": "qnt_motor",
-        "count": 2
+        "count": 18
       }
     ],
     "outputs": [
@@ -13004,19 +13004,19 @@
     "inputs": [
       {
         "item": "arc_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "arc_circuit",
-        "count": 2
-      },
-      {
-        "item": "arc_cable",
         "count": 4
       },
       {
+        "item": "arc_circuit",
+        "count": 8
+      },
+      {
+        "item": "arc_cable",
+        "count": 16
+      },
+      {
         "item": "arc_pump",
-        "count": 2
+        "count": 8
       }
     ],
     "outputs": [
@@ -13036,19 +13036,19 @@
     "inputs": [
       {
         "item": "pls_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "pls_circuit",
-        "count": 2
-      },
-      {
-        "item": "pls_cable",
         "count": 4
       },
       {
+        "item": "pls_circuit",
+        "count": 8
+      },
+      {
+        "item": "pls_cable",
+        "count": 16
+      },
+      {
         "item": "pls_pump",
-        "count": 2
+        "count": 8
       }
     ],
     "outputs": [
@@ -13068,19 +13068,19 @@
     "inputs": [
       {
         "item": "fus_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "fus_circuit",
-        "count": 2
-      },
-      {
-        "item": "fus_cable",
         "count": 4
       },
       {
+        "item": "fus_circuit",
+        "count": 8
+      },
+      {
+        "item": "fus_cable",
+        "count": 16
+      },
+      {
         "item": "fus_pump",
-        "count": 2
+        "count": 8
       }
     ],
     "outputs": [
@@ -13100,19 +13100,19 @@
     "inputs": [
       {
         "item": "qnt_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "qnt_circuit",
-        "count": 2
-      },
-      {
-        "item": "qnt_cable",
         "count": 4
       },
       {
+        "item": "qnt_circuit",
+        "count": 8
+      },
+      {
+        "item": "qnt_cable",
+        "count": 16
+      },
+      {
         "item": "qnt_pump",
-        "count": 2
+        "count": 8
       }
     ],
     "outputs": [
@@ -13132,19 +13132,19 @@
     "inputs": [
       {
         "item": "arc_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "arc_circuit",
-        "count": 2
-      },
-      {
-        "item": "arc_cable",
         "count": 4
       },
       {
+        "item": "arc_circuit",
+        "count": 8
+      },
+      {
+        "item": "arc_cable",
+        "count": 16
+      },
+      {
         "item": "arc_pump",
-        "count": 2
+        "count": 8
       }
     ],
     "outputs": [
@@ -13164,19 +13164,19 @@
     "inputs": [
       {
         "item": "pls_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "pls_circuit",
-        "count": 2
-      },
-      {
-        "item": "pls_cable",
         "count": 4
       },
       {
+        "item": "pls_circuit",
+        "count": 8
+      },
+      {
+        "item": "pls_cable",
+        "count": 16
+      },
+      {
         "item": "pls_pump",
-        "count": 2
+        "count": 8
       }
     ],
     "outputs": [
@@ -13196,19 +13196,19 @@
     "inputs": [
       {
         "item": "fus_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "fus_circuit",
-        "count": 2
-      },
-      {
-        "item": "fus_cable",
         "count": 4
       },
       {
+        "item": "fus_circuit",
+        "count": 8
+      },
+      {
+        "item": "fus_cable",
+        "count": 16
+      },
+      {
         "item": "fus_pump",
-        "count": 2
+        "count": 8
       }
     ],
     "outputs": [
@@ -13228,23 +13228,23 @@
     "inputs": [
       {
         "item": "pls_machine_hull",
-        "count": 1
+        "count": 9
       },
       {
         "item": "pls_circuit",
-        "count": 2
+        "count": 18
       },
       {
         "item": "pls_cable",
-        "count": 4
+        "count": 36
       },
       {
         "item": "pls_pump",
-        "count": 2
+        "count": 18
       },
       {
         "item": "pls_motor",
-        "count": 1
+        "count": 9
       }
     ],
     "outputs": [
@@ -13264,23 +13264,23 @@
     "inputs": [
       {
         "item": "fus_machine_hull",
-        "count": 1
+        "count": 9
       },
       {
         "item": "fus_circuit",
-        "count": 2
+        "count": 18
       },
       {
         "item": "fus_cable",
-        "count": 4
+        "count": 36
       },
       {
         "item": "fus_pump",
-        "count": 2
+        "count": 18
       },
       {
         "item": "fus_motor",
-        "count": 1
+        "count": 9
       }
     ],
     "outputs": [
@@ -13300,23 +13300,23 @@
     "inputs": [
       {
         "item": "qnt_machine_hull",
-        "count": 1
+        "count": 9
       },
       {
         "item": "qnt_circuit",
-        "count": 2
+        "count": 18
       },
       {
         "item": "qnt_cable",
-        "count": 4
+        "count": 36
       },
       {
         "item": "qnt_pump",
-        "count": 2
+        "count": 18
       },
       {
         "item": "qnt_motor",
-        "count": 1
+        "count": 9
       }
     ],
     "outputs": [
@@ -13336,15 +13336,15 @@
     "inputs": [
       {
         "item": "stm_machine_hull",
-        "count": 1
+        "count": 9
       },
       {
         "item": "stm_cable",
-        "count": 4
+        "count": 36
       },
       {
         "item": "stm_pump",
-        "count": 1
+        "count": 9
       }
     ],
     "outputs": [
@@ -13364,19 +13364,19 @@
     "inputs": [
       {
         "item": "vlt_machine_hull",
-        "count": 1
+        "count": 9
       },
       {
         "item": "vlt_circuit",
-        "count": 2
+        "count": 18
       },
       {
         "item": "vlt_cable",
-        "count": 4
+        "count": 36
       },
       {
         "item": "vlt_pump",
-        "count": 1
+        "count": 9
       }
     ],
     "outputs": [
@@ -13396,19 +13396,19 @@
     "inputs": [
       {
         "item": "arc_machine_hull",
-        "count": 1
+        "count": 9
       },
       {
         "item": "arc_circuit",
-        "count": 2
+        "count": 18
       },
       {
         "item": "arc_cable",
-        "count": 4
+        "count": 36
       },
       {
         "item": "arc_pump",
-        "count": 1
+        "count": 9
       }
     ],
     "outputs": [
@@ -13428,19 +13428,19 @@
     "inputs": [
       {
         "item": "pls_machine_hull",
-        "count": 1
+        "count": 9
       },
       {
         "item": "pls_circuit",
-        "count": 2
+        "count": 18
       },
       {
         "item": "pls_cable",
-        "count": 4
+        "count": 36
       },
       {
         "item": "pls_pump",
-        "count": 1
+        "count": 9
       }
     ],
     "outputs": [
@@ -13460,19 +13460,19 @@
     "inputs": [
       {
         "item": "stm_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "stm_cable",
         "count": 4
       },
       {
+        "item": "stm_cable",
+        "count": 16
+      },
+      {
         "item": "stm_pump",
-        "count": 2
+        "count": 8
       },
       {
         "item": "stm_motor",
-        "count": 2
+        "count": 8
       }
     ],
     "outputs": [
@@ -13492,23 +13492,23 @@
     "inputs": [
       {
         "item": "vlt_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "vlt_circuit",
-        "count": 2
-      },
-      {
-        "item": "vlt_cable",
         "count": 4
       },
       {
+        "item": "vlt_circuit",
+        "count": 8
+      },
+      {
+        "item": "vlt_cable",
+        "count": 16
+      },
+      {
         "item": "vlt_pump",
-        "count": 2
+        "count": 8
       },
       {
         "item": "vlt_motor",
-        "count": 2
+        "count": 8
       }
     ],
     "outputs": [
@@ -13528,23 +13528,23 @@
     "inputs": [
       {
         "item": "arc_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "arc_circuit",
-        "count": 2
-      },
-      {
-        "item": "arc_cable",
         "count": 4
       },
       {
+        "item": "arc_circuit",
+        "count": 8
+      },
+      {
+        "item": "arc_cable",
+        "count": 16
+      },
+      {
         "item": "arc_pump",
-        "count": 2
+        "count": 8
       },
       {
         "item": "arc_motor",
-        "count": 2
+        "count": 8
       }
     ],
     "outputs": [
@@ -13564,23 +13564,23 @@
     "inputs": [
       {
         "item": "pls_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "pls_circuit",
-        "count": 2
-      },
-      {
-        "item": "pls_cable",
         "count": 4
       },
       {
+        "item": "pls_circuit",
+        "count": 8
+      },
+      {
+        "item": "pls_cable",
+        "count": 16
+      },
+      {
         "item": "pls_pump",
-        "count": 2
+        "count": 8
       },
       {
         "item": "pls_motor",
-        "count": 2
+        "count": 8
       }
     ],
     "outputs": [
@@ -13600,23 +13600,23 @@
     "inputs": [
       {
         "item": "fus_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "fus_circuit",
-        "count": 2
-      },
-      {
-        "item": "fus_cable",
         "count": 4
       },
       {
+        "item": "fus_circuit",
+        "count": 8
+      },
+      {
+        "item": "fus_cable",
+        "count": 16
+      },
+      {
         "item": "fus_pump",
-        "count": 2
+        "count": 8
       },
       {
         "item": "fus_motor",
-        "count": 2
+        "count": 8
       }
     ],
     "outputs": [
@@ -13636,23 +13636,23 @@
     "inputs": [
       {
         "item": "qnt_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "qnt_circuit",
-        "count": 2
-      },
-      {
-        "item": "qnt_cable",
         "count": 4
       },
       {
+        "item": "qnt_circuit",
+        "count": 8
+      },
+      {
+        "item": "qnt_cable",
+        "count": 16
+      },
+      {
         "item": "qnt_pump",
-        "count": 2
+        "count": 8
       },
       {
         "item": "qnt_motor",
-        "count": 2
+        "count": 8
       }
     ],
     "outputs": [
@@ -13672,23 +13672,23 @@
     "inputs": [
       {
         "item": "sng_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "sng_circuit",
-        "count": 2
-      },
-      {
-        "item": "sng_cable",
         "count": 4
       },
       {
+        "item": "sng_circuit",
+        "count": 8
+      },
+      {
+        "item": "sng_cable",
+        "count": 16
+      },
+      {
         "item": "sng_pump",
-        "count": 2
+        "count": 8
       },
       {
         "item": "sng_motor",
-        "count": 2
+        "count": 8
       }
     ],
     "outputs": [
@@ -15056,19 +15056,19 @@
     "inputs": [
       {
         "item": "vlt_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "vlt_circuit",
-        "count": 2
-      },
-      {
-        "item": "vlt_cable",
         "count": 4
       },
       {
+        "item": "vlt_circuit",
+        "count": 8
+      },
+      {
+        "item": "vlt_cable",
+        "count": 16
+      },
+      {
         "item": "vlt_pump",
-        "count": 1
+        "count": 4
       }
     ],
     "outputs": [
@@ -15088,19 +15088,19 @@
     "inputs": [
       {
         "item": "arc_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "arc_circuit",
-        "count": 2
-      },
-      {
-        "item": "arc_cable",
         "count": 4
       },
       {
+        "item": "arc_circuit",
+        "count": 8
+      },
+      {
+        "item": "arc_cable",
+        "count": 16
+      },
+      {
         "item": "arc_pump",
-        "count": 1
+        "count": 4
       }
     ],
     "outputs": [
@@ -15120,19 +15120,19 @@
     "inputs": [
       {
         "item": "pls_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "pls_circuit",
-        "count": 2
-      },
-      {
-        "item": "pls_cable",
         "count": 4
       },
       {
+        "item": "pls_circuit",
+        "count": 8
+      },
+      {
+        "item": "pls_cable",
+        "count": 16
+      },
+      {
         "item": "pls_pump",
-        "count": 1
+        "count": 4
       }
     ],
     "outputs": [
@@ -15152,19 +15152,19 @@
     "inputs": [
       {
         "item": "fus_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "fus_circuit",
-        "count": 2
-      },
-      {
-        "item": "fus_cable",
         "count": 4
       },
       {
+        "item": "fus_circuit",
+        "count": 8
+      },
+      {
+        "item": "fus_cable",
+        "count": 16
+      },
+      {
         "item": "fus_pump",
-        "count": 1
+        "count": 4
       }
     ],
     "outputs": [
@@ -15184,19 +15184,19 @@
     "inputs": [
       {
         "item": "qnt_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "qnt_circuit",
-        "count": 2
-      },
-      {
-        "item": "qnt_cable",
         "count": 4
       },
       {
+        "item": "qnt_circuit",
+        "count": 8
+      },
+      {
+        "item": "qnt_cable",
+        "count": 16
+      },
+      {
         "item": "qnt_pump",
-        "count": 1
+        "count": 4
       }
     ],
     "outputs": [
@@ -15216,19 +15216,19 @@
     "inputs": [
       {
         "item": "stm_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "stm_cable",
         "count": 4
       },
       {
+        "item": "stm_cable",
+        "count": 16
+      },
+      {
         "item": "stm_pump",
-        "count": 2
+        "count": 8
       },
       {
         "item": "stm_motor",
-        "count": 1
+        "count": 4
       }
     ],
     "outputs": [
@@ -15248,23 +15248,23 @@
     "inputs": [
       {
         "item": "vlt_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "vlt_circuit",
-        "count": 2
-      },
-      {
-        "item": "vlt_cable",
         "count": 4
       },
       {
+        "item": "vlt_circuit",
+        "count": 8
+      },
+      {
+        "item": "vlt_cable",
+        "count": 16
+      },
+      {
         "item": "vlt_pump",
-        "count": 2
+        "count": 8
       },
       {
         "item": "vlt_motor",
-        "count": 1
+        "count": 4
       }
     ],
     "outputs": [
@@ -15284,23 +15284,23 @@
     "inputs": [
       {
         "item": "arc_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "arc_circuit",
-        "count": 2
-      },
-      {
-        "item": "arc_cable",
         "count": 4
       },
       {
+        "item": "arc_circuit",
+        "count": 8
+      },
+      {
+        "item": "arc_cable",
+        "count": 16
+      },
+      {
         "item": "arc_pump",
-        "count": 2
+        "count": 8
       },
       {
         "item": "arc_motor",
-        "count": 1
+        "count": 4
       }
     ],
     "outputs": [
@@ -15320,23 +15320,23 @@
     "inputs": [
       {
         "item": "pls_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "pls_circuit",
-        "count": 2
-      },
-      {
-        "item": "pls_cable",
         "count": 4
       },
       {
+        "item": "pls_circuit",
+        "count": 8
+      },
+      {
+        "item": "pls_cable",
+        "count": 16
+      },
+      {
         "item": "pls_pump",
-        "count": 2
+        "count": 8
       },
       {
         "item": "pls_motor",
-        "count": 1
+        "count": 4
       }
     ],
     "outputs": [
@@ -15356,23 +15356,23 @@
     "inputs": [
       {
         "item": "fus_machine_hull",
-        "count": 1
-      },
-      {
-        "item": "fus_circuit",
-        "count": 2
-      },
-      {
-        "item": "fus_cable",
         "count": 4
       },
       {
+        "item": "fus_circuit",
+        "count": 8
+      },
+      {
+        "item": "fus_cable",
+        "count": 16
+      },
+      {
         "item": "fus_pump",
-        "count": 2
+        "count": 8
       },
       {
         "item": "fus_motor",
-        "count": 1
+        "count": 4
       }
     ],
     "outputs": [

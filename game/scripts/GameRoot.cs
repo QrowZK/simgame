@@ -18,6 +18,7 @@ public sealed partial class GameRoot : Node3D
     private MachineRenderer _renderer = null!;
     private CameraRig _rig = null!;
     private Label _hud = null!;
+    private MachinePanel _panel = null!;
     private double _accumulator;
     private int _screenshotCountdown = -1;
 
@@ -34,6 +35,7 @@ public sealed partial class GameRoot : Node3D
 
         AddChild(BuildLighting());
         _hud = BuildHud();
+        _panel = BuildPanel();
 
         // Frame the factory.
         var side = Mathf.CeilToInt(Mathf.Sqrt(machineCount));
@@ -47,7 +49,9 @@ public sealed partial class GameRoot : Node3D
             CallDeferred(nameof(RunSmokeTest));
 
         if (AllArgs().Contains("--screenshot"))
+        {
             _screenshotCountdown = 12;      // let a few frames draw first
+        }
     }
 
     public override void _Process(double delta)
@@ -67,6 +71,12 @@ public sealed partial class GameRoot : Node3D
 
         _renderer.Sync(_world);
 
+        // Open the inspection panel just before the capture, so a screenshot
+        // shows the GUI rather than only proving the world draws. It has to
+        // happen after some ticks: nothing is Working before the first one.
+        if (_screenshotCountdown == 2)
+            ShowAnyRunningMachine();
+
         if (_screenshotCountdown > 0 && --_screenshotCountdown == 0)
         {
             var image = GetViewport().GetTexture().GetImage();
@@ -79,7 +89,7 @@ public sealed partial class GameRoot : Node3D
         if (_hud is not null)
             _hud.Text = $"machines {_world.MachineCount}   tick {_world.TickCount}   " +
                         $"batches {_renderer.BatchCount}   fps {Engine.GetFramesPerSecond():0}\n" +
-                        "WASD pan   Q/E rotate   wheel zoom";
+                        "WASD pan   Q/E rotate   wheel zoom   click a machine to inspect";
     }
 
     /// Headless verification: tick the sim, refill the instance buffers, and
@@ -141,6 +151,31 @@ public sealed partial class GameRoot : Node3D
         _rig.Apply();
         _renderer.Sync(_world);
         GD.Print($"after yaw+137   tick={_world.TickCount} (unchanged: {before == _world.TickCount})");
+        // Picking, without a mouse: every tile of the largest machine must
+        // resolve to that one machine, and the panel must accept it.
+        var pickOk = true;
+        var largest = 0;
+        var largestIndex = -1;
+        for (var i = 0; i < _world.Placements.Length; i++)
+            if (_world.Placements[i].Size > largest)
+            {
+                largest = _world.Placements[i].Size;
+                largestIndex = i;
+            }
+
+        if (largestIndex >= 0)
+        {
+            var placement = _world.PlacementOf(largestIndex);
+            for (var dy = 0; dy < placement.Size; dy++)
+                for (var dx = 0; dx < placement.Size; dx++)
+                    if (!_world.TryMachineAt(placement.X + dx, placement.Y + dy, out _, out var hit)
+                        || hit != largestIndex)
+                        pickOk = false;
+        }
+
+        GD.Print($"picking         largest={largest}x{largest} " +
+                 $"all tiles resolve to one machine: {pickOk}");
+        GD.Print($"panel           showing={_panel.IsShowing}");
         GD.Print("=== SMOKE OK ===");
 
         GetTree().Quit();
@@ -174,6 +209,59 @@ public sealed partial class GameRoot : Node3D
         holder.AddChild(environment);
 
         return holder;
+    }
+
+    /// Click-to-inspect. Resolves the click to a ground tile and asks the sim
+    /// which machine covers it -- the occupancy grid answers in O(1), and a 3x3
+    /// answers the same machine from any of its nine tiles.
+    public override void _UnhandledInput(InputEvent @event)
+    {
+        if (@event is InputEventKey { Pressed: true, Keycode: Key.Escape })
+        {
+            _panel.Close();
+            return;
+        }
+
+        if (@event is not InputEventMouseButton
+            { Pressed: true, ButtonIndex: MouseButton.Left } click)
+            return;
+
+        if (!_rig.TryGroundPoint(click.Position, out var point))
+            return;
+
+        var tileX = Mathf.FloorToInt(point.X / _renderer.TileSize);
+        var tileY = Mathf.FloorToInt(point.Z / _renderer.TileSize);
+
+        if (_world.TryMachineAt(tileX, tileY, out var machine, out var index))
+            _panel.Show(machine, _world.PlacementOf(index));
+        else
+            _panel.Close();
+    }
+
+    /// Opens the panel on a running machine, falling back to any machine at
+    /// all. Used by the screenshot path to exercise the panel's live layout.
+    private void ShowAnyRunningMachine()
+    {
+        for (var i = 0; i < _world.MachineCount; i++)
+            if (_world.Machines[i].State == MachineState.Working)
+            {
+                _panel.Show(_world.Machines[i], _world.PlacementOf(i));
+                return;
+            }
+
+        if (_world.MachineCount > 0)
+            _panel.Show(_world.Machines[0], _world.PlacementOf(0));
+    }
+
+    private MachinePanel BuildPanel()
+    {
+        var layer = new CanvasLayer { Name = "Ui" };
+        var panel = GD.Load<PackedScene>("res://scenes/machine_panel.tscn")
+                      .Instantiate<MachinePanel>();
+        layer.AddChild(panel);
+        AddChild(layer);
+        panel.Bind(_world.Items, _world.PlayerInventory);
+        return panel;
     }
 
     private Label BuildHud()
