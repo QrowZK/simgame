@@ -1,258 +1,4432 @@
 {
   "_comment": "Compact source spec for the progression. tools/generate_data.py expands this into data/{tiers,items,machines,recipes,techs}.json. Edit THIS file, never the generated output.",
-
   "tiers": [
-    { "id": "MAN", "index": 0, "name": "Manual",   "power": 0,     "metal": null,            "insulator": null,     "wire_metal": null,         "magnet_metal": null,        "electronics": false },
-    { "id": "STM", "index": 1, "name": "Steam",    "power": 8,     "metal": "bronze",        "insulator": null,     "wire_metal": "copper",     "magnet_metal": "iron",      "electronics": false },
-    { "id": "VLT", "index": 2, "name": "Voltaic",  "power": 32,    "metal": "steel",         "insulator": "rubber", "wire_metal": "copper",     "magnet_metal": "steel",     "electronics": true  },
-    { "id": "ARC", "index": 3, "name": "Arc",      "power": 128,   "metal": "aluminum",      "insulator": "plastic","wire_metal": "gold",       "magnet_metal": "steel",     "electronics": true  },
-    { "id": "PLS", "index": 4, "name": "Plasma",   "power": 512,   "metal": "titanium",      "insulator": "plastic","wire_metal": "platinum",   "magnet_metal": "steel",     "electronics": true  },
-    { "id": "FUS", "index": 5, "name": "Fusion",   "power": 2048,  "metal": "tungsten_steel","insulator": "silicone","wire_metal": "platinum",  "magnet_metal": "neodymium", "electronics": true  },
-    { "id": "QNT", "index": 6, "name": "Quantum",  "power": 8192,  "metal": "iridium",       "insulator": "ptfe",   "wire_metal": "iridium",    "magnet_metal": "neodymium", "electronics": true  },
-    { "id": "SNG", "index": 7, "name": "Singular", "power": 32768, "metal": "collapsium",    "insulator": "ptfe",   "wire_metal": "collapsium", "magnet_metal": "neodymium", "electronics": true  }
+    {
+      "id": "MAN",
+      "index": 0,
+      "name": "Manual",
+      "power": 0,
+      "metal": null,
+      "insulator": null,
+      "wire_metal": null,
+      "magnet_metal": null,
+      "electronics": false
+    },
+    {
+      "id": "STM",
+      "index": 1,
+      "name": "Steam",
+      "power": 8,
+      "metal": "bronze",
+      "insulator": null,
+      "wire_metal": "copper",
+      "magnet_metal": "iron",
+      "electronics": false
+    },
+    {
+      "id": "VLT",
+      "index": 2,
+      "name": "Voltaic",
+      "power": 32,
+      "metal": "steel",
+      "insulator": "bakelite",
+      "wire_metal": "copper",
+      "magnet_metal": "steel",
+      "electronics": true
+    },
+    {
+      "id": "ARC",
+      "index": 3,
+      "name": "Arc",
+      "power": 128,
+      "metal": "aluminum",
+      "insulator": "pvc",
+      "wire_metal": "gold",
+      "magnet_metal": "steel",
+      "electronics": true
+    },
+    {
+      "id": "PLS",
+      "index": 4,
+      "name": "Plasma",
+      "power": 512,
+      "metal": "titanium",
+      "insulator": "polyethylene",
+      "wire_metal": "platinum",
+      "magnet_metal": "steel",
+      "electronics": true
+    },
+    {
+      "id": "FUS",
+      "index": 5,
+      "name": "Fusion",
+      "power": 2048,
+      "metal": "tungsten_steel",
+      "insulator": "ptfe",
+      "wire_metal": "platinum",
+      "magnet_metal": "neodymium",
+      "electronics": true
+    },
+    {
+      "id": "QNT",
+      "index": 6,
+      "name": "Quantum",
+      "power": 8192,
+      "metal": "iridium",
+      "insulator": "peek",
+      "wire_metal": "iridium",
+      "magnet_metal": "neodymium",
+      "electronics": true
+    },
+    {
+      "id": "SNG",
+      "index": 7,
+      "name": "Singular",
+      "power": 32768,
+      "metal": "collapsium",
+      "insulator": "peek",
+      "wire_metal": "collapsium",
+      "magnet_metal": "neodymium",
+      "electronics": true
+    }
   ],
-
   "_forms_comment": "Form ladder. Each material declares which forms it has; the generator emits the shaping recipe for each.",
-
   "materials": [
-    { "id": "copper", "name": "Copper", "tier": "MAN", "smelt_ticks": 128, "forms": ["dust","ingot","plate","rod","wire","fine_wire"],
-      "ore": { "id": "chalcopyrite", "name": "Chalcopyrite", "byproducts": ["gold","sulfur","silver"] } },
-    { "id": "tin", "name": "Tin", "tier": "MAN", "smelt_ticks": 128, "forms": ["dust","ingot","plate","rod","wire"],
-      "ore": { "id": "cassiterite", "name": "Cassiterite", "byproducts": ["iron"] } },
-    { "id": "iron", "name": "Iron", "tier": "MAN", "smelt_ticks": 192, "forms": ["dust","ingot","plate","rod","wire","gear"],
-      "ore": { "id": "magnetite", "name": "Magnetite", "byproducts": ["nickel","manganese"] } },
-    { "id": "coal", "name": "Coal", "tier": "MAN", "direct_smelt": false, "forms": ["dust"],
-      "ore": { "id": "coal_deposit", "name": "Coal Deposit", "byproducts": ["sulfur"] } },
-    { "id": "stone", "name": "Stone", "tier": "MAN", "direct_smelt": false, "forms": ["dust"],
-      "ore": { "id": "stone_deposit", "name": "Stone Deposit", "byproducts": [] } },
-    { "id": "limestone", "name": "Limestone", "tier": "MAN", "direct_smelt": false, "forms": ["dust"],
-      "ore": { "id": "limestone_deposit", "name": "Limestone Deposit", "byproducts": [] } },
-    { "id": "quartz", "name": "Quartz", "tier": "MAN", "direct_smelt": false, "forms": ["dust"],
-      "ore": { "id": "quartz_deposit", "name": "Quartz Deposit", "byproducts": [] } },
-
-    { "id": "bronze", "name": "Bronze", "tier": "STM", "smelt_ticks": 160, "forms": ["dust","ingot","plate","rod","gear"],
-      "alloy": { "ticks": 240, "inputs": [ { "item": "copper_ingot", "count": 3 }, { "item": "tin_ingot", "count": 1 } ], "count": 4 } },
-    { "id": "lead", "name": "Lead", "tier": "STM", "smelt_ticks": 128, "forms": ["dust","ingot","plate"],
-      "ore": { "id": "galena", "name": "Galena", "byproducts": ["silver","sulfur"] } },
-    { "id": "silver", "name": "Silver", "tier": "STM", "smelt_ticks": 160, "forms": ["dust","ingot","plate","wire","fine_wire"] },
-    { "id": "zinc", "name": "Zinc", "tier": "STM", "smelt_ticks": 128, "forms": ["dust","ingot","plate"],
-      "ore": { "id": "sphalerite", "name": "Sphalerite", "byproducts": ["gallium","sulfur"] } },
-    { "id": "brass", "name": "Brass", "tier": "STM", "smelt_ticks": 160, "forms": ["dust","ingot","plate","rod"],
-      "alloy": { "ticks": 240, "inputs": [ { "item": "copper_ingot", "count": 3 }, { "item": "zinc_ingot", "count": 1 } ], "count": 4 } },
-
-    { "id": "steel", "name": "Steel", "tier": "VLT", "smelt_ticks": 256, "forms": ["dust","ingot","plate","rod","wire","gear","foil"],
-      "alloy": { "ticks": 400, "inputs": [ { "item": "iron_ingot", "count": 4 }, { "item": "coal_dust", "count": 1 } ], "count": 4 } },
-    { "id": "nickel", "name": "Nickel", "tier": "VLT", "smelt_ticks": 192, "forms": ["dust","ingot","plate"],
-      "ore": { "id": "garnierite", "name": "Garnierite", "byproducts": ["cobalt","iron"] } },
-    { "id": "cobalt", "name": "Cobalt", "tier": "VLT", "smelt_ticks": 192, "forms": ["dust","ingot"] },
-    { "id": "gold", "name": "Gold", "tier": "VLT", "smelt_ticks": 192, "forms": ["dust","ingot","plate","wire","fine_wire","foil"],
-      "ore": { "id": "native_gold", "name": "Native Gold", "byproducts": ["copper","silver"] } },
-    { "id": "sulfur", "name": "Sulfur", "tier": "VLT", "direct_smelt": false, "forms": ["dust"],
-      "ore": { "id": "sulfur_deposit", "name": "Sulfur Deposit", "byproducts": [] } },
-    { "id": "salt", "name": "Salt", "tier": "VLT", "direct_smelt": false, "forms": ["dust"],
-      "ore": { "id": "halite", "name": "Halite", "byproducts": [] } },
-    { "id": "gallium", "name": "Gallium", "tier": "VLT", "smelt_ticks": 192, "forms": ["dust","ingot"] },
-    { "id": "silicon", "name": "Silicon", "tier": "VLT", "direct_smelt": false, "forms": ["dust","ingot","plate"] },
-    { "id": "rubber", "name": "Rubber", "tier": "VLT", "direct_smelt": false, "forms": ["ingot","plate"] },
-    { "id": "magnesium", "name": "Magnesium", "tier": "VLT", "smelt_ticks": 160, "forms": ["dust","ingot"],
-      "ore": { "id": "dolomite", "name": "Dolomite", "byproducts": ["limestone"] } },
-
-    { "id": "aluminum", "name": "Aluminum", "tier": "ARC", "direct_smelt": false, "forms": ["dust","ingot","plate","rod","wire","foil"],
-      "ore": { "id": "bauxite", "name": "Bauxite", "byproducts": ["titanium","gallium"] } },
-    { "id": "chromium", "name": "Chromium", "tier": "ARC", "smelt_ticks": 320, "forms": ["dust","ingot","plate"],
-      "ore": { "id": "chromite", "name": "Chromite", "byproducts": ["iron","magnesium"] } },
-    { "id": "manganese", "name": "Manganese", "tier": "ARC", "smelt_ticks": 256, "forms": ["dust","ingot"],
-      "ore": { "id": "pyrolusite", "name": "Pyrolusite", "byproducts": ["chromium"] } },
-    { "id": "stainless_steel", "name": "Stainless Steel", "tier": "ARC", "smelt_ticks": 400, "forms": ["dust","ingot","plate","rod","gear","foil"],
-      "alloy": { "ticks": 600, "inputs": [ { "item": "steel_ingot", "count": 6 }, { "item": "chromium_ingot", "count": 1 }, { "item": "nickel_ingot", "count": 1 }, { "item": "manganese_ingot", "count": 1 } ], "count": 9 } },
-    { "id": "plastic", "name": "Plastic", "tier": "ARC", "direct_smelt": false, "forms": ["ingot","plate"] },
-    { "id": "fluorite", "name": "Fluorite", "tier": "ARC", "direct_smelt": false, "forms": ["dust"],
-      "ore": { "id": "fluorite_deposit", "name": "Fluorite Deposit", "byproducts": [] } },
-
-    { "id": "titanium", "name": "Titanium", "tier": "PLS", "direct_smelt": false, "forms": ["dust","ingot","plate","rod","gear","foil"],
-      "ore": { "id": "ilmenite", "name": "Ilmenite", "byproducts": ["iron","manganese"] } },
-    { "id": "platinum", "name": "Platinum", "tier": "PLS", "smelt_ticks": 480, "forms": ["dust","ingot","plate","wire","fine_wire"],
-      "ore": { "id": "sperrylite", "name": "Sperrylite", "byproducts": ["palladium","iridium","osmium"] } },
-    { "id": "palladium", "name": "Palladium", "tier": "PLS", "smelt_ticks": 480, "forms": ["dust","ingot","plate"] },
-    { "id": "lithium", "name": "Lithium", "tier": "PLS", "smelt_ticks": 256, "forms": ["dust","ingot"],
-      "ore": { "id": "spodumene", "name": "Spodumene", "byproducts": ["aluminum"] } },
-    { "id": "silicone", "name": "Silicone", "tier": "PLS", "direct_smelt": false, "forms": ["ingot","plate"] },
-
-    { "id": "tungsten", "name": "Tungsten", "tier": "FUS", "smelt_ticks": 640, "forms": ["dust","ingot","plate","rod","wire"],
-      "ore": { "id": "scheelite", "name": "Scheelite", "byproducts": ["manganese","limestone"] } },
-    { "id": "tungsten_steel", "name": "Tungsten Steel", "tier": "FUS", "smelt_ticks": 800, "forms": ["dust","ingot","plate","rod","gear","foil"],
-      "alloy": { "ticks": 900, "inputs": [ { "item": "tungsten_ingot", "count": 1 }, { "item": "steel_ingot", "count": 1 } ], "count": 2 } },
-    { "id": "neodymium", "name": "Neodymium", "tier": "FUS", "smelt_ticks": 560, "forms": ["dust","ingot","rod"],
-      "ore": { "id": "monazite", "name": "Monazite", "byproducts": ["cerium","lithium"] } },
-    { "id": "cerium", "name": "Cerium", "tier": "FUS", "smelt_ticks": 560, "forms": ["dust","ingot"] },
-    { "id": "niobium", "name": "Niobium", "tier": "FUS", "smelt_ticks": 640, "forms": ["dust","ingot","plate"],
-      "ore": { "id": "pyrochlore", "name": "Pyrochlore", "byproducts": ["titanium"] } },
-    { "id": "ptfe", "name": "PTFE", "tier": "FUS", "direct_smelt": false, "forms": ["ingot","plate"] },
-
-    { "id": "iridium", "name": "Iridium", "tier": "QNT", "smelt_ticks": 960, "forms": ["dust","ingot","plate","rod","wire","fine_wire","foil"] },
-    { "id": "osmium", "name": "Osmium", "tier": "QNT", "smelt_ticks": 960, "forms": ["dust","ingot","plate","wire"] },
-    { "id": "xenite", "name": "Xenite", "tier": "QNT", "direct_smelt": false, "forms": ["dust","ingot","plate","rod"],
-      "ore": { "id": "xenite_deposit", "name": "Xenite Deposit", "byproducts": ["iridium","osmium"] } },
-
-    { "id": "collapsium", "name": "Collapsium", "tier": "SNG", "direct_smelt": false, "forms": ["dust","ingot","plate","rod","wire","fine_wire"] }
+    {
+      "id": "copper",
+      "name": "Copper",
+      "tier": "MAN",
+      "smelt_ticks": 128,
+      "forms": [
+        "dust",
+        "ingot",
+        "plate",
+        "rod",
+        "wire",
+        "fine_wire"
+      ],
+      "ore": {
+        "id": "chalcopyrite",
+        "name": "Chalcopyrite",
+        "byproducts": [
+          "gold",
+          "sulfur",
+          "silver"
+        ]
+      }
+    },
+    {
+      "id": "tin",
+      "name": "Tin",
+      "tier": "MAN",
+      "smelt_ticks": 128,
+      "forms": [
+        "dust",
+        "ingot",
+        "plate",
+        "rod",
+        "wire"
+      ],
+      "ore": {
+        "id": "cassiterite",
+        "name": "Cassiterite",
+        "byproducts": [
+          "iron"
+        ]
+      }
+    },
+    {
+      "id": "iron",
+      "name": "Iron",
+      "tier": "MAN",
+      "smelt_ticks": 192,
+      "forms": [
+        "dust",
+        "ingot",
+        "plate",
+        "rod",
+        "wire",
+        "gear"
+      ],
+      "ore": {
+        "id": "magnetite",
+        "name": "Magnetite",
+        "byproducts": [
+          "nickel",
+          "manganese"
+        ]
+      }
+    },
+    {
+      "id": "coal",
+      "name": "Coal",
+      "tier": "MAN",
+      "direct_smelt": false,
+      "forms": [
+        "dust"
+      ],
+      "ore": {
+        "id": "coal_deposit",
+        "name": "Coal Deposit",
+        "byproducts": [
+          "sulfur"
+        ]
+      }
+    },
+    {
+      "id": "stone",
+      "name": "Stone",
+      "tier": "MAN",
+      "direct_smelt": false,
+      "forms": [
+        "dust"
+      ],
+      "ore": {
+        "id": "stone_deposit",
+        "name": "Stone Deposit",
+        "byproducts": []
+      }
+    },
+    {
+      "id": "limestone",
+      "name": "Limestone",
+      "tier": "MAN",
+      "direct_smelt": false,
+      "forms": [
+        "dust"
+      ],
+      "ore": {
+        "id": "limestone_deposit",
+        "name": "Limestone Deposit",
+        "byproducts": []
+      }
+    },
+    {
+      "id": "quartz",
+      "name": "Quartz",
+      "tier": "MAN",
+      "direct_smelt": false,
+      "forms": [
+        "dust"
+      ],
+      "ore": {
+        "id": "quartz_deposit",
+        "name": "Quartz Deposit",
+        "byproducts": []
+      }
+    },
+    {
+      "id": "bronze",
+      "name": "Bronze",
+      "tier": "STM",
+      "smelt_ticks": 160,
+      "forms": [
+        "dust",
+        "ingot",
+        "plate",
+        "rod",
+        "gear"
+      ],
+      "alloy": {
+        "ticks": 240,
+        "inputs": [
+          {
+            "item": "copper_ingot",
+            "count": 3
+          },
+          {
+            "item": "tin_ingot",
+            "count": 1
+          }
+        ],
+        "count": 4
+      }
+    },
+    {
+      "id": "lead",
+      "name": "Lead",
+      "tier": "STM",
+      "smelt_ticks": 128,
+      "forms": [
+        "dust",
+        "ingot",
+        "plate"
+      ],
+      "ore": {
+        "id": "galena",
+        "name": "Galena",
+        "byproducts": [
+          "silver",
+          "sulfur"
+        ]
+      }
+    },
+    {
+      "id": "silver",
+      "name": "Silver",
+      "tier": "STM",
+      "smelt_ticks": 160,
+      "forms": [
+        "dust",
+        "ingot",
+        "plate",
+        "wire",
+        "fine_wire"
+      ]
+    },
+    {
+      "id": "zinc",
+      "name": "Zinc",
+      "tier": "STM",
+      "smelt_ticks": 128,
+      "forms": [
+        "dust",
+        "ingot",
+        "plate"
+      ],
+      "ore": {
+        "id": "sphalerite",
+        "name": "Sphalerite",
+        "byproducts": [
+          "gallium",
+          "sulfur"
+        ]
+      }
+    },
+    {
+      "id": "brass",
+      "name": "Brass",
+      "tier": "STM",
+      "smelt_ticks": 160,
+      "forms": [
+        "dust",
+        "ingot",
+        "plate",
+        "rod"
+      ],
+      "alloy": {
+        "ticks": 240,
+        "inputs": [
+          {
+            "item": "copper_ingot",
+            "count": 3
+          },
+          {
+            "item": "zinc_ingot",
+            "count": 1
+          }
+        ],
+        "count": 4
+      }
+    },
+    {
+      "id": "steel",
+      "name": "Steel",
+      "tier": "VLT",
+      "smelt_ticks": 256,
+      "forms": [
+        "dust",
+        "ingot",
+        "plate",
+        "rod",
+        "wire",
+        "gear",
+        "foil"
+      ],
+      "alloy": {
+        "ticks": 400,
+        "inputs": [
+          {
+            "item": "iron_ingot",
+            "count": 4
+          },
+          {
+            "item": "coal_dust",
+            "count": 1
+          }
+        ],
+        "count": 4
+      }
+    },
+    {
+      "id": "nickel",
+      "name": "Nickel",
+      "tier": "VLT",
+      "smelt_ticks": 192,
+      "forms": [
+        "dust",
+        "ingot",
+        "plate"
+      ],
+      "ore": {
+        "id": "garnierite",
+        "name": "Garnierite",
+        "byproducts": [
+          "cobalt",
+          "iron"
+        ]
+      }
+    },
+    {
+      "id": "cobalt",
+      "name": "Cobalt",
+      "tier": "VLT",
+      "smelt_ticks": 192,
+      "forms": [
+        "dust",
+        "ingot"
+      ]
+    },
+    {
+      "id": "gold",
+      "name": "Gold",
+      "tier": "VLT",
+      "smelt_ticks": 192,
+      "forms": [
+        "dust",
+        "ingot",
+        "plate",
+        "wire",
+        "fine_wire",
+        "foil"
+      ],
+      "ore": {
+        "id": "native_gold",
+        "name": "Native Gold",
+        "byproducts": [
+          "copper",
+          "silver"
+        ]
+      }
+    },
+    {
+      "id": "sulfur",
+      "name": "Sulfur",
+      "tier": "VLT",
+      "direct_smelt": false,
+      "forms": [
+        "dust"
+      ],
+      "ore": {
+        "id": "sulfur_deposit",
+        "name": "Sulfur Deposit",
+        "byproducts": []
+      }
+    },
+    {
+      "id": "salt",
+      "name": "Salt",
+      "tier": "VLT",
+      "direct_smelt": false,
+      "forms": [
+        "dust"
+      ],
+      "ore": {
+        "id": "halite",
+        "name": "Halite",
+        "byproducts": []
+      }
+    },
+    {
+      "id": "gallium",
+      "name": "Gallium",
+      "tier": "VLT",
+      "smelt_ticks": 192,
+      "forms": [
+        "dust",
+        "ingot"
+      ]
+    },
+    {
+      "id": "silicon",
+      "name": "Silicon",
+      "tier": "VLT",
+      "direct_smelt": false,
+      "forms": [
+        "dust",
+        "ingot",
+        "plate"
+      ]
+    },
+    {
+      "id": "magnesium",
+      "name": "Magnesium",
+      "tier": "VLT",
+      "smelt_ticks": 160,
+      "forms": [
+        "dust",
+        "ingot"
+      ],
+      "ore": {
+        "id": "dolomite",
+        "name": "Dolomite",
+        "byproducts": [
+          "limestone"
+        ]
+      }
+    },
+    {
+      "id": "aluminum",
+      "name": "Aluminum",
+      "tier": "ARC",
+      "direct_smelt": false,
+      "forms": [
+        "dust",
+        "ingot",
+        "plate",
+        "rod",
+        "wire",
+        "foil"
+      ],
+      "ore": {
+        "id": "bauxite",
+        "name": "Bauxite",
+        "byproducts": [
+          "titanium",
+          "gallium"
+        ]
+      }
+    },
+    {
+      "id": "chromium",
+      "name": "Chromium",
+      "tier": "ARC",
+      "smelt_ticks": 320,
+      "forms": [
+        "dust",
+        "ingot",
+        "plate"
+      ],
+      "ore": {
+        "id": "chromite",
+        "name": "Chromite",
+        "byproducts": [
+          "iron",
+          "magnesium"
+        ]
+      }
+    },
+    {
+      "id": "manganese",
+      "name": "Manganese",
+      "tier": "ARC",
+      "smelt_ticks": 256,
+      "forms": [
+        "dust",
+        "ingot"
+      ],
+      "ore": {
+        "id": "pyrolusite",
+        "name": "Pyrolusite",
+        "byproducts": [
+          "chromium"
+        ]
+      }
+    },
+    {
+      "id": "stainless_steel",
+      "name": "Stainless Steel",
+      "tier": "ARC",
+      "smelt_ticks": 400,
+      "forms": [
+        "dust",
+        "ingot",
+        "plate",
+        "rod",
+        "gear",
+        "foil"
+      ],
+      "alloy": {
+        "ticks": 600,
+        "inputs": [
+          {
+            "item": "steel_ingot",
+            "count": 6
+          },
+          {
+            "item": "chromium_ingot",
+            "count": 1
+          },
+          {
+            "item": "nickel_ingot",
+            "count": 1
+          },
+          {
+            "item": "manganese_ingot",
+            "count": 1
+          }
+        ],
+        "count": 9
+      }
+    },
+    {
+      "id": "fluorite",
+      "name": "Fluorite",
+      "tier": "ARC",
+      "direct_smelt": false,
+      "forms": [
+        "dust"
+      ],
+      "ore": {
+        "id": "fluorite_deposit",
+        "name": "Fluorite Deposit",
+        "byproducts": []
+      }
+    },
+    {
+      "id": "titanium",
+      "name": "Titanium",
+      "tier": "PLS",
+      "direct_smelt": false,
+      "forms": [
+        "dust",
+        "ingot",
+        "plate",
+        "rod",
+        "gear",
+        "foil"
+      ],
+      "ore": {
+        "id": "ilmenite",
+        "name": "Ilmenite",
+        "byproducts": [
+          "iron",
+          "manganese"
+        ]
+      }
+    },
+    {
+      "id": "platinum",
+      "name": "Platinum",
+      "tier": "PLS",
+      "smelt_ticks": 480,
+      "forms": [
+        "dust",
+        "ingot",
+        "plate",
+        "wire",
+        "fine_wire"
+      ],
+      "ore": {
+        "id": "sperrylite",
+        "name": "Sperrylite",
+        "byproducts": [
+          "palladium",
+          "iridium",
+          "osmium"
+        ]
+      }
+    },
+    {
+      "id": "palladium",
+      "name": "Palladium",
+      "tier": "PLS",
+      "smelt_ticks": 480,
+      "forms": [
+        "dust",
+        "ingot",
+        "plate"
+      ]
+    },
+    {
+      "id": "lithium",
+      "name": "Lithium",
+      "tier": "PLS",
+      "smelt_ticks": 256,
+      "forms": [
+        "dust",
+        "ingot"
+      ],
+      "ore": {
+        "id": "spodumene",
+        "name": "Spodumene",
+        "byproducts": [
+          "aluminum"
+        ]
+      }
+    },
+    {
+      "id": "tungsten",
+      "name": "Tungsten",
+      "tier": "FUS",
+      "smelt_ticks": 640,
+      "forms": [
+        "dust",
+        "ingot",
+        "plate",
+        "rod",
+        "wire"
+      ],
+      "ore": {
+        "id": "scheelite",
+        "name": "Scheelite",
+        "byproducts": [
+          "manganese",
+          "limestone"
+        ]
+      }
+    },
+    {
+      "id": "tungsten_steel",
+      "name": "Tungsten Steel",
+      "tier": "FUS",
+      "smelt_ticks": 800,
+      "forms": [
+        "dust",
+        "ingot",
+        "plate",
+        "rod",
+        "gear",
+        "foil"
+      ],
+      "alloy": {
+        "ticks": 900,
+        "inputs": [
+          {
+            "item": "tungsten_ingot",
+            "count": 1
+          },
+          {
+            "item": "steel_ingot",
+            "count": 1
+          }
+        ],
+        "count": 2
+      }
+    },
+    {
+      "id": "neodymium",
+      "name": "Neodymium",
+      "tier": "FUS",
+      "smelt_ticks": 560,
+      "forms": [
+        "dust",
+        "ingot",
+        "rod"
+      ],
+      "ore": {
+        "id": "monazite",
+        "name": "Monazite",
+        "byproducts": [
+          "cerium",
+          "lithium"
+        ]
+      }
+    },
+    {
+      "id": "cerium",
+      "name": "Cerium",
+      "tier": "FUS",
+      "smelt_ticks": 560,
+      "forms": [
+        "dust",
+        "ingot"
+      ]
+    },
+    {
+      "id": "niobium",
+      "name": "Niobium",
+      "tier": "FUS",
+      "smelt_ticks": 640,
+      "forms": [
+        "dust",
+        "ingot",
+        "plate"
+      ],
+      "ore": {
+        "id": "pyrochlore",
+        "name": "Pyrochlore",
+        "byproducts": [
+          "titanium"
+        ]
+      }
+    },
+    {
+      "id": "iridium",
+      "name": "Iridium",
+      "tier": "QNT",
+      "smelt_ticks": 960,
+      "forms": [
+        "dust",
+        "ingot",
+        "plate",
+        "rod",
+        "wire",
+        "fine_wire",
+        "foil"
+      ]
+    },
+    {
+      "id": "osmium",
+      "name": "Osmium",
+      "tier": "QNT",
+      "smelt_ticks": 960,
+      "forms": [
+        "dust",
+        "ingot",
+        "plate",
+        "wire"
+      ]
+    },
+    {
+      "id": "xenite",
+      "name": "Xenite",
+      "tier": "QNT",
+      "direct_smelt": false,
+      "forms": [
+        "dust",
+        "ingot",
+        "plate",
+        "rod"
+      ],
+      "ore": {
+        "id": "xenite_deposit",
+        "name": "Xenite Deposit",
+        "byproducts": [
+          "iridium",
+          "osmium"
+        ]
+      }
+    },
+    {
+      "id": "collapsium",
+      "name": "Collapsium",
+      "tier": "SNG",
+      "direct_smelt": false,
+      "forms": [
+        "dust",
+        "ingot",
+        "plate",
+        "rod",
+        "wire",
+        "fine_wire"
+      ]
+    },
+    {
+      "id": "bakelite",
+      "name": "Bakelite",
+      "tier": "VLT",
+      "direct_smelt": false,
+      "polymer": true,
+      "forms": [
+        "ingot",
+        "plate"
+      ],
+      "form_labels": {
+        "ingot": "Resin",
+        "plate": "Board"
+      }
+    },
+    {
+      "id": "pvc",
+      "name": "PVC",
+      "tier": "VLT",
+      "direct_smelt": false,
+      "polymer": true,
+      "forms": [
+        "ingot",
+        "plate"
+      ],
+      "form_labels": {
+        "ingot": "Pellets",
+        "plate": "Sheet"
+      }
+    },
+    {
+      "id": "polyethylene",
+      "name": "Polyethylene",
+      "tier": "ARC",
+      "direct_smelt": false,
+      "polymer": true,
+      "forms": [
+        "ingot",
+        "plate"
+      ],
+      "form_labels": {
+        "ingot": "Pellets",
+        "plate": "Sheet"
+      }
+    },
+    {
+      "id": "polypropylene",
+      "name": "Polypropylene",
+      "tier": "ARC",
+      "direct_smelt": false,
+      "polymer": true,
+      "forms": [
+        "ingot",
+        "plate"
+      ],
+      "form_labels": {
+        "ingot": "Pellets",
+        "plate": "Sheet"
+      }
+    },
+    {
+      "id": "polystyrene",
+      "name": "Polystyrene",
+      "tier": "ARC",
+      "direct_smelt": false,
+      "polymer": true,
+      "forms": [
+        "ingot",
+        "plate"
+      ],
+      "form_labels": {
+        "ingot": "Pellets",
+        "plate": "Sheet"
+      }
+    },
+    {
+      "id": "sbr_rubber",
+      "name": "SBR Rubber",
+      "tier": "ARC",
+      "direct_smelt": false,
+      "polymer": true,
+      "forms": [
+        "ingot",
+        "plate"
+      ],
+      "form_labels": {
+        "ingot": "Bale",
+        "plate": "Sheet"
+      }
+    },
+    {
+      "id": "pet",
+      "name": "PET",
+      "tier": "PLS",
+      "direct_smelt": false,
+      "polymer": true,
+      "forms": [
+        "ingot",
+        "plate"
+      ],
+      "form_labels": {
+        "ingot": "Pellets",
+        "plate": "Sheet"
+      }
+    },
+    {
+      "id": "abs",
+      "name": "ABS",
+      "tier": "PLS",
+      "direct_smelt": false,
+      "polymer": true,
+      "forms": [
+        "ingot",
+        "plate"
+      ],
+      "form_labels": {
+        "ingot": "Pellets",
+        "plate": "Sheet"
+      }
+    },
+    {
+      "id": "nylon",
+      "name": "Nylon 6,6",
+      "tier": "PLS",
+      "direct_smelt": false,
+      "polymer": true,
+      "forms": [
+        "ingot",
+        "plate"
+      ],
+      "form_labels": {
+        "ingot": "Pellets",
+        "plate": "Fibre Mat"
+      }
+    },
+    {
+      "id": "polycarbonate",
+      "name": "Polycarbonate",
+      "tier": "PLS",
+      "direct_smelt": false,
+      "polymer": true,
+      "forms": [
+        "ingot",
+        "plate"
+      ],
+      "form_labels": {
+        "ingot": "Pellets",
+        "plate": "Sheet"
+      }
+    },
+    {
+      "id": "ptfe",
+      "name": "PTFE",
+      "tier": "PLS",
+      "direct_smelt": false,
+      "polymer": true,
+      "forms": [
+        "ingot",
+        "plate"
+      ],
+      "form_labels": {
+        "ingot": "Pellets",
+        "plate": "Sheet"
+      }
+    },
+    {
+      "id": "epoxy",
+      "name": "Epoxy",
+      "tier": "FUS",
+      "direct_smelt": false,
+      "polymer": true,
+      "forms": [
+        "ingot",
+        "plate"
+      ],
+      "form_labels": {
+        "ingot": "Resin",
+        "plate": "Laminate"
+      }
+    },
+    {
+      "id": "polyurethane",
+      "name": "Polyurethane",
+      "tier": "FUS",
+      "direct_smelt": false,
+      "polymer": true,
+      "forms": [
+        "ingot",
+        "plate"
+      ],
+      "form_labels": {
+        "ingot": "Prepolymer",
+        "plate": "Foam Panel"
+      }
+    },
+    {
+      "id": "silicone",
+      "name": "Silicone",
+      "tier": "FUS",
+      "direct_smelt": false,
+      "polymer": true,
+      "forms": [
+        "ingot",
+        "plate"
+      ],
+      "form_labels": {
+        "ingot": "Gum",
+        "plate": "Sheet"
+      }
+    },
+    {
+      "id": "aramid",
+      "name": "Aramid",
+      "tier": "QNT",
+      "direct_smelt": false,
+      "polymer": true,
+      "forms": [
+        "ingot",
+        "plate"
+      ],
+      "form_labels": {
+        "ingot": "Staple",
+        "plate": "Weave"
+      }
+    },
+    {
+      "id": "peek",
+      "name": "PEEK",
+      "tier": "QNT",
+      "direct_smelt": false,
+      "polymer": true,
+      "forms": [
+        "ingot",
+        "plate"
+      ],
+      "form_labels": {
+        "ingot": "Pellets",
+        "plate": "Sheet"
+      }
+    }
   ],
-
   "fluids": [
-    { "id": "water", "name": "Water", "tier": "MAN", "raw": true },
-    { "id": "crude_oil", "name": "Crude Oil", "tier": "STM", "raw": true },
-    { "id": "steam", "name": "Steam", "tier": "STM" },
-    { "id": "oxygen", "name": "Oxygen", "tier": "VLT" },
-    { "id": "hydrogen", "name": "Hydrogen", "tier": "VLT" },
-    { "id": "chlorine", "name": "Chlorine", "tier": "VLT" },
-    { "id": "sodium_hydroxide", "name": "Sodium Hydroxide", "tier": "VLT" },
-    { "id": "sulfuric_acid", "name": "Sulfuric Acid", "tier": "VLT" },
-    { "id": "naphtha", "name": "Naphtha", "tier": "ARC" },
-    { "id": "lubricant", "name": "Lubricant", "tier": "ARC" },
-    { "id": "fuel_oil", "name": "Fuel Oil", "tier": "ARC" },
-    { "id": "titanium_tetrachloride", "name": "Titanium Tetrachloride", "tier": "PLS" },
-    { "id": "magnesium_chloride", "name": "Magnesium Chloride", "tier": "PLS" },
-    { "id": "fluorine", "name": "Fluorine", "tier": "FUS" },
-    { "id": "deuterium", "name": "Deuterium", "tier": "FUS" },
-    { "id": "tritium", "name": "Tritium", "tier": "FUS" },
-    { "id": "helium3", "name": "Helium-3", "tier": "FUS" }
+    {
+      "id": "water",
+      "name": "Water",
+      "tier": "MAN",
+      "raw": true
+    },
+    {
+      "id": "air",
+      "name": "Air",
+      "tier": "MAN",
+      "raw": true
+    },
+    {
+      "id": "crude_oil",
+      "name": "Crude Oil",
+      "tier": "STM",
+      "raw": true,
+      "petrochem": true
+    },
+    {
+      "id": "steam",
+      "name": "Steam",
+      "tier": "STM"
+    },
+    {
+      "id": "syngas",
+      "name": "Synthesis Gas",
+      "tier": "STM",
+      "petrochem": true
+    },
+    {
+      "id": "coal_tar",
+      "name": "Coal Tar",
+      "tier": "STM",
+      "petrochem": true
+    },
+    {
+      "id": "methanol",
+      "name": "Methanol",
+      "tier": "STM",
+      "petrochem": true
+    },
+    {
+      "id": "formaldehyde",
+      "name": "Formaldehyde",
+      "tier": "STM",
+      "petrochem": true
+    },
+    {
+      "id": "phenol",
+      "name": "Phenol",
+      "tier": "STM",
+      "petrochem": true
+    },
+    {
+      "id": "oxygen",
+      "name": "Oxygen",
+      "tier": "VLT"
+    },
+    {
+      "id": "hydrogen",
+      "name": "Hydrogen",
+      "tier": "VLT"
+    },
+    {
+      "id": "nitrogen",
+      "name": "Nitrogen",
+      "tier": "VLT"
+    },
+    {
+      "id": "chlorine",
+      "name": "Chlorine",
+      "tier": "VLT"
+    },
+    {
+      "id": "carbon_monoxide",
+      "name": "Carbon Monoxide",
+      "tier": "VLT",
+      "petrochem": true
+    },
+    {
+      "id": "sodium_hydroxide",
+      "name": "Sodium Hydroxide",
+      "tier": "VLT"
+    },
+    {
+      "id": "sulfuric_acid",
+      "name": "Sulfuric Acid",
+      "tier": "VLT"
+    },
+    {
+      "id": "ammonia",
+      "name": "Ammonia",
+      "tier": "ARC"
+    },
+    {
+      "id": "refinery_gas",
+      "name": "Refinery Gas",
+      "tier": "VLT",
+      "petrochem": true
+    },
+    {
+      "id": "naphtha",
+      "name": "Naphtha",
+      "tier": "VLT",
+      "petrochem": true
+    },
+    {
+      "id": "kerosene",
+      "name": "Kerosene",
+      "tier": "VLT",
+      "petrochem": true
+    },
+    {
+      "id": "diesel",
+      "name": "Diesel",
+      "tier": "VLT",
+      "petrochem": true
+    },
+    {
+      "id": "atmospheric_residue",
+      "name": "Atmospheric Residue",
+      "tier": "VLT",
+      "petrochem": true
+    },
+    {
+      "id": "methane",
+      "name": "Methane",
+      "tier": "VLT",
+      "petrochem": true
+    },
+    {
+      "id": "ethane",
+      "name": "Ethane",
+      "tier": "VLT",
+      "petrochem": true
+    },
+    {
+      "id": "vacuum_gas_oil",
+      "name": "Vacuum Gas Oil",
+      "tier": "ARC",
+      "petrochem": true
+    },
+    {
+      "id": "vacuum_residue",
+      "name": "Vacuum Residue",
+      "tier": "ARC",
+      "petrochem": true
+    },
+    {
+      "id": "hydrogen_sulfide",
+      "name": "Hydrogen Sulfide",
+      "tier": "ARC",
+      "petrochem": true
+    },
+    {
+      "id": "treated_naphtha",
+      "name": "Treated Naphtha",
+      "tier": "ARC",
+      "petrochem": true
+    },
+    {
+      "id": "fcc_slurry",
+      "name": "FCC Slurry Oil",
+      "tier": "PLS",
+      "petrochem": true
+    },
+    {
+      "id": "butylene",
+      "name": "Butylene",
+      "tier": "PLS",
+      "petrochem": true
+    },
+    {
+      "id": "ethylene",
+      "name": "Ethylene",
+      "tier": "VLT",
+      "petrochem": true
+    },
+    {
+      "id": "propylene",
+      "name": "Propylene",
+      "tier": "ARC",
+      "petrochem": true
+    },
+    {
+      "id": "butadiene",
+      "name": "Butadiene",
+      "tier": "ARC",
+      "petrochem": true
+    },
+    {
+      "id": "pyrolysis_gasoline",
+      "name": "Pyrolysis Gasoline",
+      "tier": "ARC",
+      "petrochem": true
+    },
+    {
+      "id": "benzene",
+      "name": "Benzene",
+      "tier": "ARC",
+      "petrochem": true
+    },
+    {
+      "id": "toluene",
+      "name": "Toluene",
+      "tier": "ARC",
+      "petrochem": true
+    },
+    {
+      "id": "xylene",
+      "name": "Xylene",
+      "tier": "ARC",
+      "petrochem": true
+    },
+    {
+      "id": "ethylene_dichloride",
+      "name": "Ethylene Dichloride",
+      "tier": "VLT",
+      "petrochem": true
+    },
+    {
+      "id": "vinyl_chloride",
+      "name": "Vinyl Chloride",
+      "tier": "VLT",
+      "petrochem": true
+    },
+    {
+      "id": "ethylbenzene",
+      "name": "Ethylbenzene",
+      "tier": "ARC",
+      "petrochem": true
+    },
+    {
+      "id": "styrene",
+      "name": "Styrene",
+      "tier": "ARC",
+      "petrochem": true
+    },
+    {
+      "id": "cumene",
+      "name": "Cumene",
+      "tier": "ARC",
+      "petrochem": true
+    },
+    {
+      "id": "ethylene_oxide",
+      "name": "Ethylene Oxide",
+      "tier": "PLS",
+      "petrochem": true
+    },
+    {
+      "id": "ethylene_glycol",
+      "name": "Ethylene Glycol",
+      "tier": "PLS",
+      "petrochem": true
+    },
+    {
+      "id": "acrylonitrile",
+      "name": "Acrylonitrile",
+      "tier": "PLS",
+      "petrochem": true
+    },
+    {
+      "id": "cyclohexane",
+      "name": "Cyclohexane",
+      "tier": "PLS",
+      "petrochem": true
+    },
+    {
+      "id": "phosgene",
+      "name": "Phosgene",
+      "tier": "PLS",
+      "petrochem": true
+    },
+    {
+      "id": "hydrogen_fluoride",
+      "name": "Hydrogen Fluoride",
+      "tier": "PLS"
+    },
+    {
+      "id": "chloroform",
+      "name": "Chloroform",
+      "tier": "PLS",
+      "petrochem": true
+    },
+    {
+      "id": "chlorodifluoromethane",
+      "name": "Chlorodifluoromethane",
+      "tier": "PLS",
+      "petrochem": true
+    },
+    {
+      "id": "tetrafluoroethylene",
+      "name": "Tetrafluoroethylene",
+      "tier": "PLS",
+      "petrochem": true
+    },
+    {
+      "id": "methyl_chloride",
+      "name": "Methyl Chloride",
+      "tier": "FUS",
+      "petrochem": true
+    },
+    {
+      "id": "dimethyldichlorosilane",
+      "name": "Dimethyldichlorosilane",
+      "tier": "FUS",
+      "petrochem": true
+    },
+    {
+      "id": "epichlorohydrin",
+      "name": "Epichlorohydrin",
+      "tier": "FUS",
+      "petrochem": true
+    },
+    {
+      "id": "toluene_diisocyanate",
+      "name": "Toluene Diisocyanate",
+      "tier": "FUS",
+      "petrochem": true
+    },
+    {
+      "id": "polyol",
+      "name": "Polyol",
+      "tier": "FUS",
+      "petrochem": true
+    },
+    {
+      "id": "difluorobenzophenone",
+      "name": "Difluorobenzophenone",
+      "tier": "QNT",
+      "petrochem": true
+    },
+    {
+      "id": "terephthaloyl_chloride",
+      "name": "Terephthaloyl Chloride",
+      "tier": "QNT",
+      "petrochem": true
+    },
+    {
+      "id": "titanium_tetrachloride",
+      "name": "Titanium Tetrachloride",
+      "tier": "PLS"
+    },
+    {
+      "id": "magnesium_chloride",
+      "name": "Magnesium Chloride",
+      "tier": "PLS"
+    },
+    {
+      "id": "fluorine",
+      "name": "Fluorine",
+      "tier": "FUS"
+    },
+    {
+      "id": "deuterium",
+      "name": "Deuterium",
+      "tier": "FUS"
+    },
+    {
+      "id": "tritium",
+      "name": "Tritium",
+      "tier": "FUS"
+    },
+    {
+      "id": "helium3",
+      "name": "Helium-3",
+      "tier": "FUS"
+    }
   ],
-
   "extra_items": [
-    { "id": "alumina", "name": "Alumina", "tier": "ARC", "category": "intermediate" }
+    {
+      "id": "alumina",
+      "name": "Alumina",
+      "tier": "VLT",
+      "category": "intermediate"
+    },
+    {
+      "id": "terephthalic_acid",
+      "name": "Terephthalic Acid",
+      "tier": "PLS",
+      "category": "intermediate"
+    },
+    {
+      "id": "bisphenol_a",
+      "name": "Bisphenol A",
+      "tier": "PLS",
+      "category": "intermediate"
+    },
+    {
+      "id": "adipic_acid",
+      "name": "Adipic Acid",
+      "tier": "PLS",
+      "category": "intermediate"
+    },
+    {
+      "id": "hexamethylenediamine",
+      "name": "Hexamethylenediamine",
+      "tier": "PLS",
+      "category": "intermediate"
+    },
+    {
+      "id": "paraphenylenediamine",
+      "name": "p-Phenylenediamine",
+      "tier": "QNT",
+      "category": "intermediate"
+    },
+    {
+      "id": "hydroquinone",
+      "name": "Hydroquinone",
+      "tier": "QNT",
+      "category": "intermediate"
+    },
+    {
+      "id": "carbon_black",
+      "name": "Carbon Black",
+      "tier": "PLS",
+      "category": "intermediate"
+    },
+    {
+      "id": "petroleum_coke",
+      "name": "Petroleum Coke",
+      "tier": "PLS",
+      "category": "intermediate"
+    },
+    {
+      "id": "graphite",
+      "name": "Synthetic Graphite",
+      "tier": "FUS",
+      "category": "intermediate"
+    }
   ],
-
   "_components_comment": "Emitted for every tier that declares the component. {metal}/{insulator}/{wire_metal}/{magnet_metal} resolve per tier.",
   "components": [
-    { "id": "cable",        "name": "Cable",        "machine": "assembler", "ticks": 80,  "electronics": false,
-      "inputs": [ { "pattern": "{wire_metal}_wire", "count": 2 }, { "pattern": "{insulator}_plate", "count": 1 } ], "count": 2 },
-    { "id": "machine_hull", "name": "Machine Hull", "machine": "assembler", "ticks": 200, "electronics": false,
-      "inputs": [ { "pattern": "{metal}_plate", "count": 8 }, { "component": "cable", "count": 2 } ], "count": 1 },
-    { "id": "motor",        "name": "Motor",        "machine": "assembler", "ticks": 160, "electronics": false,
-      "inputs": [ { "pattern": "{metal}_rod", "count": 2 }, { "pattern": "{metal}_plate", "count": 2 }, { "pattern": "{wire_metal}_wire", "count": 4 }, { "pattern": "{magnet_metal}_rod", "count": 1 } ], "count": 1 },
-    { "id": "piston",       "name": "Piston",       "machine": "assembler", "ticks": 160, "electronics": false,
-      "inputs": [ { "pattern": "{metal}_plate", "count": 3 }, { "pattern": "{metal}_rod", "count": 2 }, { "component": "motor", "count": 1 } ], "count": 1 },
-    { "id": "pump",         "name": "Pump",         "machine": "assembler", "ticks": 160, "electronics": false,
-      "inputs": [ { "pattern": "{metal}_plate", "count": 2 }, { "pattern": "{metal}_rod", "count": 2 }, { "component": "motor", "count": 1 } ], "count": 1 },
-    { "id": "conveyor",     "name": "Conveyor",     "machine": "assembler", "ticks": 160, "electronics": false,
-      "inputs": [ { "pattern": "{metal}_plate", "count": 2 }, { "component": "motor", "count": 1 } ], "count": 1 },
-    { "id": "board",        "name": "Circuit Board","machine": "assembler", "ticks": 120, "electronics": true,
-      "inputs": [ { "pattern": "{insulator}_plate", "count": 2 }, { "pattern": "{metal}_plate", "count": 1 } ], "count": 2 },
-    { "id": "circuit",      "name": "Circuit",      "machine": "assembler", "ticks": 240, "electronics": true,
-      "inputs": [ { "component": "board", "count": 1 }, { "pattern": "{wire_metal}_fine_wire", "count": 4 }, { "item": "silicon_plate", "count": 2 } ], "count": 1 }
+    {
+      "id": "cable",
+      "name": "Cable",
+      "machine": "assembler",
+      "ticks": 80,
+      "electronics": false,
+      "inputs": [
+        {
+          "pattern": "{wire_metal}_wire",
+          "count": 2
+        },
+        {
+          "pattern": "{insulator}_plate",
+          "count": 1
+        }
+      ],
+      "count": 2
+    },
+    {
+      "id": "machine_hull",
+      "name": "Machine Hull",
+      "machine": "assembler",
+      "ticks": 200,
+      "electronics": false,
+      "inputs": [
+        {
+          "pattern": "{metal}_plate",
+          "count": 8
+        },
+        {
+          "component": "cable",
+          "count": 2
+        }
+      ],
+      "count": 1
+    },
+    {
+      "id": "motor",
+      "name": "Motor",
+      "machine": "assembler",
+      "ticks": 160,
+      "electronics": false,
+      "inputs": [
+        {
+          "pattern": "{metal}_rod",
+          "count": 2
+        },
+        {
+          "pattern": "{metal}_plate",
+          "count": 2
+        },
+        {
+          "pattern": "{wire_metal}_wire",
+          "count": 4
+        },
+        {
+          "pattern": "{magnet_metal}_rod",
+          "count": 1
+        }
+      ],
+      "count": 1
+    },
+    {
+      "id": "piston",
+      "name": "Piston",
+      "machine": "assembler",
+      "ticks": 160,
+      "electronics": false,
+      "inputs": [
+        {
+          "pattern": "{metal}_plate",
+          "count": 3
+        },
+        {
+          "pattern": "{metal}_rod",
+          "count": 2
+        },
+        {
+          "component": "motor",
+          "count": 1
+        }
+      ],
+      "count": 1
+    },
+    {
+      "id": "pump",
+      "name": "Pump",
+      "machine": "assembler",
+      "ticks": 160,
+      "electronics": false,
+      "inputs": [
+        {
+          "pattern": "{metal}_plate",
+          "count": 2
+        },
+        {
+          "pattern": "{metal}_rod",
+          "count": 2
+        },
+        {
+          "component": "motor",
+          "count": 1
+        }
+      ],
+      "count": 1
+    },
+    {
+      "id": "conveyor",
+      "name": "Conveyor",
+      "machine": "assembler",
+      "ticks": 160,
+      "electronics": false,
+      "inputs": [
+        {
+          "pattern": "{metal}_plate",
+          "count": 2
+        },
+        {
+          "component": "motor",
+          "count": 1
+        }
+      ],
+      "count": 1
+    },
+    {
+      "id": "board",
+      "name": "Circuit Board",
+      "machine": "assembler",
+      "ticks": 120,
+      "electronics": true,
+      "inputs": [
+        {
+          "pattern": "{insulator}_plate",
+          "count": 2
+        },
+        {
+          "pattern": "{metal}_plate",
+          "count": 1
+        }
+      ],
+      "count": 2
+    },
+    {
+      "id": "circuit",
+      "name": "Circuit",
+      "machine": "assembler",
+      "ticks": 240,
+      "electronics": true,
+      "inputs": [
+        {
+          "component": "board",
+          "count": 1
+        },
+        {
+          "pattern": "{wire_metal}_fine_wire",
+          "count": 4
+        },
+        {
+          "item": "silicon_plate",
+          "count": 2
+        }
+      ],
+      "count": 1
+    }
   ],
-
   "_machines_comment": "A machine category exists at each tier listed. Its craft recipe is hull + (circuits+cables when the tier has electronics) + the parts below.",
   "machines": [
-    { "id": "furnace",          "name": "Furnace",           "tiers": ["MAN","STM","VLT","ARC","PLS","FUS"], "parts": [] },
-    { "id": "manual_crafting",  "name": "Manual Crafting",   "tiers": ["MAN"],                               "parts": [], "starting": true },
-    { "id": "alloy_smelter",    "name": "Alloy Smelter",     "tiers": ["MAN","STM","VLT","ARC","PLS","FUS"], "parts": [] },
-    { "id": "crusher",          "name": "Crusher",           "tiers": ["STM","VLT","ARC","PLS","FUS","QNT"], "parts": [ { "component": "piston", "count": 2 } ] },
-    { "id": "macerator",        "name": "Macerator",         "tiers": ["STM","VLT","ARC","PLS","FUS","QNT"], "parts": [ { "component": "motor", "count": 2 } ] },
-    { "id": "sifter",           "name": "Sifter",            "tiers": ["STM","VLT","ARC"],                   "parts": [ { "component": "motor", "count": 1 } ] },
-    { "id": "bender",           "name": "Bender",            "tiers": ["STM","VLT","ARC","PLS","FUS","QNT"], "parts": [ { "component": "piston", "count": 2 }, { "component": "motor", "count": 1 } ] },
-    { "id": "lathe",            "name": "Lathe",             "tiers": ["STM","VLT","ARC","PLS","FUS","QNT"], "parts": [ { "component": "motor", "count": 2 } ] },
-    { "id": "assembler",        "name": "Assembler",         "tiers": ["STM","VLT","ARC","PLS","FUS","QNT","SNG"], "parts": [ { "component": "conveyor", "count": 2 }, { "component": "piston", "count": 1 } ] },
-    { "id": "boiler",           "name": "Boiler",            "tiers": ["STM"],                               "parts": [ { "component": "pump", "count": 1 } ] },
-    { "id": "miner",            "name": "Miner",             "tiers": ["STM","VLT","ARC","PLS","FUS","QNT","SNG"], "parts": [ { "component": "motor", "count": 2 }, { "component": "conveyor", "count": 2 } ] },
-    { "id": "pump_station",     "name": "Pump Station",      "tiers": ["STM","VLT","ARC","PLS","FUS","QNT"], "parts": [ { "component": "pump", "count": 2 } ] },
-    { "id": "generator",        "name": "Generator",         "tiers": ["STM","VLT","ARC","PLS","FUS","QNT","SNG"], "parts": [ { "component": "motor", "count": 2 } ] },
-    { "id": "washer",           "name": "Ore Washer",        "tiers": ["VLT","ARC","PLS","FUS","QNT"],       "parts": [ { "component": "pump", "count": 1 } ] },
-    { "id": "wire_mill",        "name": "Wire Mill",         "tiers": ["STM","VLT","ARC","PLS","FUS","QNT"], "parts": [ { "component": "motor", "count": 2 } ] },
-    { "id": "mixer",            "name": "Mixer",             "tiers": ["VLT","ARC","PLS","FUS"],             "parts": [ { "component": "motor", "count": 1 } ] },
-    { "id": "chemical_reactor", "name": "Chemical Reactor",  "tiers": ["STM","VLT","ARC","PLS","FUS","QNT","SNG"], "parts": [ { "component": "pump", "count": 1 }, { "component": "motor", "count": 1 } ] },
-    { "id": "electrolyzer",     "name": "Electrolyzer",      "tiers": ["VLT","ARC","PLS","FUS","QNT","SNG"], "parts": [ { "component": "pump", "count": 1 } ] },
-    { "id": "cutter",           "name": "Cutter",            "tiers": ["VLT","ARC","PLS"],                   "parts": [ { "component": "motor", "count": 1 }, { "component": "conveyor", "count": 1 } ] },
-    { "id": "centrifuge",       "name": "Centrifuge",        "tiers": ["ARC","PLS","FUS","QNT","SNG"],       "parts": [ { "component": "motor", "count": 2 } ] },
-    { "id": "distillery",       "name": "Distillery",        "tiers": ["VLT","ARC","PLS","FUS","QNT"],       "parts": [ { "component": "pump", "count": 2 } ] },
-    { "id": "arc_furnace",      "name": "Arc Furnace",       "tiers": ["ARC","PLS","FUS"],                   "parts": [ { "component": "motor", "count": 1 } ] },
-    { "id": "chemical_bath",    "name": "Chemical Bath",     "tiers": ["PLS","FUS","QNT"],                   "parts": [ { "component": "pump", "count": 2 } ] },
-    { "id": "vacuum_freezer",   "name": "Vacuum Freezer",    "tiers": ["PLS","FUS","QNT","SNG"],             "parts": [ { "component": "pump", "count": 2 }, { "component": "motor", "count": 1 } ] },
-    { "id": "fusion_reactor",   "name": "Fusion Reactor",    "tiers": ["FUS","QNT","SNG"],                   "parts": [ { "component": "pump", "count": 4 }, { "component": "motor", "count": 4 } ] },
-    { "id": "replicator",       "name": "Matter Replicator", "tiers": ["SNG"],                               "parts": [ { "component": "pump", "count": 2 }, { "component": "motor", "count": 4 } ] }
+    {
+      "id": "furnace",
+      "name": "Furnace",
+      "tiers": [
+        "MAN",
+        "STM",
+        "VLT",
+        "ARC",
+        "PLS",
+        "FUS"
+      ],
+      "parts": []
+    },
+    {
+      "id": "manual_crafting",
+      "name": "Manual Crafting",
+      "tiers": [
+        "MAN"
+      ],
+      "parts": [],
+      "starting": true
+    },
+    {
+      "id": "alloy_smelter",
+      "name": "Alloy Smelter",
+      "tiers": [
+        "MAN",
+        "STM",
+        "VLT",
+        "ARC",
+        "PLS",
+        "FUS"
+      ],
+      "parts": []
+    },
+    {
+      "id": "crusher",
+      "name": "Crusher",
+      "tiers": [
+        "STM",
+        "VLT",
+        "ARC",
+        "PLS",
+        "FUS",
+        "QNT"
+      ],
+      "parts": [
+        {
+          "component": "piston",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "macerator",
+      "name": "Macerator",
+      "tiers": [
+        "STM",
+        "VLT",
+        "ARC",
+        "PLS",
+        "FUS",
+        "QNT"
+      ],
+      "parts": [
+        {
+          "component": "motor",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "sifter",
+      "name": "Sifter",
+      "tiers": [
+        "STM",
+        "VLT",
+        "ARC"
+      ],
+      "parts": [
+        {
+          "component": "motor",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "bender",
+      "name": "Bender",
+      "tiers": [
+        "STM",
+        "VLT",
+        "ARC",
+        "PLS",
+        "FUS",
+        "QNT"
+      ],
+      "parts": [
+        {
+          "component": "piston",
+          "count": 2
+        },
+        {
+          "component": "motor",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "lathe",
+      "name": "Lathe",
+      "tiers": [
+        "STM",
+        "VLT",
+        "ARC",
+        "PLS",
+        "FUS",
+        "QNT"
+      ],
+      "parts": [
+        {
+          "component": "motor",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "assembler",
+      "name": "Assembler",
+      "tiers": [
+        "STM",
+        "VLT",
+        "ARC",
+        "PLS",
+        "FUS",
+        "QNT",
+        "SNG"
+      ],
+      "parts": [
+        {
+          "component": "conveyor",
+          "count": 2
+        },
+        {
+          "component": "piston",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "boiler",
+      "name": "Boiler",
+      "tiers": [
+        "STM"
+      ],
+      "parts": [
+        {
+          "component": "pump",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "miner",
+      "name": "Miner",
+      "tiers": [
+        "STM",
+        "VLT",
+        "ARC",
+        "PLS",
+        "FUS",
+        "QNT",
+        "SNG"
+      ],
+      "parts": [
+        {
+          "component": "motor",
+          "count": 2
+        },
+        {
+          "component": "conveyor",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "pump_station",
+      "name": "Pump Station",
+      "tiers": [
+        "STM",
+        "VLT",
+        "ARC",
+        "PLS",
+        "FUS",
+        "QNT"
+      ],
+      "parts": [
+        {
+          "component": "pump",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "generator",
+      "name": "Generator",
+      "tiers": [
+        "STM",
+        "VLT",
+        "ARC",
+        "PLS",
+        "FUS",
+        "QNT",
+        "SNG"
+      ],
+      "parts": [
+        {
+          "component": "motor",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "washer",
+      "name": "Ore Washer",
+      "tiers": [
+        "VLT",
+        "ARC",
+        "PLS",
+        "FUS",
+        "QNT"
+      ],
+      "parts": [
+        {
+          "component": "pump",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "wire_mill",
+      "name": "Wire Mill",
+      "tiers": [
+        "STM",
+        "VLT",
+        "ARC",
+        "PLS",
+        "FUS",
+        "QNT"
+      ],
+      "parts": [
+        {
+          "component": "motor",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "mixer",
+      "name": "Mixer",
+      "tiers": [
+        "VLT",
+        "ARC",
+        "PLS",
+        "FUS"
+      ],
+      "parts": [
+        {
+          "component": "motor",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "chemical_reactor",
+      "name": "Chemical Reactor",
+      "tiers": [
+        "STM",
+        "VLT",
+        "ARC",
+        "PLS",
+        "FUS",
+        "QNT",
+        "SNG"
+      ],
+      "parts": [
+        {
+          "component": "pump",
+          "count": 1
+        },
+        {
+          "component": "motor",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "electrolyzer",
+      "name": "Electrolyzer",
+      "tiers": [
+        "VLT",
+        "ARC",
+        "PLS",
+        "FUS",
+        "QNT",
+        "SNG"
+      ],
+      "parts": [
+        {
+          "component": "pump",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "cutter",
+      "name": "Cutter",
+      "tiers": [
+        "VLT",
+        "ARC",
+        "PLS"
+      ],
+      "parts": [
+        {
+          "component": "motor",
+          "count": 1
+        },
+        {
+          "component": "conveyor",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "centrifuge",
+      "name": "Centrifuge",
+      "tiers": [
+        "ARC",
+        "PLS",
+        "FUS",
+        "QNT",
+        "SNG"
+      ],
+      "parts": [
+        {
+          "component": "motor",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "distillery",
+      "name": "Distillery",
+      "tiers": [
+        "STM",
+        "VLT",
+        "ARC",
+        "PLS",
+        "FUS",
+        "QNT"
+      ],
+      "parts": [
+        {
+          "component": "pump",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "arc_furnace",
+      "name": "Arc Furnace",
+      "tiers": [
+        "ARC",
+        "PLS",
+        "FUS"
+      ],
+      "parts": [
+        {
+          "component": "motor",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "chemical_bath",
+      "name": "Chemical Bath",
+      "tiers": [
+        "PLS",
+        "FUS",
+        "QNT"
+      ],
+      "parts": [
+        {
+          "component": "pump",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "vacuum_freezer",
+      "name": "Vacuum Freezer",
+      "tiers": [
+        "PLS",
+        "FUS",
+        "QNT",
+        "SNG"
+      ],
+      "parts": [
+        {
+          "component": "pump",
+          "count": 2
+        },
+        {
+          "component": "motor",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "fusion_reactor",
+      "name": "Fusion Reactor",
+      "tiers": [
+        "FUS",
+        "QNT",
+        "SNG"
+      ],
+      "parts": [
+        {
+          "component": "pump",
+          "count": 4
+        },
+        {
+          "component": "motor",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "id": "replicator",
+      "name": "Matter Replicator",
+      "tiers": [
+        "SNG"
+      ],
+      "parts": [
+        {
+          "component": "pump",
+          "count": 2
+        },
+        {
+          "component": "motor",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "id": "vacuum_distillation",
+      "name": "Vacuum Distillation",
+      "tiers": [
+        "ARC",
+        "PLS",
+        "FUS",
+        "QNT"
+      ],
+      "parts": [
+        {
+          "component": "pump",
+          "count": 3
+        }
+      ]
+    },
+    {
+      "id": "steam_cracker",
+      "name": "Steam Cracker",
+      "tiers": [
+        "VLT",
+        "ARC",
+        "PLS",
+        "FUS",
+        "QNT"
+      ],
+      "parts": [
+        {
+          "component": "pump",
+          "count": 2
+        },
+        {
+          "component": "motor",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "catalytic_reformer",
+      "name": "Catalytic Reformer",
+      "tiers": [
+        "ARC",
+        "PLS",
+        "FUS",
+        "QNT"
+      ],
+      "parts": [
+        {
+          "component": "pump",
+          "count": 2
+        },
+        {
+          "component": "motor",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "fcc_unit",
+      "name": "Catalytic Cracker",
+      "tiers": [
+        "PLS",
+        "FUS",
+        "QNT"
+      ],
+      "parts": [
+        {
+          "component": "pump",
+          "count": 3
+        },
+        {
+          "component": "motor",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "hydrotreater",
+      "name": "Hydrotreater",
+      "tiers": [
+        "ARC",
+        "PLS",
+        "FUS",
+        "QNT"
+      ],
+      "parts": [
+        {
+          "component": "pump",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "claus_unit",
+      "name": "Claus Sulfur Unit",
+      "tiers": [
+        "ARC",
+        "PLS",
+        "FUS"
+      ],
+      "parts": [
+        {
+          "component": "pump",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "coker",
+      "name": "Delayed Coker",
+      "tiers": [
+        "PLS",
+        "FUS",
+        "QNT"
+      ],
+      "parts": [
+        {
+          "component": "pump",
+          "count": 2
+        },
+        {
+          "component": "motor",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "gasifier",
+      "name": "Gasifier",
+      "tiers": [
+        "STM",
+        "VLT",
+        "ARC",
+        "PLS"
+      ],
+      "parts": [
+        {
+          "component": "pump",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "polymerizer",
+      "name": "Polymerization Reactor",
+      "tiers": [
+        "STM",
+        "VLT",
+        "ARC",
+        "PLS",
+        "FUS",
+        "QNT",
+        "SNG"
+      ],
+      "parts": [
+        {
+          "component": "pump",
+          "count": 2
+        },
+        {
+          "component": "motor",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "spinneret",
+      "name": "Fibre Spinneret",
+      "tiers": [
+        "PLS",
+        "FUS",
+        "QNT",
+        "SNG"
+      ],
+      "parts": [
+        {
+          "component": "motor",
+          "count": 2
+        },
+        {
+          "component": "conveyor",
+          "count": 1
+        }
+      ]
+    }
   ],
-
   "_chemistry_comment": "Hand-written recipes that do not fit a generated pattern. These are the real tier gates.",
   "chemistry": [
-    { "id": "boil_water", "machine": "boiler", "tier": "STM", "ticks": 40, "tech": "processing",
-      "inputs": [ { "item": "water", "count": 1 }, { "item": "coal_dust", "count": 1 } ],
-      "outputs": [ { "item": "steam", "count": 8 } ] },
-
-    { "id": "electrolyze_water", "machine": "electrolyzer", "tier": "VLT", "ticks": 200, "tech": "chemistry",
-      "inputs": [ { "item": "water", "count": 2 } ],
-      "outputs": [ { "item": "hydrogen", "count": 2 }, { "item": "oxygen", "count": 1 } ] },
-    { "id": "electrolyze_brine", "machine": "electrolyzer", "tier": "VLT", "ticks": 240, "tech": "chemistry",
-      "inputs": [ { "item": "salt_dust", "count": 2 }, { "item": "water", "count": 1 } ],
-      "outputs": [ { "item": "chlorine", "count": 1 }, { "item": "sodium_hydroxide", "count": 1 }, { "item": "hydrogen", "count": 1 } ] },
-    { "id": "make_sulfuric_acid", "machine": "chemical_reactor", "tier": "VLT", "ticks": 320, "tech": "chemistry",
-      "inputs": [ { "item": "sulfur_dust", "count": 1 }, { "item": "oxygen", "count": 3 }, { "item": "water", "count": 1 } ],
-      "outputs": [ { "item": "sulfuric_acid", "count": 2 } ] },
-    { "id": "reduce_silicon", "machine": "furnace", "tier": "STM", "ticks": 400, "tech": "chemistry",
-      "inputs": [ { "item": "quartz_dust", "count": 2 }, { "item": "coal_dust", "count": 2 } ],
-      "outputs": [ { "item": "silicon_ingot", "count": 1 } ] },
-    { "id": "vulcanize_rubber", "machine": "chemical_reactor", "tier": "STM", "ticks": 280, "tech": "chemistry",
-      "inputs": [ { "item": "crude_oil", "count": 2 }, { "item": "sulfur_dust", "count": 1 } ],
-      "outputs": [ { "item": "rubber_ingot", "count": 3 } ] },
-
-    { "id": "distill_crude_oil", "machine": "distillery", "tier": "VLT", "ticks": 240, "tech": "chemistry",
-      "inputs": [ { "item": "crude_oil", "count": 4 } ],
-      "outputs": [ { "item": "naphtha", "count": 2 }, { "item": "lubricant", "count": 1 }, { "item": "fuel_oil", "count": 1 } ] },
-    { "id": "polymerize_plastic", "machine": "chemical_reactor", "tier": "VLT", "ticks": 320, "tech": "chemistry",
-      "inputs": [ { "item": "naphtha", "count": 2 }, { "item": "oxygen", "count": 1 } ],
-      "outputs": [ { "item": "plastic_ingot", "count": 3 } ] },
-    { "id": "leach_bauxite", "machine": "chemical_reactor", "tier": "VLT", "ticks": 400, "tech": "chemistry",
-      "inputs": [ { "item": "aluminum_dust", "count": 2 }, { "item": "sodium_hydroxide", "count": 1 } ],
-      "outputs": [ { "item": "alumina", "count": 2 } ] },
-    { "id": "electrolyze_alumina", "machine": "electrolyzer", "tier": "VLT", "ticks": 600, "power_multiplier": 4, "tech": "metallurgy",
-      "inputs": [ { "item": "alumina", "count": 2 } ],
-      "outputs": [ { "item": "aluminum_ingot", "count": 2 }, { "item": "oxygen", "count": 3 } ] },
-
-    { "id": "chlorinate_ilmenite", "machine": "chemical_reactor", "tier": "ARC", "ticks": 480, "tech": "chemistry",
-      "inputs": [ { "item": "titanium_dust", "count": 2 }, { "item": "chlorine", "count": 4 }, { "item": "coal_dust", "count": 2 } ],
-      "outputs": [ { "item": "titanium_tetrachloride", "count": 2 } ] },
-    { "id": "kroll_reduce_titanium", "machine": "chemical_reactor", "tier": "ARC", "ticks": 640, "power_multiplier": 2, "tech": "metallurgy",
-      "inputs": [ { "item": "titanium_tetrachloride", "count": 2 }, { "item": "magnesium_ingot", "count": 2 } ],
-      "outputs": [ { "item": "titanium_ingot", "count": 2 }, { "item": "magnesium_chloride", "count": 2 } ] },
-    { "id": "electrolyze_magnesium_chloride", "machine": "electrolyzer", "tier": "ARC", "ticks": 400, "tech": "chemistry",
-      "inputs": [ { "item": "magnesium_chloride", "count": 2 } ],
-      "outputs": [ { "item": "magnesium_ingot", "count": 2 }, { "item": "chlorine", "count": 2 } ] },
-    { "id": "cure_silicone", "machine": "chemical_reactor", "tier": "PLS", "ticks": 400, "tech": "chemistry",
-      "inputs": [ { "item": "silicon_ingot", "count": 1 }, { "item": "naphtha", "count": 2 }, { "item": "chlorine", "count": 1 } ],
-      "outputs": [ { "item": "silicone_ingot", "count": 3 } ] },
-
-    { "id": "electrolyze_fluorite", "machine": "electrolyzer", "tier": "PLS", "ticks": 480, "tech": "chemistry",
-      "inputs": [ { "item": "fluorite_dust", "count": 2 }, { "item": "sulfuric_acid", "count": 1 } ],
-      "outputs": [ { "item": "fluorine", "count": 2 } ] },
-    { "id": "polymerize_ptfe", "machine": "chemical_reactor", "tier": "PLS", "ticks": 560, "tech": "chemistry",
-      "inputs": [ { "item": "naphtha", "count": 2 }, { "item": "fluorine", "count": 4 } ],
-      "outputs": [ { "item": "ptfe_ingot", "count": 3 } ] },
-    { "id": "centrifuge_deuterium", "machine": "centrifuge", "tier": "FUS", "ticks": 800, "power_multiplier": 2, "tech": "chemistry",
-      "inputs": [ { "item": "water", "count": 16 } ],
-      "outputs": [ { "item": "deuterium", "count": 1 } ] },
-    { "id": "breed_tritium", "machine": "fusion_reactor", "tier": "FUS", "ticks": 960, "power_multiplier": 4, "tech": "chemistry",
-      "inputs": [ { "item": "deuterium", "count": 2 }, { "item": "lithium_ingot", "count": 1 } ],
-      "outputs": [ { "item": "tritium", "count": 2 } ] },
-    { "id": "fuse_helium3", "machine": "fusion_reactor", "tier": "FUS", "ticks": 1200, "power_multiplier": 4, "tech": "chemistry",
-      "inputs": [ { "item": "deuterium", "count": 4 } ],
-      "outputs": [ { "item": "helium3", "count": 1 } ] },
-
-    { "id": "refine_xenite", "machine": "chemical_bath", "tier": "QNT", "ticks": 1200, "power_multiplier": 2, "tech": "metallurgy",
-      "inputs": [ { "item": "xenite_dust", "count": 2 }, { "item": "sulfuric_acid", "count": 2 } ],
-      "outputs": [ { "item": "xenite_ingot", "count": 1 }, { "item": "iridium_dust", "count": 1 } ] },
-
-    { "id": "deconstruct_stone", "machine": "replicator", "tier": "SNG", "ticks": 600, "power_multiplier": 2, "tech": "chemistry",
-      "inputs": [ { "item": "stone_deposit", "count": 16 }, { "item": "helium3", "count": 2 } ],
-      "outputs": [ { "item": "iron_dust", "count": 4 }, { "item": "copper_dust", "count": 4 }, { "item": "silicon_dust", "count": 2 }, { "item": "titanium_dust", "count": 1 } ] },
-
-    { "id": "collapse_matter", "machine": "fusion_reactor", "tier": "QNT", "ticks": 2400, "power_multiplier": 8, "tech": "metallurgy",
-      "inputs": [ { "item": "xenite_ingot", "count": 4 }, { "item": "helium3", "count": 8 }, { "item": "tritium", "count": 4 } ],
-      "outputs": [ { "item": "collapsium_ingot", "count": 1 } ] }
+    {
+      "id": "separate_air",
+      "machine": "chemical_reactor",
+      "tier": "STM",
+      "ticks": 200,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "air",
+          "count": 4
+        }
+      ],
+      "outputs": [
+        {
+          "item": "oxygen",
+          "count": 1
+        },
+        {
+          "item": "nitrogen",
+          "count": 3
+        }
+      ]
+    },
+    {
+      "id": "boil_water",
+      "machine": "boiler",
+      "tier": "STM",
+      "ticks": 40,
+      "tech": "processing",
+      "inputs": [
+        {
+          "item": "water",
+          "count": 1
+        },
+        {
+          "item": "coal_dust",
+          "count": 1
+        }
+      ],
+      "outputs": [
+        {
+          "item": "steam",
+          "count": 8
+        }
+      ]
+    },
+    {
+      "id": "electrolyze_water",
+      "machine": "electrolyzer",
+      "tier": "VLT",
+      "ticks": 200,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "water",
+          "count": 2
+        }
+      ],
+      "outputs": [
+        {
+          "item": "hydrogen",
+          "count": 2
+        },
+        {
+          "item": "oxygen",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "electrolyze_brine",
+      "machine": "electrolyzer",
+      "tier": "VLT",
+      "ticks": 240,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "salt_dust",
+          "count": 2
+        },
+        {
+          "item": "water",
+          "count": 1
+        }
+      ],
+      "outputs": [
+        {
+          "item": "chlorine",
+          "count": 1
+        },
+        {
+          "item": "sodium_hydroxide",
+          "count": 1
+        },
+        {
+          "item": "hydrogen",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "make_sulfuric_acid",
+      "machine": "chemical_reactor",
+      "tier": "VLT",
+      "ticks": 320,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "sulfur_dust",
+          "count": 1
+        },
+        {
+          "item": "oxygen",
+          "count": 3
+        },
+        {
+          "item": "water",
+          "count": 1
+        }
+      ],
+      "outputs": [
+        {
+          "item": "sulfuric_acid",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "reduce_silicon",
+      "machine": "arc_furnace",
+      "tier": "STM",
+      "ticks": 400,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "quartz_dust",
+          "count": 2
+        },
+        {
+          "item": "coal_dust",
+          "count": 2
+        }
+      ],
+      "outputs": [
+        {
+          "item": "silicon_ingot",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "haber_ammonia",
+      "machine": "chemical_reactor",
+      "tier": "ARC",
+      "ticks": 400,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "nitrogen",
+          "count": 1
+        },
+        {
+          "item": "hydrogen",
+          "count": 3
+        }
+      ],
+      "outputs": [
+        {
+          "item": "ammonia",
+          "count": 2
+        }
+      ],
+      "power_multiplier": 2
+    },
+    {
+      "id": "gasify_coal",
+      "machine": "gasifier",
+      "tier": "STM",
+      "ticks": 240,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "coal_deposit",
+          "count": 2
+        },
+        {
+          "item": "steam",
+          "count": 2
+        }
+      ],
+      "outputs": [
+        {
+          "item": "syngas",
+          "count": 4
+        },
+        {
+          "item": "coal_tar",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "synthesise_methanol",
+      "machine": "chemical_reactor",
+      "tier": "STM",
+      "ticks": 320,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "syngas",
+          "count": 4
+        }
+      ],
+      "outputs": [
+        {
+          "item": "methanol",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "oxidise_formaldehyde",
+      "machine": "chemical_reactor",
+      "tier": "STM",
+      "ticks": 260,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "methanol",
+          "count": 2
+        },
+        {
+          "item": "oxygen",
+          "count": 1
+        }
+      ],
+      "outputs": [
+        {
+          "item": "formaldehyde",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "extract_phenol",
+      "machine": "distillery",
+      "tier": "STM",
+      "ticks": 300,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "coal_tar",
+          "count": 2
+        }
+      ],
+      "outputs": [
+        {
+          "item": "phenol",
+          "count": 1
+        },
+        {
+          "item": "benzene",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "cure_bakelite",
+      "machine": "polymerizer",
+      "tier": "STM",
+      "ticks": 420,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "phenol",
+          "count": 2
+        },
+        {
+          "item": "formaldehyde",
+          "count": 3
+        }
+      ],
+      "outputs": [
+        {
+          "item": "bakelite_ingot",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "id": "distil_crude",
+      "machine": "distillery",
+      "tier": "VLT",
+      "ticks": 300,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "crude_oil",
+          "count": 12
+        }
+      ],
+      "outputs": [
+        {
+          "item": "refinery_gas",
+          "count": 1
+        },
+        {
+          "item": "naphtha",
+          "count": 4
+        },
+        {
+          "item": "kerosene",
+          "count": 2
+        },
+        {
+          "item": "diesel",
+          "count": 3
+        },
+        {
+          "item": "atmospheric_residue",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "split_refinery_gas",
+      "machine": "distillery",
+      "tier": "VLT",
+      "ticks": 160,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "refinery_gas",
+          "count": 2
+        }
+      ],
+      "outputs": [
+        {
+          "item": "methane",
+          "count": 2
+        },
+        {
+          "item": "ethane",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "distil_vacuum",
+      "machine": "vacuum_distillation",
+      "tier": "ARC",
+      "ticks": 320,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "atmospheric_residue",
+          "count": 4
+        }
+      ],
+      "outputs": [
+        {
+          "item": "vacuum_gas_oil",
+          "count": 3
+        },
+        {
+          "item": "vacuum_residue",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "hydrotreat_naphtha",
+      "machine": "hydrotreater",
+      "tier": "ARC",
+      "ticks": 280,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "naphtha",
+          "count": 4
+        },
+        {
+          "item": "hydrogen",
+          "count": 1
+        }
+      ],
+      "outputs": [
+        {
+          "item": "treated_naphtha",
+          "count": 4
+        },
+        {
+          "item": "hydrogen_sulfide",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "claus_sulfur",
+      "machine": "claus_unit",
+      "tier": "ARC",
+      "ticks": 240,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "hydrogen_sulfide",
+          "count": 2
+        },
+        {
+          "item": "oxygen",
+          "count": 1
+        }
+      ],
+      "outputs": [
+        {
+          "item": "sulfur_dust",
+          "count": 2
+        },
+        {
+          "item": "water",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "crack_naphtha",
+      "machine": "steam_cracker",
+      "tier": "VLT",
+      "ticks": 360,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "treated_naphtha",
+          "count": 6
+        },
+        {
+          "item": "steam",
+          "count": 4
+        }
+      ],
+      "outputs": [
+        {
+          "item": "ethylene",
+          "count": 3
+        },
+        {
+          "item": "propylene",
+          "count": 2
+        },
+        {
+          "item": "butadiene",
+          "count": 1
+        },
+        {
+          "item": "pyrolysis_gasoline",
+          "count": 2
+        },
+        {
+          "item": "hydrogen",
+          "count": 1
+        }
+      ],
+      "power_multiplier": 2
+    },
+    {
+      "id": "reform_naphtha",
+      "machine": "catalytic_reformer",
+      "tier": "ARC",
+      "ticks": 340,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "treated_naphtha",
+          "count": 4
+        }
+      ],
+      "outputs": [
+        {
+          "item": "benzene",
+          "count": 1
+        },
+        {
+          "item": "toluene",
+          "count": 1
+        },
+        {
+          "item": "xylene",
+          "count": 1
+        },
+        {
+          "item": "hydrogen",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "extract_aromatics",
+      "machine": "distillery",
+      "tier": "ARC",
+      "ticks": 220,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "pyrolysis_gasoline",
+          "count": 3
+        }
+      ],
+      "outputs": [
+        {
+          "item": "benzene",
+          "count": 2
+        },
+        {
+          "item": "toluene",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "crack_catalytic",
+      "machine": "fcc_unit",
+      "tier": "PLS",
+      "ticks": 360,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "vacuum_gas_oil",
+          "count": 6
+        }
+      ],
+      "outputs": [
+        {
+          "item": "propylene",
+          "count": 2
+        },
+        {
+          "item": "butylene",
+          "count": 1
+        },
+        {
+          "item": "fcc_slurry",
+          "count": 2
+        }
+      ],
+      "power_multiplier": 2
+    },
+    {
+      "id": "coke_residue",
+      "machine": "coker",
+      "tier": "PLS",
+      "ticks": 400,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "vacuum_residue",
+          "count": 4
+        }
+      ],
+      "outputs": [
+        {
+          "item": "petroleum_coke",
+          "count": 2
+        },
+        {
+          "item": "refinery_gas",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "furnace_black",
+      "machine": "chemical_reactor",
+      "tier": "PLS",
+      "ticks": 300,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "diesel",
+          "count": 3
+        },
+        {
+          "item": "fcc_slurry",
+          "count": 1
+        }
+      ],
+      "outputs": [
+        {
+          "item": "carbon_black",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "id": "graphitise_coke",
+      "machine": "arc_furnace",
+      "tier": "FUS",
+      "ticks": 600,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "petroleum_coke",
+          "count": 3
+        }
+      ],
+      "outputs": [
+        {
+          "item": "graphite",
+          "count": 2
+        }
+      ],
+      "power_multiplier": 2
+    },
+    {
+      "id": "chlorinate_ethylene",
+      "machine": "chemical_reactor",
+      "tier": "VLT",
+      "ticks": 260,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "ethylene",
+          "count": 2
+        },
+        {
+          "item": "chlorine",
+          "count": 2
+        }
+      ],
+      "outputs": [
+        {
+          "item": "ethylene_dichloride",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "crack_vcm",
+      "machine": "steam_cracker",
+      "tier": "VLT",
+      "ticks": 280,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "ethylene_dichloride",
+          "count": 2
+        }
+      ],
+      "outputs": [
+        {
+          "item": "vinyl_chloride",
+          "count": 2
+        },
+        {
+          "item": "hydrogen",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "polymerise_pvc",
+      "machine": "polymerizer",
+      "tier": "VLT",
+      "ticks": 380,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "vinyl_chloride",
+          "count": 3
+        }
+      ],
+      "outputs": [
+        {
+          "item": "pvc_ingot",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "id": "polymerise_polyethylene",
+      "machine": "polymerizer",
+      "tier": "ARC",
+      "ticks": 360,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "ethylene",
+          "count": 3
+        }
+      ],
+      "outputs": [
+        {
+          "item": "polyethylene_ingot",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "id": "polymerise_polypropylene",
+      "machine": "polymerizer",
+      "tier": "ARC",
+      "ticks": 360,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "propylene",
+          "count": 3
+        }
+      ],
+      "outputs": [
+        {
+          "item": "polypropylene_ingot",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "id": "alkylate_ethylbenzene",
+      "machine": "chemical_reactor",
+      "tier": "ARC",
+      "ticks": 300,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "ethylene",
+          "count": 1
+        },
+        {
+          "item": "benzene",
+          "count": 1
+        }
+      ],
+      "outputs": [
+        {
+          "item": "ethylbenzene",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "dehydrogenate_styrene",
+      "machine": "chemical_reactor",
+      "tier": "ARC",
+      "ticks": 320,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "ethylbenzene",
+          "count": 2
+        }
+      ],
+      "outputs": [
+        {
+          "item": "styrene",
+          "count": 2
+        },
+        {
+          "item": "hydrogen",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "polymerise_polystyrene",
+      "machine": "polymerizer",
+      "tier": "ARC",
+      "ticks": 360,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "styrene",
+          "count": 3
+        }
+      ],
+      "outputs": [
+        {
+          "item": "polystyrene_ingot",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "id": "copolymerise_sbr",
+      "machine": "polymerizer",
+      "tier": "ARC",
+      "ticks": 420,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "butadiene",
+          "count": 3
+        },
+        {
+          "item": "styrene",
+          "count": 1
+        },
+        {
+          "item": "carbon_black",
+          "count": 1
+        }
+      ],
+      "outputs": [
+        {
+          "item": "sbr_rubber_ingot",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "id": "oxidise_ethylene_oxide",
+      "machine": "chemical_reactor",
+      "tier": "PLS",
+      "ticks": 300,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "ethylene",
+          "count": 2
+        },
+        {
+          "item": "oxygen",
+          "count": 1
+        }
+      ],
+      "outputs": [
+        {
+          "item": "ethylene_oxide",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "hydrate_ethylene_glycol",
+      "machine": "chemical_reactor",
+      "tier": "PLS",
+      "ticks": 280,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "ethylene_oxide",
+          "count": 2
+        },
+        {
+          "item": "water",
+          "count": 1
+        }
+      ],
+      "outputs": [
+        {
+          "item": "ethylene_glycol",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "oxidise_terephthalic_acid",
+      "machine": "chemical_reactor",
+      "tier": "PLS",
+      "ticks": 340,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "xylene",
+          "count": 2
+        },
+        {
+          "item": "oxygen",
+          "count": 3
+        }
+      ],
+      "outputs": [
+        {
+          "item": "terephthalic_acid",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "polymerise_pet",
+      "machine": "polymerizer",
+      "tier": "PLS",
+      "ticks": 400,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "terephthalic_acid",
+          "count": 2
+        },
+        {
+          "item": "ethylene_glycol",
+          "count": 2
+        }
+      ],
+      "outputs": [
+        {
+          "item": "pet_ingot",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "id": "ammoxidise_acrylonitrile",
+      "machine": "chemical_reactor",
+      "tier": "PLS",
+      "ticks": 340,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "propylene",
+          "count": 2
+        },
+        {
+          "item": "ammonia",
+          "count": 2
+        },
+        {
+          "item": "oxygen",
+          "count": 3
+        }
+      ],
+      "outputs": [
+        {
+          "item": "acrylonitrile",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "polymerise_abs",
+      "machine": "polymerizer",
+      "tier": "PLS",
+      "ticks": 420,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "acrylonitrile",
+          "count": 1
+        },
+        {
+          "item": "butadiene",
+          "count": 1
+        },
+        {
+          "item": "styrene",
+          "count": 2
+        }
+      ],
+      "outputs": [
+        {
+          "item": "abs_ingot",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "id": "hydrogenate_cyclohexane",
+      "machine": "chemical_reactor",
+      "tier": "PLS",
+      "ticks": 300,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "benzene",
+          "count": 2
+        },
+        {
+          "item": "hydrogen",
+          "count": 3
+        }
+      ],
+      "outputs": [
+        {
+          "item": "cyclohexane",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "oxidise_adipic_acid",
+      "machine": "chemical_reactor",
+      "tier": "PLS",
+      "ticks": 340,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "cyclohexane",
+          "count": 2
+        },
+        {
+          "item": "oxygen",
+          "count": 3
+        }
+      ],
+      "outputs": [
+        {
+          "item": "adipic_acid",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "aminate_hmda",
+      "machine": "chemical_reactor",
+      "tier": "PLS",
+      "ticks": 360,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "butadiene",
+          "count": 2
+        },
+        {
+          "item": "ammonia",
+          "count": 2
+        },
+        {
+          "item": "hydrogen",
+          "count": 2
+        }
+      ],
+      "outputs": [
+        {
+          "item": "hexamethylenediamine",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "polymerise_nylon",
+      "machine": "polymerizer",
+      "tier": "PLS",
+      "ticks": 420,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "adipic_acid",
+          "count": 2
+        },
+        {
+          "item": "hexamethylenediamine",
+          "count": 2
+        }
+      ],
+      "outputs": [
+        {
+          "item": "nylon_ingot",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "id": "alkylate_cumene",
+      "machine": "chemical_reactor",
+      "tier": "ARC",
+      "ticks": 300,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "benzene",
+          "count": 1
+        },
+        {
+          "item": "propylene",
+          "count": 1
+        }
+      ],
+      "outputs": [
+        {
+          "item": "cumene",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "cumene_to_bpa",
+      "machine": "chemical_reactor",
+      "tier": "PLS",
+      "ticks": 360,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "cumene",
+          "count": 2
+        },
+        {
+          "item": "oxygen",
+          "count": 1
+        }
+      ],
+      "outputs": [
+        {
+          "item": "bisphenol_a",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "make_phosgene",
+      "machine": "chemical_reactor",
+      "tier": "PLS",
+      "ticks": 280,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "carbon_monoxide",
+          "count": 1
+        },
+        {
+          "item": "chlorine",
+          "count": 1
+        }
+      ],
+      "outputs": [
+        {
+          "item": "phosgene",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "polymerise_polycarbonate",
+      "machine": "polymerizer",
+      "tier": "PLS",
+      "ticks": 440,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "bisphenol_a",
+          "count": 2
+        },
+        {
+          "item": "phosgene",
+          "count": 2
+        }
+      ],
+      "outputs": [
+        {
+          "item": "polycarbonate_ingot",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "id": "make_carbon_monoxide",
+      "machine": "chemical_reactor",
+      "tier": "VLT",
+      "ticks": 220,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "coal_dust",
+          "count": 1
+        },
+        {
+          "item": "oxygen",
+          "count": 1
+        }
+      ],
+      "outputs": [
+        {
+          "item": "carbon_monoxide",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "make_hydrogen_fluoride",
+      "machine": "chemical_reactor",
+      "tier": "PLS",
+      "ticks": 300,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "fluorite_dust",
+          "count": 2
+        },
+        {
+          "item": "sulfuric_acid",
+          "count": 1
+        }
+      ],
+      "outputs": [
+        {
+          "item": "hydrogen_fluoride",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "chlorinate_methane",
+      "machine": "chemical_reactor",
+      "tier": "PLS",
+      "ticks": 280,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "methane",
+          "count": 2
+        },
+        {
+          "item": "chlorine",
+          "count": 3
+        }
+      ],
+      "outputs": [
+        {
+          "item": "chloroform",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "make_r22",
+      "machine": "chemical_reactor",
+      "tier": "PLS",
+      "ticks": 300,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "chloroform",
+          "count": 2
+        },
+        {
+          "item": "hydrogen_fluoride",
+          "count": 2
+        }
+      ],
+      "outputs": [
+        {
+          "item": "chlorodifluoromethane",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "pyrolyse_tfe",
+      "machine": "steam_cracker",
+      "tier": "PLS",
+      "ticks": 340,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "chlorodifluoromethane",
+          "count": 2
+        }
+      ],
+      "outputs": [
+        {
+          "item": "tetrafluoroethylene",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "polymerise_ptfe",
+      "machine": "polymerizer",
+      "tier": "PLS",
+      "ticks": 440,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "tetrafluoroethylene",
+          "count": 3
+        }
+      ],
+      "outputs": [
+        {
+          "item": "ptfe_ingot",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "id": "make_epichlorohydrin",
+      "machine": "chemical_reactor",
+      "tier": "FUS",
+      "ticks": 320,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "propylene",
+          "count": 2
+        },
+        {
+          "item": "chlorine",
+          "count": 2
+        },
+        {
+          "item": "water",
+          "count": 1
+        }
+      ],
+      "outputs": [
+        {
+          "item": "epichlorohydrin",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "cure_epoxy",
+      "machine": "polymerizer",
+      "tier": "FUS",
+      "ticks": 420,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "bisphenol_a",
+          "count": 2
+        },
+        {
+          "item": "epichlorohydrin",
+          "count": 2
+        }
+      ],
+      "outputs": [
+        {
+          "item": "epoxy_ingot",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "id": "make_tdi",
+      "machine": "chemical_reactor",
+      "tier": "FUS",
+      "ticks": 360,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "toluene",
+          "count": 2
+        },
+        {
+          "item": "ammonia",
+          "count": 2
+        },
+        {
+          "item": "phosgene",
+          "count": 2
+        }
+      ],
+      "outputs": [
+        {
+          "item": "toluene_diisocyanate",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "make_polyol",
+      "machine": "chemical_reactor",
+      "tier": "FUS",
+      "ticks": 320,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "propylene",
+          "count": 2
+        },
+        {
+          "item": "ethylene_glycol",
+          "count": 1
+        }
+      ],
+      "outputs": [
+        {
+          "item": "polyol",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "cure_polyurethane",
+      "machine": "polymerizer",
+      "tier": "FUS",
+      "ticks": 440,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "toluene_diisocyanate",
+          "count": 2
+        },
+        {
+          "item": "polyol",
+          "count": 2
+        }
+      ],
+      "outputs": [
+        {
+          "item": "polyurethane_ingot",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "id": "make_methyl_chloride",
+      "machine": "chemical_reactor",
+      "tier": "FUS",
+      "ticks": 280,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "methanol",
+          "count": 2
+        },
+        {
+          "item": "chlorine",
+          "count": 1
+        }
+      ],
+      "outputs": [
+        {
+          "item": "methyl_chloride",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "rochow_process",
+      "machine": "chemical_reactor",
+      "tier": "FUS",
+      "ticks": 380,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "silicon_ingot",
+          "count": 1
+        },
+        {
+          "item": "methyl_chloride",
+          "count": 3
+        }
+      ],
+      "outputs": [
+        {
+          "item": "dimethyldichlorosilane",
+          "count": 3
+        }
+      ]
+    },
+    {
+      "id": "cure_silicone",
+      "machine": "polymerizer",
+      "tier": "FUS",
+      "ticks": 420,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "dimethyldichlorosilane",
+          "count": 3
+        },
+        {
+          "item": "water",
+          "count": 1
+        }
+      ],
+      "outputs": [
+        {
+          "item": "silicone_ingot",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "id": "make_hydroquinone",
+      "machine": "chemical_reactor",
+      "tier": "FUS",
+      "ticks": 400,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "benzene",
+          "count": 2
+        },
+        {
+          "item": "oxygen",
+          "count": 2
+        }
+      ],
+      "outputs": [
+        {
+          "item": "hydroquinone",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "make_dfbp",
+      "machine": "chemical_reactor",
+      "tier": "FUS",
+      "ticks": 420,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "toluene",
+          "count": 2
+        },
+        {
+          "item": "hydrogen_fluoride",
+          "count": 2
+        }
+      ],
+      "outputs": [
+        {
+          "item": "difluorobenzophenone",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "polymerise_peek",
+      "machine": "polymerizer",
+      "tier": "FUS",
+      "ticks": 520,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "hydroquinone",
+          "count": 2
+        },
+        {
+          "item": "difluorobenzophenone",
+          "count": 2
+        }
+      ],
+      "outputs": [
+        {
+          "item": "peek_ingot",
+          "count": 4
+        }
+      ],
+      "power_multiplier": 2
+    },
+    {
+      "id": "make_ppd",
+      "machine": "chemical_reactor",
+      "tier": "QNT",
+      "ticks": 400,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "benzene",
+          "count": 2
+        },
+        {
+          "item": "ammonia",
+          "count": 2
+        }
+      ],
+      "outputs": [
+        {
+          "item": "paraphenylenediamine",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "make_tpc",
+      "machine": "chemical_reactor",
+      "tier": "QNT",
+      "ticks": 400,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "terephthalic_acid",
+          "count": 2
+        },
+        {
+          "item": "chlorine",
+          "count": 2
+        }
+      ],
+      "outputs": [
+        {
+          "item": "terephthaloyl_chloride",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "spin_aramid",
+      "machine": "spinneret",
+      "tier": "QNT",
+      "ticks": 520,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "paraphenylenediamine",
+          "count": 2
+        },
+        {
+          "item": "terephthaloyl_chloride",
+          "count": 2
+        }
+      ],
+      "outputs": [
+        {
+          "item": "aramid_ingot",
+          "count": 4
+        }
+      ],
+      "power_multiplier": 2
+    },
+    {
+      "id": "leach_bauxite",
+      "machine": "chemical_reactor",
+      "tier": "VLT",
+      "ticks": 400,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "aluminum_dust",
+          "count": 2
+        },
+        {
+          "item": "sodium_hydroxide",
+          "count": 1
+        }
+      ],
+      "outputs": [
+        {
+          "item": "alumina",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "electrolyze_alumina",
+      "machine": "electrolyzer",
+      "tier": "VLT",
+      "ticks": 600,
+      "tech": "metallurgy",
+      "inputs": [
+        {
+          "item": "alumina",
+          "count": 2
+        }
+      ],
+      "outputs": [
+        {
+          "item": "aluminum_ingot",
+          "count": 2
+        },
+        {
+          "item": "oxygen",
+          "count": 3
+        }
+      ],
+      "power_multiplier": 4
+    },
+    {
+      "id": "chlorinate_ilmenite",
+      "machine": "chemical_reactor",
+      "tier": "ARC",
+      "ticks": 480,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "titanium_dust",
+          "count": 2
+        },
+        {
+          "item": "chlorine",
+          "count": 4
+        },
+        {
+          "item": "coal_dust",
+          "count": 2
+        }
+      ],
+      "outputs": [
+        {
+          "item": "titanium_tetrachloride",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "kroll_reduce_titanium",
+      "machine": "chemical_reactor",
+      "tier": "ARC",
+      "ticks": 640,
+      "tech": "metallurgy",
+      "inputs": [
+        {
+          "item": "titanium_tetrachloride",
+          "count": 2
+        },
+        {
+          "item": "magnesium_ingot",
+          "count": 2
+        }
+      ],
+      "outputs": [
+        {
+          "item": "titanium_ingot",
+          "count": 2
+        },
+        {
+          "item": "magnesium_chloride",
+          "count": 2
+        }
+      ],
+      "power_multiplier": 2
+    },
+    {
+      "id": "electrolyze_magnesium_chloride",
+      "machine": "electrolyzer",
+      "tier": "ARC",
+      "ticks": 400,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "magnesium_chloride",
+          "count": 2
+        }
+      ],
+      "outputs": [
+        {
+          "item": "magnesium_ingot",
+          "count": 2
+        },
+        {
+          "item": "chlorine",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "electrolyze_fluorite",
+      "machine": "electrolyzer",
+      "tier": "PLS",
+      "ticks": 480,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "fluorite_dust",
+          "count": 2
+        },
+        {
+          "item": "sulfuric_acid",
+          "count": 1
+        }
+      ],
+      "outputs": [
+        {
+          "item": "fluorine",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "centrifuge_deuterium",
+      "machine": "centrifuge",
+      "tier": "FUS",
+      "ticks": 800,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "water",
+          "count": 16
+        }
+      ],
+      "outputs": [
+        {
+          "item": "deuterium",
+          "count": 1
+        }
+      ],
+      "power_multiplier": 2
+    },
+    {
+      "id": "breed_tritium",
+      "machine": "fusion_reactor",
+      "tier": "FUS",
+      "ticks": 960,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "deuterium",
+          "count": 2
+        },
+        {
+          "item": "lithium_ingot",
+          "count": 1
+        }
+      ],
+      "outputs": [
+        {
+          "item": "tritium",
+          "count": 2
+        }
+      ],
+      "power_multiplier": 4
+    },
+    {
+      "id": "fuse_helium3",
+      "machine": "fusion_reactor",
+      "tier": "FUS",
+      "ticks": 1200,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "deuterium",
+          "count": 4
+        }
+      ],
+      "outputs": [
+        {
+          "item": "helium3",
+          "count": 1
+        }
+      ],
+      "power_multiplier": 4
+    },
+    {
+      "id": "refine_xenite",
+      "machine": "chemical_bath",
+      "tier": "QNT",
+      "ticks": 1200,
+      "tech": "metallurgy",
+      "inputs": [
+        {
+          "item": "xenite_dust",
+          "count": 2
+        },
+        {
+          "item": "sulfuric_acid",
+          "count": 2
+        }
+      ],
+      "outputs": [
+        {
+          "item": "xenite_ingot",
+          "count": 1
+        },
+        {
+          "item": "iridium_dust",
+          "count": 1
+        }
+      ],
+      "power_multiplier": 2
+    },
+    {
+      "id": "deconstruct_stone",
+      "machine": "replicator",
+      "tier": "SNG",
+      "ticks": 600,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "stone_deposit",
+          "count": 16
+        },
+        {
+          "item": "helium3",
+          "count": 2
+        }
+      ],
+      "outputs": [
+        {
+          "item": "iron_dust",
+          "count": 4
+        },
+        {
+          "item": "copper_dust",
+          "count": 4
+        },
+        {
+          "item": "silicon_dust",
+          "count": 2
+        },
+        {
+          "item": "titanium_dust",
+          "count": 1
+        }
+      ],
+      "power_multiplier": 2
+    },
+    {
+      "id": "collapse_matter",
+      "machine": "fusion_reactor",
+      "tier": "QNT",
+      "ticks": 2400,
+      "tech": "metallurgy",
+      "inputs": [
+        {
+          "item": "xenite_ingot",
+          "count": 4
+        },
+        {
+          "item": "helium3",
+          "count": 8
+        },
+        {
+          "item": "tritium",
+          "count": 4
+        }
+      ],
+      "outputs": [
+        {
+          "item": "collapsium_ingot",
+          "count": 1
+        }
+      ],
+      "power_multiplier": 8
+    },
+    {
+      "id": "crack_ethane",
+      "machine": "steam_cracker",
+      "tier": "VLT",
+      "ticks": 320,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "ethane",
+          "count": 3
+        },
+        {
+          "item": "steam",
+          "count": 2
+        }
+      ],
+      "outputs": [
+        {
+          "item": "ethylene",
+          "count": 3
+        },
+        {
+          "item": "hydrogen",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "alkylate_kerosene",
+      "machine": "chemical_reactor",
+      "tier": "PLS",
+      "ticks": 300,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "butylene",
+          "count": 2
+        },
+        {
+          "item": "refinery_gas",
+          "count": 1
+        }
+      ],
+      "outputs": [
+        {
+          "item": "kerosene",
+          "count": 3
+        }
+      ]
+    }
   ],
-
   "_techs_comment": "Four tech lines run the length of the ladder. Each tier's metallurgy node is gated on physically holding that tier's machine hull, which is what makes progression component-gated rather than points-gated.",
   "tech_lines": [
-    { "id": "metallurgy",  "name": "Metallurgy" },
-    { "id": "processing",  "name": "Ore Processing" },
-    { "id": "chemistry",   "name": "Chemistry" },
-    { "id": "fabrication", "name": "Fabrication" }
-  ]
+    {
+      "id": "metallurgy",
+      "name": "Metallurgy"
+    },
+    {
+      "id": "processing",
+      "name": "Ore Processing"
+    },
+    {
+      "id": "chemistry",
+      "name": "Chemistry"
+    },
+    {
+      "id": "fabrication",
+      "name": "Fabrication"
+    }
+  ],
+  "goal": {
+    "id": "von_neumann_seed",
+    "name": "Von Neumann Seed",
+    "tier": "SNG",
+    "machine": "assembler",
+    "ticks": 4800,
+    "power_multiplier": 8,
+    "assemblies": [
+      {
+        "id": "pressure_hull_assembly",
+        "name": "Pressure Hull Assembly",
+        "tier": "SNG",
+        "ticks": 1200,
+        "inputs": [
+          [
+            "collapsium_plate",
+            8
+          ],
+          [
+            "aramid_plate",
+            6
+          ],
+          [
+            "epoxy_ingot",
+            4
+          ],
+          [
+            "graphite",
+            4
+          ]
+        ]
+      },
+      {
+        "id": "fabrication_core",
+        "name": "Fabrication Core",
+        "tier": "SNG",
+        "ticks": 1600,
+        "inputs": [
+          [
+            "sng_circuit",
+            4
+          ],
+          [
+            "peek_plate",
+            6
+          ],
+          [
+            "polycarbonate_plate",
+            4
+          ],
+          [
+            "silicone_plate",
+            2
+          ]
+        ]
+      },
+      {
+        "id": "life_support_loop",
+        "name": "Life Support Loop",
+        "tier": "SNG",
+        "ticks": 1000,
+        "inputs": [
+          [
+            "pet_plate",
+            4
+          ],
+          [
+            "nylon_plate",
+            4
+          ],
+          [
+            "polyurethane_plate",
+            4
+          ],
+          [
+            "ptfe_plate",
+            3
+          ],
+          [
+            "polypropylene_plate",
+            3
+          ]
+        ]
+      },
+      {
+        "id": "cable_harness",
+        "name": "Cable Harness",
+        "tier": "SNG",
+        "ticks": 900,
+        "inputs": [
+          [
+            "sng_cable",
+            8
+          ],
+          [
+            "pvc_plate",
+            6
+          ],
+          [
+            "polyethylene_plate",
+            4
+          ],
+          [
+            "bakelite_plate",
+            2
+          ],
+          [
+            "sbr_rubber_plate",
+            3
+          ]
+        ]
+      },
+      {
+        "id": "propellant_tank",
+        "name": "Propellant Tank",
+        "tier": "SNG",
+        "ticks": 800,
+        "inputs": [
+          [
+            "kerosene",
+            12
+          ],
+          [
+            "abs_plate",
+            4
+          ],
+          [
+            "polystyrene_plate",
+            3
+          ],
+          [
+            "titanium_plate",
+            6
+          ]
+        ]
+      }
+    ],
+    "inputs": [
+      [
+        "pressure_hull_assembly",
+        1
+      ],
+      [
+        "fabrication_core",
+        1
+      ],
+      [
+        "life_support_loop",
+        1
+      ],
+      [
+        "cable_harness",
+        1
+      ],
+      [
+        "propellant_tank",
+        1
+      ],
+      [
+        "sng_machine_hull",
+        2
+      ]
+    ]
+  }
 }

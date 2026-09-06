@@ -3254,9 +3254,9 @@
   {
     "id": "macerate_silicon_ingot",
     "machine": "macerator",
-    "tier": "STM",
+    "tier": "ARC",
     "duration_ticks": 80,
-    "power_draw": 8,
+    "power_draw": 128,
     "inputs": [
       {
         "item": "silicon_ingot",
@@ -3269,14 +3269,14 @@
         "count": 1
       }
     ],
-    "unlocked_by": "tech_stm_processing"
+    "unlocked_by": "tech_arc_processing"
   },
   {
     "id": "form_silicon_plate",
     "machine": "bender",
-    "tier": "STM",
+    "tier": "ARC",
     "duration_ticks": 60,
-    "power_draw": 8,
+    "power_draw": 128,
     "inputs": [
       {
         "item": "silicon_ingot",
@@ -3289,27 +3289,7 @@
         "count": 1
       }
     ],
-    "unlocked_by": "tech_stm_metallurgy"
-  },
-  {
-    "id": "form_rubber_plate",
-    "machine": "bender",
-    "tier": "STM",
-    "duration_ticks": 60,
-    "power_draw": 8,
-    "inputs": [
-      {
-        "item": "rubber_ingot",
-        "count": 1
-      }
-    ],
-    "outputs": [
-      {
-        "item": "rubber_plate",
-        "count": 1
-      }
-    ],
-    "unlocked_by": "tech_stm_metallurgy"
+    "unlocked_by": "tech_arc_metallurgy"
   },
   {
     "id": "smelt_dolomite",
@@ -4360,26 +4340,6 @@
     "unlocked_by": "tech_vlt_metallurgy"
   },
   {
-    "id": "form_plastic_plate",
-    "machine": "bender",
-    "tier": "VLT",
-    "duration_ticks": 60,
-    "power_draw": 32,
-    "inputs": [
-      {
-        "item": "plastic_ingot",
-        "count": 1
-      }
-    ],
-    "outputs": [
-      {
-        "item": "plastic_plate",
-        "count": 1
-      }
-    ],
-    "unlocked_by": "tech_vlt_metallurgy"
-  },
-  {
     "id": "crush_fluorite_deposit",
     "machine": "crusher",
     "tier": "STM",
@@ -5316,26 +5276,6 @@
     "unlocked_by": "tech_arc_processing"
   },
   {
-    "id": "form_silicone_plate",
-    "machine": "bender",
-    "tier": "PLS",
-    "duration_ticks": 60,
-    "power_draw": 512,
-    "inputs": [
-      {
-        "item": "silicone_ingot",
-        "count": 1
-      }
-    ],
-    "outputs": [
-      {
-        "item": "silicone_plate",
-        "count": 1
-      }
-    ],
-    "unlocked_by": "tech_pls_metallurgy"
-  },
-  {
     "id": "smelt_scheelite",
     "machine": "furnace",
     "tier": "PLS",
@@ -6252,26 +6192,6 @@
     "unlocked_by": "tech_pls_metallurgy"
   },
   {
-    "id": "form_ptfe_plate",
-    "machine": "bender",
-    "tier": "PLS",
-    "duration_ticks": 60,
-    "power_draw": 512,
-    "inputs": [
-      {
-        "item": "ptfe_ingot",
-        "count": 1
-      }
-    ],
-    "outputs": [
-      {
-        "item": "ptfe_plate",
-        "count": 1
-      }
-    ],
-    "unlocked_by": "tech_pls_metallurgy"
-  },
-  {
     "id": "smelt_iridium_dust",
     "machine": "furnace",
     "tier": "FUS",
@@ -6804,6 +6724,326 @@
     "unlocked_by": "tech_qnt_metallurgy"
   },
   {
+    "id": "form_bakelite_plate",
+    "machine": "bender",
+    "tier": "STM",
+    "duration_ticks": 60,
+    "power_draw": 8,
+    "inputs": [
+      {
+        "item": "bakelite_ingot",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "bakelite_plate",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_stm_metallurgy"
+  },
+  {
+    "id": "form_pvc_plate",
+    "machine": "bender",
+    "tier": "VLT",
+    "duration_ticks": 60,
+    "power_draw": 32,
+    "inputs": [
+      {
+        "item": "pvc_ingot",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "pvc_plate",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_vlt_metallurgy"
+  },
+  {
+    "id": "form_polyethylene_plate",
+    "machine": "bender",
+    "tier": "ARC",
+    "duration_ticks": 60,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "polyethylene_ingot",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "polyethylene_plate",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_metallurgy"
+  },
+  {
+    "id": "form_polypropylene_plate",
+    "machine": "bender",
+    "tier": "ARC",
+    "duration_ticks": 60,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "polypropylene_ingot",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "polypropylene_plate",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_metallurgy"
+  },
+  {
+    "id": "form_polystyrene_plate",
+    "machine": "bender",
+    "tier": "ARC",
+    "duration_ticks": 60,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "polystyrene_ingot",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "polystyrene_plate",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_metallurgy"
+  },
+  {
+    "id": "form_sbr_rubber_plate",
+    "machine": "bender",
+    "tier": "PLS",
+    "duration_ticks": 60,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "sbr_rubber_ingot",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "sbr_rubber_plate",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_pls_metallurgy"
+  },
+  {
+    "id": "form_pet_plate",
+    "machine": "bender",
+    "tier": "PLS",
+    "duration_ticks": 60,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "pet_ingot",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "pet_plate",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_pls_metallurgy"
+  },
+  {
+    "id": "form_abs_plate",
+    "machine": "bender",
+    "tier": "PLS",
+    "duration_ticks": 60,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "abs_ingot",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "abs_plate",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_pls_metallurgy"
+  },
+  {
+    "id": "form_nylon_plate",
+    "machine": "bender",
+    "tier": "PLS",
+    "duration_ticks": 60,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "nylon_ingot",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "nylon_plate",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_pls_metallurgy"
+  },
+  {
+    "id": "form_polycarbonate_plate",
+    "machine": "bender",
+    "tier": "PLS",
+    "duration_ticks": 60,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "polycarbonate_ingot",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "polycarbonate_plate",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_pls_metallurgy"
+  },
+  {
+    "id": "form_ptfe_plate",
+    "machine": "bender",
+    "tier": "PLS",
+    "duration_ticks": 60,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "ptfe_ingot",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "ptfe_plate",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_pls_metallurgy"
+  },
+  {
+    "id": "form_epoxy_plate",
+    "machine": "bender",
+    "tier": "FUS",
+    "duration_ticks": 60,
+    "power_draw": 2048,
+    "inputs": [
+      {
+        "item": "epoxy_ingot",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "epoxy_plate",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_fus_metallurgy"
+  },
+  {
+    "id": "form_polyurethane_plate",
+    "machine": "bender",
+    "tier": "FUS",
+    "duration_ticks": 60,
+    "power_draw": 2048,
+    "inputs": [
+      {
+        "item": "polyurethane_ingot",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "polyurethane_plate",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_fus_metallurgy"
+  },
+  {
+    "id": "form_silicone_plate",
+    "machine": "bender",
+    "tier": "FUS",
+    "duration_ticks": 60,
+    "power_draw": 2048,
+    "inputs": [
+      {
+        "item": "silicone_ingot",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "silicone_plate",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_fus_metallurgy"
+  },
+  {
+    "id": "form_aramid_plate",
+    "machine": "bender",
+    "tier": "QNT",
+    "duration_ticks": 60,
+    "power_draw": 8192,
+    "inputs": [
+      {
+        "item": "aramid_ingot",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "aramid_plate",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_qnt_metallurgy"
+  },
+  {
+    "id": "form_peek_plate",
+    "machine": "bender",
+    "tier": "FUS",
+    "duration_ticks": 60,
+    "power_draw": 2048,
+    "inputs": [
+      {
+        "item": "peek_ingot",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "peek_plate",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_fus_metallurgy"
+  },
+  {
     "id": "comp_stm_cable",
     "machine": "manual_crafting",
     "tier": "MAN",
@@ -6971,7 +7211,7 @@
         "count": 2
       },
       {
-        "item": "rubber_plate",
+        "item": "bakelite_plate",
         "count": 1
       }
     ],
@@ -7127,7 +7367,7 @@
     "power_draw": 8,
     "inputs": [
       {
-        "item": "rubber_plate",
+        "item": "bakelite_plate",
         "count": 2
       },
       {
@@ -7146,9 +7386,9 @@
   {
     "id": "comp_vlt_circuit",
     "machine": "assembler",
-    "tier": "STM",
+    "tier": "ARC",
     "duration_ticks": 240,
-    "power_draw": 8,
+    "power_draw": 128,
     "inputs": [
       {
         "item": "vlt_board",
@@ -7169,7 +7409,7 @@
         "count": 1
       }
     ],
-    "unlocked_by": "tech_stm_fabrication"
+    "unlocked_by": "tech_arc_fabrication"
   },
   {
     "id": "comp_arc_cable",
@@ -7183,7 +7423,7 @@
         "count": 2
       },
       {
-        "item": "plastic_plate",
+        "item": "pvc_plate",
         "count": 1
       }
     ],
@@ -7339,7 +7579,7 @@
     "power_draw": 32,
     "inputs": [
       {
-        "item": "plastic_plate",
+        "item": "pvc_plate",
         "count": 2
       },
       {
@@ -7358,9 +7598,9 @@
   {
     "id": "comp_arc_circuit",
     "machine": "assembler",
-    "tier": "VLT",
+    "tier": "ARC",
     "duration_ticks": 240,
-    "power_draw": 32,
+    "power_draw": 128,
     "inputs": [
       {
         "item": "arc_board",
@@ -7381,7 +7621,7 @@
         "count": 1
       }
     ],
-    "unlocked_by": "tech_vlt_fabrication"
+    "unlocked_by": "tech_arc_fabrication"
   },
   {
     "id": "comp_pls_cable",
@@ -7395,7 +7635,7 @@
         "count": 2
       },
       {
-        "item": "plastic_plate",
+        "item": "polyethylene_plate",
         "count": 1
       }
     ],
@@ -7551,7 +7791,7 @@
     "power_draw": 128,
     "inputs": [
       {
-        "item": "plastic_plate",
+        "item": "polyethylene_plate",
         "count": 2
       },
       {
@@ -7607,7 +7847,7 @@
         "count": 2
       },
       {
-        "item": "silicone_plate",
+        "item": "ptfe_plate",
         "count": 1
       }
     ],
@@ -7763,7 +8003,7 @@
     "power_draw": 512,
     "inputs": [
       {
-        "item": "silicone_plate",
+        "item": "ptfe_plate",
         "count": 2
       },
       {
@@ -7819,7 +8059,7 @@
         "count": 2
       },
       {
-        "item": "ptfe_plate",
+        "item": "peek_plate",
         "count": 1
       }
     ],
@@ -7975,7 +8215,7 @@
     "power_draw": 2048,
     "inputs": [
       {
-        "item": "ptfe_plate",
+        "item": "peek_plate",
         "count": 2
       },
       {
@@ -8031,7 +8271,7 @@
         "count": 2
       },
       {
-        "item": "ptfe_plate",
+        "item": "peek_plate",
         "count": 1
       }
     ],
@@ -8187,7 +8427,7 @@
     "power_draw": 8192,
     "inputs": [
       {
-        "item": "ptfe_plate",
+        "item": "peek_plate",
         "count": 2
       },
       {
@@ -8278,9 +8518,9 @@
   {
     "id": "build_vlt_furnace",
     "machine": "assembler",
-    "tier": "STM",
+    "tier": "ARC",
     "duration_ticks": 400,
-    "power_draw": 8,
+    "power_draw": 128,
     "inputs": [
       {
         "item": "vlt_machine_hull",
@@ -8301,14 +8541,14 @@
         "count": 1
       }
     ],
-    "unlocked_by": "tech_stm_fabrication"
+    "unlocked_by": "tech_arc_fabrication"
   },
   {
     "id": "build_arc_furnace",
     "machine": "assembler",
-    "tier": "VLT",
+    "tier": "ARC",
     "duration_ticks": 400,
-    "power_draw": 32,
+    "power_draw": 128,
     "inputs": [
       {
         "item": "arc_machine_hull",
@@ -8329,7 +8569,7 @@
         "count": 1
       }
     ],
-    "unlocked_by": "tech_vlt_fabrication"
+    "unlocked_by": "tech_arc_fabrication"
   },
   {
     "id": "build_pls_furnace",
@@ -8434,9 +8674,9 @@
   {
     "id": "build_vlt_alloy_smelter",
     "machine": "assembler",
-    "tier": "STM",
+    "tier": "ARC",
     "duration_ticks": 400,
-    "power_draw": 8,
+    "power_draw": 128,
     "inputs": [
       {
         "item": "vlt_machine_hull",
@@ -8457,14 +8697,14 @@
         "count": 1
       }
     ],
-    "unlocked_by": "tech_stm_fabrication"
+    "unlocked_by": "tech_arc_fabrication"
   },
   {
     "id": "build_arc_alloy_smelter",
     "machine": "assembler",
-    "tier": "VLT",
+    "tier": "ARC",
     "duration_ticks": 400,
-    "power_draw": 32,
+    "power_draw": 128,
     "inputs": [
       {
         "item": "arc_machine_hull",
@@ -8485,7 +8725,7 @@
         "count": 1
       }
     ],
-    "unlocked_by": "tech_vlt_fabrication"
+    "unlocked_by": "tech_arc_fabrication"
   },
   {
     "id": "build_pls_alloy_smelter",
@@ -8574,9 +8814,9 @@
   {
     "id": "build_vlt_crusher",
     "machine": "assembler",
-    "tier": "STM",
+    "tier": "ARC",
     "duration_ticks": 400,
-    "power_draw": 8,
+    "power_draw": 128,
     "inputs": [
       {
         "item": "vlt_machine_hull",
@@ -8601,14 +8841,14 @@
         "count": 1
       }
     ],
-    "unlocked_by": "tech_stm_fabrication"
+    "unlocked_by": "tech_arc_fabrication"
   },
   {
     "id": "build_arc_crusher",
     "machine": "assembler",
-    "tier": "VLT",
+    "tier": "ARC",
     "duration_ticks": 400,
-    "power_draw": 32,
+    "power_draw": 128,
     "inputs": [
       {
         "item": "arc_machine_hull",
@@ -8633,7 +8873,7 @@
         "count": 1
       }
     ],
-    "unlocked_by": "tech_vlt_fabrication"
+    "unlocked_by": "tech_arc_fabrication"
   },
   {
     "id": "build_pls_crusher",
@@ -8762,9 +9002,9 @@
   {
     "id": "build_vlt_macerator",
     "machine": "assembler",
-    "tier": "STM",
+    "tier": "ARC",
     "duration_ticks": 400,
-    "power_draw": 8,
+    "power_draw": 128,
     "inputs": [
       {
         "item": "vlt_machine_hull",
@@ -8789,14 +9029,14 @@
         "count": 1
       }
     ],
-    "unlocked_by": "tech_stm_fabrication"
+    "unlocked_by": "tech_arc_fabrication"
   },
   {
     "id": "build_arc_macerator",
     "machine": "assembler",
-    "tier": "VLT",
+    "tier": "ARC",
     "duration_ticks": 400,
-    "power_draw": 32,
+    "power_draw": 128,
     "inputs": [
       {
         "item": "arc_machine_hull",
@@ -8821,7 +9061,7 @@
         "count": 1
       }
     ],
-    "unlocked_by": "tech_vlt_fabrication"
+    "unlocked_by": "tech_arc_fabrication"
   },
   {
     "id": "build_pls_macerator",
@@ -8950,9 +9190,9 @@
   {
     "id": "build_vlt_sifter",
     "machine": "assembler",
-    "tier": "STM",
+    "tier": "ARC",
     "duration_ticks": 400,
-    "power_draw": 8,
+    "power_draw": 128,
     "inputs": [
       {
         "item": "vlt_machine_hull",
@@ -8977,14 +9217,14 @@
         "count": 1
       }
     ],
-    "unlocked_by": "tech_stm_fabrication"
+    "unlocked_by": "tech_arc_fabrication"
   },
   {
     "id": "build_arc_sifter",
     "machine": "assembler",
-    "tier": "VLT",
+    "tier": "ARC",
     "duration_ticks": 400,
-    "power_draw": 32,
+    "power_draw": 128,
     "inputs": [
       {
         "item": "arc_machine_hull",
@@ -9009,7 +9249,7 @@
         "count": 1
       }
     ],
-    "unlocked_by": "tech_vlt_fabrication"
+    "unlocked_by": "tech_arc_fabrication"
   },
   {
     "id": "build_stm_bender",
@@ -9046,9 +9286,9 @@
   {
     "id": "build_vlt_bender",
     "machine": "assembler",
-    "tier": "STM",
+    "tier": "ARC",
     "duration_ticks": 400,
-    "power_draw": 8,
+    "power_draw": 128,
     "inputs": [
       {
         "item": "vlt_machine_hull",
@@ -9077,14 +9317,14 @@
         "count": 1
       }
     ],
-    "unlocked_by": "tech_stm_fabrication"
+    "unlocked_by": "tech_arc_fabrication"
   },
   {
     "id": "build_arc_bender",
     "machine": "assembler",
-    "tier": "VLT",
+    "tier": "ARC",
     "duration_ticks": 400,
-    "power_draw": 32,
+    "power_draw": 128,
     "inputs": [
       {
         "item": "arc_machine_hull",
@@ -9113,7 +9353,7 @@
         "count": 1
       }
     ],
-    "unlocked_by": "tech_vlt_fabrication"
+    "unlocked_by": "tech_arc_fabrication"
   },
   {
     "id": "build_pls_bender",
@@ -9254,9 +9494,9 @@
   {
     "id": "build_vlt_lathe",
     "machine": "assembler",
-    "tier": "STM",
+    "tier": "ARC",
     "duration_ticks": 400,
-    "power_draw": 8,
+    "power_draw": 128,
     "inputs": [
       {
         "item": "vlt_machine_hull",
@@ -9281,14 +9521,14 @@
         "count": 1
       }
     ],
-    "unlocked_by": "tech_stm_fabrication"
+    "unlocked_by": "tech_arc_fabrication"
   },
   {
     "id": "build_arc_lathe",
     "machine": "assembler",
-    "tier": "VLT",
+    "tier": "ARC",
     "duration_ticks": 400,
-    "power_draw": 32,
+    "power_draw": 128,
     "inputs": [
       {
         "item": "arc_machine_hull",
@@ -9313,7 +9553,7 @@
         "count": 1
       }
     ],
-    "unlocked_by": "tech_vlt_fabrication"
+    "unlocked_by": "tech_arc_fabrication"
   },
   {
     "id": "build_pls_lathe",
@@ -9446,9 +9686,9 @@
   {
     "id": "build_vlt_assembler",
     "machine": "assembler",
-    "tier": "STM",
+    "tier": "ARC",
     "duration_ticks": 400,
-    "power_draw": 8,
+    "power_draw": 128,
     "inputs": [
       {
         "item": "vlt_machine_hull",
@@ -9477,14 +9717,14 @@
         "count": 1
       }
     ],
-    "unlocked_by": "tech_stm_fabrication"
+    "unlocked_by": "tech_arc_fabrication"
   },
   {
     "id": "build_arc_assembler",
     "machine": "assembler",
-    "tier": "VLT",
+    "tier": "ARC",
     "duration_ticks": 400,
-    "power_draw": 32,
+    "power_draw": 128,
     "inputs": [
       {
         "item": "arc_machine_hull",
@@ -9513,7 +9753,7 @@
         "count": 1
       }
     ],
-    "unlocked_by": "tech_vlt_fabrication"
+    "unlocked_by": "tech_arc_fabrication"
   },
   {
     "id": "build_pls_assembler",
@@ -9722,9 +9962,9 @@
   {
     "id": "build_vlt_miner",
     "machine": "assembler",
-    "tier": "STM",
+    "tier": "ARC",
     "duration_ticks": 400,
-    "power_draw": 8,
+    "power_draw": 128,
     "inputs": [
       {
         "item": "vlt_machine_hull",
@@ -9753,14 +9993,14 @@
         "count": 1
       }
     ],
-    "unlocked_by": "tech_stm_fabrication"
+    "unlocked_by": "tech_arc_fabrication"
   },
   {
     "id": "build_arc_miner",
     "machine": "assembler",
-    "tier": "VLT",
+    "tier": "ARC",
     "duration_ticks": 400,
-    "power_draw": 32,
+    "power_draw": 128,
     "inputs": [
       {
         "item": "arc_machine_hull",
@@ -9789,7 +10029,7 @@
         "count": 1
       }
     ],
-    "unlocked_by": "tech_vlt_fabrication"
+    "unlocked_by": "tech_arc_fabrication"
   },
   {
     "id": "build_pls_miner",
@@ -9966,9 +10206,9 @@
   {
     "id": "build_vlt_pump_station",
     "machine": "assembler",
-    "tier": "STM",
+    "tier": "ARC",
     "duration_ticks": 400,
-    "power_draw": 8,
+    "power_draw": 128,
     "inputs": [
       {
         "item": "vlt_machine_hull",
@@ -9993,14 +10233,14 @@
         "count": 1
       }
     ],
-    "unlocked_by": "tech_stm_fabrication"
+    "unlocked_by": "tech_arc_fabrication"
   },
   {
     "id": "build_arc_pump_station",
     "machine": "assembler",
-    "tier": "VLT",
+    "tier": "ARC",
     "duration_ticks": 400,
-    "power_draw": 32,
+    "power_draw": 128,
     "inputs": [
       {
         "item": "arc_machine_hull",
@@ -10025,7 +10265,7 @@
         "count": 1
       }
     ],
-    "unlocked_by": "tech_vlt_fabrication"
+    "unlocked_by": "tech_arc_fabrication"
   },
   {
     "id": "build_pls_pump_station",
@@ -10154,9 +10394,9 @@
   {
     "id": "build_vlt_generator",
     "machine": "assembler",
-    "tier": "STM",
+    "tier": "ARC",
     "duration_ticks": 400,
-    "power_draw": 8,
+    "power_draw": 128,
     "inputs": [
       {
         "item": "vlt_machine_hull",
@@ -10181,14 +10421,14 @@
         "count": 1
       }
     ],
-    "unlocked_by": "tech_stm_fabrication"
+    "unlocked_by": "tech_arc_fabrication"
   },
   {
     "id": "build_arc_generator",
     "machine": "assembler",
-    "tier": "VLT",
+    "tier": "ARC",
     "duration_ticks": 400,
-    "power_draw": 32,
+    "power_draw": 128,
     "inputs": [
       {
         "item": "arc_machine_hull",
@@ -10213,7 +10453,7 @@
         "count": 1
       }
     ],
-    "unlocked_by": "tech_vlt_fabrication"
+    "unlocked_by": "tech_arc_fabrication"
   },
   {
     "id": "build_pls_generator",
@@ -10346,9 +10586,9 @@
   {
     "id": "build_vlt_washer",
     "machine": "assembler",
-    "tier": "STM",
+    "tier": "ARC",
     "duration_ticks": 400,
-    "power_draw": 8,
+    "power_draw": 128,
     "inputs": [
       {
         "item": "vlt_machine_hull",
@@ -10373,14 +10613,14 @@
         "count": 1
       }
     ],
-    "unlocked_by": "tech_stm_fabrication"
+    "unlocked_by": "tech_arc_fabrication"
   },
   {
     "id": "build_arc_washer",
     "machine": "assembler",
-    "tier": "VLT",
+    "tier": "ARC",
     "duration_ticks": 400,
-    "power_draw": 32,
+    "power_draw": 128,
     "inputs": [
       {
         "item": "arc_machine_hull",
@@ -10405,7 +10645,7 @@
         "count": 1
       }
     ],
-    "unlocked_by": "tech_vlt_fabrication"
+    "unlocked_by": "tech_arc_fabrication"
   },
   {
     "id": "build_pls_washer",
@@ -10534,9 +10774,9 @@
   {
     "id": "build_vlt_wire_mill",
     "machine": "assembler",
-    "tier": "STM",
+    "tier": "ARC",
     "duration_ticks": 400,
-    "power_draw": 8,
+    "power_draw": 128,
     "inputs": [
       {
         "item": "vlt_machine_hull",
@@ -10561,14 +10801,14 @@
         "count": 1
       }
     ],
-    "unlocked_by": "tech_stm_fabrication"
+    "unlocked_by": "tech_arc_fabrication"
   },
   {
     "id": "build_arc_wire_mill",
     "machine": "assembler",
-    "tier": "VLT",
+    "tier": "ARC",
     "duration_ticks": 400,
-    "power_draw": 32,
+    "power_draw": 128,
     "inputs": [
       {
         "item": "arc_machine_hull",
@@ -10593,7 +10833,7 @@
         "count": 1
       }
     ],
-    "unlocked_by": "tech_vlt_fabrication"
+    "unlocked_by": "tech_arc_fabrication"
   },
   {
     "id": "build_pls_wire_mill",
@@ -10694,9 +10934,9 @@
   {
     "id": "build_vlt_mixer",
     "machine": "assembler",
-    "tier": "STM",
+    "tier": "ARC",
     "duration_ticks": 400,
-    "power_draw": 8,
+    "power_draw": 128,
     "inputs": [
       {
         "item": "vlt_machine_hull",
@@ -10721,14 +10961,14 @@
         "count": 1
       }
     ],
-    "unlocked_by": "tech_stm_fabrication"
+    "unlocked_by": "tech_arc_fabrication"
   },
   {
     "id": "build_arc_mixer",
     "machine": "assembler",
-    "tier": "VLT",
+    "tier": "ARC",
     "duration_ticks": 400,
-    "power_draw": 32,
+    "power_draw": 128,
     "inputs": [
       {
         "item": "arc_machine_hull",
@@ -10753,7 +10993,7 @@
         "count": 1
       }
     ],
-    "unlocked_by": "tech_vlt_fabrication"
+    "unlocked_by": "tech_arc_fabrication"
   },
   {
     "id": "build_pls_mixer",
@@ -10854,9 +11094,9 @@
   {
     "id": "build_vlt_chemical_reactor",
     "machine": "assembler",
-    "tier": "STM",
+    "tier": "ARC",
     "duration_ticks": 400,
-    "power_draw": 8,
+    "power_draw": 128,
     "inputs": [
       {
         "item": "vlt_machine_hull",
@@ -10885,14 +11125,14 @@
         "count": 1
       }
     ],
-    "unlocked_by": "tech_stm_fabrication"
+    "unlocked_by": "tech_arc_fabrication"
   },
   {
     "id": "build_arc_chemical_reactor",
     "machine": "assembler",
-    "tier": "VLT",
+    "tier": "ARC",
     "duration_ticks": 400,
-    "power_draw": 32,
+    "power_draw": 128,
     "inputs": [
       {
         "item": "arc_machine_hull",
@@ -10921,7 +11161,7 @@
         "count": 1
       }
     ],
-    "unlocked_by": "tech_vlt_fabrication"
+    "unlocked_by": "tech_arc_fabrication"
   },
   {
     "id": "build_pls_chemical_reactor",
@@ -11070,9 +11310,9 @@
   {
     "id": "build_vlt_electrolyzer",
     "machine": "assembler",
-    "tier": "STM",
+    "tier": "ARC",
     "duration_ticks": 400,
-    "power_draw": 8,
+    "power_draw": 128,
     "inputs": [
       {
         "item": "vlt_machine_hull",
@@ -11097,14 +11337,14 @@
         "count": 1
       }
     ],
-    "unlocked_by": "tech_stm_fabrication"
+    "unlocked_by": "tech_arc_fabrication"
   },
   {
     "id": "build_arc_electrolyzer",
     "machine": "assembler",
-    "tier": "VLT",
+    "tier": "ARC",
     "duration_ticks": 400,
-    "power_draw": 32,
+    "power_draw": 128,
     "inputs": [
       {
         "item": "arc_machine_hull",
@@ -11129,7 +11369,7 @@
         "count": 1
       }
     ],
-    "unlocked_by": "tech_vlt_fabrication"
+    "unlocked_by": "tech_arc_fabrication"
   },
   {
     "id": "build_pls_electrolyzer",
@@ -11262,9 +11502,9 @@
   {
     "id": "build_vlt_cutter",
     "machine": "assembler",
-    "tier": "STM",
+    "tier": "ARC",
     "duration_ticks": 400,
-    "power_draw": 8,
+    "power_draw": 128,
     "inputs": [
       {
         "item": "vlt_machine_hull",
@@ -11293,14 +11533,14 @@
         "count": 1
       }
     ],
-    "unlocked_by": "tech_stm_fabrication"
+    "unlocked_by": "tech_arc_fabrication"
   },
   {
     "id": "build_arc_cutter",
     "machine": "assembler",
-    "tier": "VLT",
+    "tier": "ARC",
     "duration_ticks": 400,
-    "power_draw": 32,
+    "power_draw": 128,
     "inputs": [
       {
         "item": "arc_machine_hull",
@@ -11329,7 +11569,7 @@
         "count": 1
       }
     ],
-    "unlocked_by": "tech_vlt_fabrication"
+    "unlocked_by": "tech_arc_fabrication"
   },
   {
     "id": "build_pls_cutter",
@@ -11370,9 +11610,9 @@
   {
     "id": "build_arc_centrifuge",
     "machine": "assembler",
-    "tier": "VLT",
+    "tier": "ARC",
     "duration_ticks": 400,
-    "power_draw": 32,
+    "power_draw": 128,
     "inputs": [
       {
         "item": "arc_machine_hull",
@@ -11397,7 +11637,7 @@
         "count": 1
       }
     ],
-    "unlocked_by": "tech_vlt_fabrication"
+    "unlocked_by": "tech_arc_fabrication"
   },
   {
     "id": "build_pls_centrifuge",
@@ -11528,11 +11768,39 @@
     "unlocked_by": "tech_qnt_fabrication"
   },
   {
+    "id": "build_stm_distillery",
+    "machine": "manual_crafting",
+    "tier": "MAN",
+    "duration_ticks": 400,
+    "power_draw": 0,
+    "inputs": [
+      {
+        "item": "stm_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "stm_cable",
+        "count": 4
+      },
+      {
+        "item": "stm_pump",
+        "count": 2
+      }
+    ],
+    "outputs": [
+      {
+        "item": "stm_distillery",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_man_fabrication"
+  },
+  {
     "id": "build_vlt_distillery",
     "machine": "assembler",
-    "tier": "STM",
+    "tier": "ARC",
     "duration_ticks": 400,
-    "power_draw": 8,
+    "power_draw": 128,
     "inputs": [
       {
         "item": "vlt_machine_hull",
@@ -11557,14 +11825,14 @@
         "count": 1
       }
     ],
-    "unlocked_by": "tech_stm_fabrication"
+    "unlocked_by": "tech_arc_fabrication"
   },
   {
     "id": "build_arc_distillery",
     "machine": "assembler",
-    "tier": "VLT",
+    "tier": "ARC",
     "duration_ticks": 400,
-    "power_draw": 32,
+    "power_draw": 128,
     "inputs": [
       {
         "item": "arc_machine_hull",
@@ -11589,7 +11857,7 @@
         "count": 1
       }
     ],
-    "unlocked_by": "tech_vlt_fabrication"
+    "unlocked_by": "tech_arc_fabrication"
   },
   {
     "id": "build_pls_distillery",
@@ -11690,9 +11958,9 @@
   {
     "id": "build_arc_arc_furnace",
     "machine": "assembler",
-    "tier": "VLT",
+    "tier": "ARC",
     "duration_ticks": 400,
-    "power_draw": 32,
+    "power_draw": 128,
     "inputs": [
       {
         "item": "arc_machine_hull",
@@ -11717,7 +11985,7 @@
         "count": 1
       }
     ],
-    "unlocked_by": "tech_vlt_fabrication"
+    "unlocked_by": "tech_arc_fabrication"
   },
   {
     "id": "build_pls_arc_furnace",
@@ -12168,6 +12436,1646 @@
     "unlocked_by": "tech_qnt_fabrication"
   },
   {
+    "id": "build_arc_vacuum_distillation",
+    "machine": "assembler",
+    "tier": "ARC",
+    "duration_ticks": 400,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "arc_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "arc_circuit",
+        "count": 2
+      },
+      {
+        "item": "arc_cable",
+        "count": 4
+      },
+      {
+        "item": "arc_pump",
+        "count": 3
+      }
+    ],
+    "outputs": [
+      {
+        "item": "arc_vacuum_distillation",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_fabrication"
+  },
+  {
+    "id": "build_pls_vacuum_distillation",
+    "machine": "assembler",
+    "tier": "ARC",
+    "duration_ticks": 400,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "pls_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "pls_circuit",
+        "count": 2
+      },
+      {
+        "item": "pls_cable",
+        "count": 4
+      },
+      {
+        "item": "pls_pump",
+        "count": 3
+      }
+    ],
+    "outputs": [
+      {
+        "item": "pls_vacuum_distillation",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_fabrication"
+  },
+  {
+    "id": "build_fus_vacuum_distillation",
+    "machine": "assembler",
+    "tier": "PLS",
+    "duration_ticks": 400,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "fus_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "fus_circuit",
+        "count": 2
+      },
+      {
+        "item": "fus_cable",
+        "count": 4
+      },
+      {
+        "item": "fus_pump",
+        "count": 3
+      }
+    ],
+    "outputs": [
+      {
+        "item": "fus_vacuum_distillation",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_pls_fabrication"
+  },
+  {
+    "id": "build_qnt_vacuum_distillation",
+    "machine": "assembler",
+    "tier": "FUS",
+    "duration_ticks": 400,
+    "power_draw": 2048,
+    "inputs": [
+      {
+        "item": "qnt_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "qnt_circuit",
+        "count": 2
+      },
+      {
+        "item": "qnt_cable",
+        "count": 4
+      },
+      {
+        "item": "qnt_pump",
+        "count": 3
+      }
+    ],
+    "outputs": [
+      {
+        "item": "qnt_vacuum_distillation",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_fus_fabrication"
+  },
+  {
+    "id": "build_vlt_steam_cracker",
+    "machine": "assembler",
+    "tier": "ARC",
+    "duration_ticks": 400,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "vlt_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "vlt_circuit",
+        "count": 2
+      },
+      {
+        "item": "vlt_cable",
+        "count": 4
+      },
+      {
+        "item": "vlt_pump",
+        "count": 2
+      },
+      {
+        "item": "vlt_motor",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "vlt_steam_cracker",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_fabrication"
+  },
+  {
+    "id": "build_arc_steam_cracker",
+    "machine": "assembler",
+    "tier": "ARC",
+    "duration_ticks": 400,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "arc_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "arc_circuit",
+        "count": 2
+      },
+      {
+        "item": "arc_cable",
+        "count": 4
+      },
+      {
+        "item": "arc_pump",
+        "count": 2
+      },
+      {
+        "item": "arc_motor",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "arc_steam_cracker",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_fabrication"
+  },
+  {
+    "id": "build_pls_steam_cracker",
+    "machine": "assembler",
+    "tier": "ARC",
+    "duration_ticks": 400,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "pls_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "pls_circuit",
+        "count": 2
+      },
+      {
+        "item": "pls_cable",
+        "count": 4
+      },
+      {
+        "item": "pls_pump",
+        "count": 2
+      },
+      {
+        "item": "pls_motor",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "pls_steam_cracker",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_fabrication"
+  },
+  {
+    "id": "build_fus_steam_cracker",
+    "machine": "assembler",
+    "tier": "PLS",
+    "duration_ticks": 400,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "fus_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "fus_circuit",
+        "count": 2
+      },
+      {
+        "item": "fus_cable",
+        "count": 4
+      },
+      {
+        "item": "fus_pump",
+        "count": 2
+      },
+      {
+        "item": "fus_motor",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "fus_steam_cracker",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_pls_fabrication"
+  },
+  {
+    "id": "build_qnt_steam_cracker",
+    "machine": "assembler",
+    "tier": "FUS",
+    "duration_ticks": 400,
+    "power_draw": 2048,
+    "inputs": [
+      {
+        "item": "qnt_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "qnt_circuit",
+        "count": 2
+      },
+      {
+        "item": "qnt_cable",
+        "count": 4
+      },
+      {
+        "item": "qnt_pump",
+        "count": 2
+      },
+      {
+        "item": "qnt_motor",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "qnt_steam_cracker",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_fus_fabrication"
+  },
+  {
+    "id": "build_arc_catalytic_reformer",
+    "machine": "assembler",
+    "tier": "ARC",
+    "duration_ticks": 400,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "arc_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "arc_circuit",
+        "count": 2
+      },
+      {
+        "item": "arc_cable",
+        "count": 4
+      },
+      {
+        "item": "arc_pump",
+        "count": 2
+      },
+      {
+        "item": "arc_motor",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "arc_catalytic_reformer",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_fabrication"
+  },
+  {
+    "id": "build_pls_catalytic_reformer",
+    "machine": "assembler",
+    "tier": "ARC",
+    "duration_ticks": 400,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "pls_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "pls_circuit",
+        "count": 2
+      },
+      {
+        "item": "pls_cable",
+        "count": 4
+      },
+      {
+        "item": "pls_pump",
+        "count": 2
+      },
+      {
+        "item": "pls_motor",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "pls_catalytic_reformer",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_fabrication"
+  },
+  {
+    "id": "build_fus_catalytic_reformer",
+    "machine": "assembler",
+    "tier": "PLS",
+    "duration_ticks": 400,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "fus_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "fus_circuit",
+        "count": 2
+      },
+      {
+        "item": "fus_cable",
+        "count": 4
+      },
+      {
+        "item": "fus_pump",
+        "count": 2
+      },
+      {
+        "item": "fus_motor",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "fus_catalytic_reformer",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_pls_fabrication"
+  },
+  {
+    "id": "build_qnt_catalytic_reformer",
+    "machine": "assembler",
+    "tier": "FUS",
+    "duration_ticks": 400,
+    "power_draw": 2048,
+    "inputs": [
+      {
+        "item": "qnt_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "qnt_circuit",
+        "count": 2
+      },
+      {
+        "item": "qnt_cable",
+        "count": 4
+      },
+      {
+        "item": "qnt_pump",
+        "count": 2
+      },
+      {
+        "item": "qnt_motor",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "qnt_catalytic_reformer",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_fus_fabrication"
+  },
+  {
+    "id": "build_pls_fcc_unit",
+    "machine": "assembler",
+    "tier": "ARC",
+    "duration_ticks": 400,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "pls_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "pls_circuit",
+        "count": 2
+      },
+      {
+        "item": "pls_cable",
+        "count": 4
+      },
+      {
+        "item": "pls_pump",
+        "count": 3
+      },
+      {
+        "item": "pls_motor",
+        "count": 2
+      }
+    ],
+    "outputs": [
+      {
+        "item": "pls_fcc_unit",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_fabrication"
+  },
+  {
+    "id": "build_fus_fcc_unit",
+    "machine": "assembler",
+    "tier": "PLS",
+    "duration_ticks": 400,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "fus_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "fus_circuit",
+        "count": 2
+      },
+      {
+        "item": "fus_cable",
+        "count": 4
+      },
+      {
+        "item": "fus_pump",
+        "count": 3
+      },
+      {
+        "item": "fus_motor",
+        "count": 2
+      }
+    ],
+    "outputs": [
+      {
+        "item": "fus_fcc_unit",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_pls_fabrication"
+  },
+  {
+    "id": "build_qnt_fcc_unit",
+    "machine": "assembler",
+    "tier": "FUS",
+    "duration_ticks": 400,
+    "power_draw": 2048,
+    "inputs": [
+      {
+        "item": "qnt_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "qnt_circuit",
+        "count": 2
+      },
+      {
+        "item": "qnt_cable",
+        "count": 4
+      },
+      {
+        "item": "qnt_pump",
+        "count": 3
+      },
+      {
+        "item": "qnt_motor",
+        "count": 2
+      }
+    ],
+    "outputs": [
+      {
+        "item": "qnt_fcc_unit",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_fus_fabrication"
+  },
+  {
+    "id": "build_arc_hydrotreater",
+    "machine": "assembler",
+    "tier": "ARC",
+    "duration_ticks": 400,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "arc_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "arc_circuit",
+        "count": 2
+      },
+      {
+        "item": "arc_cable",
+        "count": 4
+      },
+      {
+        "item": "arc_pump",
+        "count": 2
+      }
+    ],
+    "outputs": [
+      {
+        "item": "arc_hydrotreater",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_fabrication"
+  },
+  {
+    "id": "build_pls_hydrotreater",
+    "machine": "assembler",
+    "tier": "ARC",
+    "duration_ticks": 400,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "pls_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "pls_circuit",
+        "count": 2
+      },
+      {
+        "item": "pls_cable",
+        "count": 4
+      },
+      {
+        "item": "pls_pump",
+        "count": 2
+      }
+    ],
+    "outputs": [
+      {
+        "item": "pls_hydrotreater",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_fabrication"
+  },
+  {
+    "id": "build_fus_hydrotreater",
+    "machine": "assembler",
+    "tier": "PLS",
+    "duration_ticks": 400,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "fus_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "fus_circuit",
+        "count": 2
+      },
+      {
+        "item": "fus_cable",
+        "count": 4
+      },
+      {
+        "item": "fus_pump",
+        "count": 2
+      }
+    ],
+    "outputs": [
+      {
+        "item": "fus_hydrotreater",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_pls_fabrication"
+  },
+  {
+    "id": "build_qnt_hydrotreater",
+    "machine": "assembler",
+    "tier": "FUS",
+    "duration_ticks": 400,
+    "power_draw": 2048,
+    "inputs": [
+      {
+        "item": "qnt_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "qnt_circuit",
+        "count": 2
+      },
+      {
+        "item": "qnt_cable",
+        "count": 4
+      },
+      {
+        "item": "qnt_pump",
+        "count": 2
+      }
+    ],
+    "outputs": [
+      {
+        "item": "qnt_hydrotreater",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_fus_fabrication"
+  },
+  {
+    "id": "build_arc_claus_unit",
+    "machine": "assembler",
+    "tier": "ARC",
+    "duration_ticks": 400,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "arc_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "arc_circuit",
+        "count": 2
+      },
+      {
+        "item": "arc_cable",
+        "count": 4
+      },
+      {
+        "item": "arc_pump",
+        "count": 2
+      }
+    ],
+    "outputs": [
+      {
+        "item": "arc_claus_unit",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_fabrication"
+  },
+  {
+    "id": "build_pls_claus_unit",
+    "machine": "assembler",
+    "tier": "ARC",
+    "duration_ticks": 400,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "pls_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "pls_circuit",
+        "count": 2
+      },
+      {
+        "item": "pls_cable",
+        "count": 4
+      },
+      {
+        "item": "pls_pump",
+        "count": 2
+      }
+    ],
+    "outputs": [
+      {
+        "item": "pls_claus_unit",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_fabrication"
+  },
+  {
+    "id": "build_fus_claus_unit",
+    "machine": "assembler",
+    "tier": "PLS",
+    "duration_ticks": 400,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "fus_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "fus_circuit",
+        "count": 2
+      },
+      {
+        "item": "fus_cable",
+        "count": 4
+      },
+      {
+        "item": "fus_pump",
+        "count": 2
+      }
+    ],
+    "outputs": [
+      {
+        "item": "fus_claus_unit",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_pls_fabrication"
+  },
+  {
+    "id": "build_pls_coker",
+    "machine": "assembler",
+    "tier": "ARC",
+    "duration_ticks": 400,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "pls_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "pls_circuit",
+        "count": 2
+      },
+      {
+        "item": "pls_cable",
+        "count": 4
+      },
+      {
+        "item": "pls_pump",
+        "count": 2
+      },
+      {
+        "item": "pls_motor",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "pls_coker",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_fabrication"
+  },
+  {
+    "id": "build_fus_coker",
+    "machine": "assembler",
+    "tier": "PLS",
+    "duration_ticks": 400,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "fus_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "fus_circuit",
+        "count": 2
+      },
+      {
+        "item": "fus_cable",
+        "count": 4
+      },
+      {
+        "item": "fus_pump",
+        "count": 2
+      },
+      {
+        "item": "fus_motor",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "fus_coker",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_pls_fabrication"
+  },
+  {
+    "id": "build_qnt_coker",
+    "machine": "assembler",
+    "tier": "FUS",
+    "duration_ticks": 400,
+    "power_draw": 2048,
+    "inputs": [
+      {
+        "item": "qnt_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "qnt_circuit",
+        "count": 2
+      },
+      {
+        "item": "qnt_cable",
+        "count": 4
+      },
+      {
+        "item": "qnt_pump",
+        "count": 2
+      },
+      {
+        "item": "qnt_motor",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "qnt_coker",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_fus_fabrication"
+  },
+  {
+    "id": "build_stm_gasifier",
+    "machine": "manual_crafting",
+    "tier": "MAN",
+    "duration_ticks": 400,
+    "power_draw": 0,
+    "inputs": [
+      {
+        "item": "stm_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "stm_cable",
+        "count": 4
+      },
+      {
+        "item": "stm_pump",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "stm_gasifier",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_man_fabrication"
+  },
+  {
+    "id": "build_vlt_gasifier",
+    "machine": "assembler",
+    "tier": "ARC",
+    "duration_ticks": 400,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "vlt_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "vlt_circuit",
+        "count": 2
+      },
+      {
+        "item": "vlt_cable",
+        "count": 4
+      },
+      {
+        "item": "vlt_pump",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "vlt_gasifier",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_fabrication"
+  },
+  {
+    "id": "build_arc_gasifier",
+    "machine": "assembler",
+    "tier": "ARC",
+    "duration_ticks": 400,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "arc_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "arc_circuit",
+        "count": 2
+      },
+      {
+        "item": "arc_cable",
+        "count": 4
+      },
+      {
+        "item": "arc_pump",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "arc_gasifier",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_fabrication"
+  },
+  {
+    "id": "build_pls_gasifier",
+    "machine": "assembler",
+    "tier": "ARC",
+    "duration_ticks": 400,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "pls_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "pls_circuit",
+        "count": 2
+      },
+      {
+        "item": "pls_cable",
+        "count": 4
+      },
+      {
+        "item": "pls_pump",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "pls_gasifier",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_fabrication"
+  },
+  {
+    "id": "build_stm_polymerizer",
+    "machine": "manual_crafting",
+    "tier": "MAN",
+    "duration_ticks": 400,
+    "power_draw": 0,
+    "inputs": [
+      {
+        "item": "stm_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "stm_cable",
+        "count": 4
+      },
+      {
+        "item": "stm_pump",
+        "count": 2
+      },
+      {
+        "item": "stm_motor",
+        "count": 2
+      }
+    ],
+    "outputs": [
+      {
+        "item": "stm_polymerizer",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_man_fabrication"
+  },
+  {
+    "id": "build_vlt_polymerizer",
+    "machine": "assembler",
+    "tier": "ARC",
+    "duration_ticks": 400,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "vlt_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "vlt_circuit",
+        "count": 2
+      },
+      {
+        "item": "vlt_cable",
+        "count": 4
+      },
+      {
+        "item": "vlt_pump",
+        "count": 2
+      },
+      {
+        "item": "vlt_motor",
+        "count": 2
+      }
+    ],
+    "outputs": [
+      {
+        "item": "vlt_polymerizer",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_fabrication"
+  },
+  {
+    "id": "build_arc_polymerizer",
+    "machine": "assembler",
+    "tier": "ARC",
+    "duration_ticks": 400,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "arc_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "arc_circuit",
+        "count": 2
+      },
+      {
+        "item": "arc_cable",
+        "count": 4
+      },
+      {
+        "item": "arc_pump",
+        "count": 2
+      },
+      {
+        "item": "arc_motor",
+        "count": 2
+      }
+    ],
+    "outputs": [
+      {
+        "item": "arc_polymerizer",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_fabrication"
+  },
+  {
+    "id": "build_pls_polymerizer",
+    "machine": "assembler",
+    "tier": "ARC",
+    "duration_ticks": 400,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "pls_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "pls_circuit",
+        "count": 2
+      },
+      {
+        "item": "pls_cable",
+        "count": 4
+      },
+      {
+        "item": "pls_pump",
+        "count": 2
+      },
+      {
+        "item": "pls_motor",
+        "count": 2
+      }
+    ],
+    "outputs": [
+      {
+        "item": "pls_polymerizer",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_fabrication"
+  },
+  {
+    "id": "build_fus_polymerizer",
+    "machine": "assembler",
+    "tier": "PLS",
+    "duration_ticks": 400,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "fus_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "fus_circuit",
+        "count": 2
+      },
+      {
+        "item": "fus_cable",
+        "count": 4
+      },
+      {
+        "item": "fus_pump",
+        "count": 2
+      },
+      {
+        "item": "fus_motor",
+        "count": 2
+      }
+    ],
+    "outputs": [
+      {
+        "item": "fus_polymerizer",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_pls_fabrication"
+  },
+  {
+    "id": "build_qnt_polymerizer",
+    "machine": "assembler",
+    "tier": "FUS",
+    "duration_ticks": 400,
+    "power_draw": 2048,
+    "inputs": [
+      {
+        "item": "qnt_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "qnt_circuit",
+        "count": 2
+      },
+      {
+        "item": "qnt_cable",
+        "count": 4
+      },
+      {
+        "item": "qnt_pump",
+        "count": 2
+      },
+      {
+        "item": "qnt_motor",
+        "count": 2
+      }
+    ],
+    "outputs": [
+      {
+        "item": "qnt_polymerizer",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_fus_fabrication"
+  },
+  {
+    "id": "build_sng_polymerizer",
+    "machine": "assembler",
+    "tier": "QNT",
+    "duration_ticks": 400,
+    "power_draw": 8192,
+    "inputs": [
+      {
+        "item": "sng_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "sng_circuit",
+        "count": 2
+      },
+      {
+        "item": "sng_cable",
+        "count": 4
+      },
+      {
+        "item": "sng_pump",
+        "count": 2
+      },
+      {
+        "item": "sng_motor",
+        "count": 2
+      }
+    ],
+    "outputs": [
+      {
+        "item": "sng_polymerizer",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_qnt_fabrication"
+  },
+  {
+    "id": "build_pls_spinneret",
+    "machine": "assembler",
+    "tier": "ARC",
+    "duration_ticks": 400,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "pls_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "pls_circuit",
+        "count": 2
+      },
+      {
+        "item": "pls_cable",
+        "count": 4
+      },
+      {
+        "item": "pls_motor",
+        "count": 2
+      },
+      {
+        "item": "pls_conveyor",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "pls_spinneret",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_fabrication"
+  },
+  {
+    "id": "build_fus_spinneret",
+    "machine": "assembler",
+    "tier": "PLS",
+    "duration_ticks": 400,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "fus_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "fus_circuit",
+        "count": 2
+      },
+      {
+        "item": "fus_cable",
+        "count": 4
+      },
+      {
+        "item": "fus_motor",
+        "count": 2
+      },
+      {
+        "item": "fus_conveyor",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "fus_spinneret",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_pls_fabrication"
+  },
+  {
+    "id": "build_qnt_spinneret",
+    "machine": "assembler",
+    "tier": "FUS",
+    "duration_ticks": 400,
+    "power_draw": 2048,
+    "inputs": [
+      {
+        "item": "qnt_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "qnt_circuit",
+        "count": 2
+      },
+      {
+        "item": "qnt_cable",
+        "count": 4
+      },
+      {
+        "item": "qnt_motor",
+        "count": 2
+      },
+      {
+        "item": "qnt_conveyor",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "qnt_spinneret",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_fus_fabrication"
+  },
+  {
+    "id": "build_sng_spinneret",
+    "machine": "assembler",
+    "tier": "QNT",
+    "duration_ticks": 400,
+    "power_draw": 8192,
+    "inputs": [
+      {
+        "item": "sng_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "sng_circuit",
+        "count": 2
+      },
+      {
+        "item": "sng_cable",
+        "count": 4
+      },
+      {
+        "item": "sng_motor",
+        "count": 2
+      },
+      {
+        "item": "sng_conveyor",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "sng_spinneret",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_qnt_fabrication"
+  },
+  {
+    "id": "build_pressure_hull_assembly",
+    "machine": "assembler",
+    "tier": "SNG",
+    "duration_ticks": 1200,
+    "power_draw": 32768,
+    "inputs": [
+      {
+        "item": "collapsium_plate",
+        "count": 8
+      },
+      {
+        "item": "aramid_plate",
+        "count": 6
+      },
+      {
+        "item": "epoxy_ingot",
+        "count": 4
+      },
+      {
+        "item": "graphite",
+        "count": 4
+      }
+    ],
+    "outputs": [
+      {
+        "item": "pressure_hull_assembly",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_sng_fabrication"
+  },
+  {
+    "id": "build_fabrication_core",
+    "machine": "assembler",
+    "tier": "SNG",
+    "duration_ticks": 1600,
+    "power_draw": 32768,
+    "inputs": [
+      {
+        "item": "sng_circuit",
+        "count": 4
+      },
+      {
+        "item": "peek_plate",
+        "count": 6
+      },
+      {
+        "item": "polycarbonate_plate",
+        "count": 4
+      },
+      {
+        "item": "silicone_plate",
+        "count": 2
+      }
+    ],
+    "outputs": [
+      {
+        "item": "fabrication_core",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_sng_fabrication"
+  },
+  {
+    "id": "build_life_support_loop",
+    "machine": "assembler",
+    "tier": "SNG",
+    "duration_ticks": 1000,
+    "power_draw": 32768,
+    "inputs": [
+      {
+        "item": "pet_plate",
+        "count": 4
+      },
+      {
+        "item": "nylon_plate",
+        "count": 4
+      },
+      {
+        "item": "polyurethane_plate",
+        "count": 4
+      },
+      {
+        "item": "ptfe_plate",
+        "count": 3
+      },
+      {
+        "item": "polypropylene_plate",
+        "count": 3
+      }
+    ],
+    "outputs": [
+      {
+        "item": "life_support_loop",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_sng_fabrication"
+  },
+  {
+    "id": "build_cable_harness",
+    "machine": "assembler",
+    "tier": "SNG",
+    "duration_ticks": 900,
+    "power_draw": 32768,
+    "inputs": [
+      {
+        "item": "sng_cable",
+        "count": 8
+      },
+      {
+        "item": "pvc_plate",
+        "count": 6
+      },
+      {
+        "item": "polyethylene_plate",
+        "count": 4
+      },
+      {
+        "item": "bakelite_plate",
+        "count": 2
+      },
+      {
+        "item": "sbr_rubber_plate",
+        "count": 3
+      }
+    ],
+    "outputs": [
+      {
+        "item": "cable_harness",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_sng_fabrication"
+  },
+  {
+    "id": "build_propellant_tank",
+    "machine": "assembler",
+    "tier": "SNG",
+    "duration_ticks": 800,
+    "power_draw": 32768,
+    "inputs": [
+      {
+        "item": "kerosene",
+        "count": 12
+      },
+      {
+        "item": "abs_plate",
+        "count": 4
+      },
+      {
+        "item": "polystyrene_plate",
+        "count": 3
+      },
+      {
+        "item": "titanium_plate",
+        "count": 6
+      }
+    ],
+    "outputs": [
+      {
+        "item": "propellant_tank",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_sng_fabrication"
+  },
+  {
+    "id": "build_von_neumann_seed",
+    "machine": "assembler",
+    "tier": "SNG",
+    "duration_ticks": 4800,
+    "power_draw": 262144,
+    "inputs": [
+      {
+        "item": "pressure_hull_assembly",
+        "count": 1
+      },
+      {
+        "item": "fabrication_core",
+        "count": 1
+      },
+      {
+        "item": "life_support_loop",
+        "count": 1
+      },
+      {
+        "item": "cable_harness",
+        "count": 1
+      },
+      {
+        "item": "propellant_tank",
+        "count": 1
+      },
+      {
+        "item": "sng_machine_hull",
+        "count": 2
+      }
+    ],
+    "outputs": [
+      {
+        "item": "von_neumann_seed",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_sng_fabrication"
+  },
+  {
+    "id": "separate_air",
+    "machine": "chemical_reactor",
+    "tier": "STM",
+    "duration_ticks": 200,
+    "power_draw": 8,
+    "inputs": [
+      {
+        "item": "air",
+        "count": 4
+      }
+    ],
+    "outputs": [
+      {
+        "item": "oxygen",
+        "count": 1
+      },
+      {
+        "item": "nitrogen",
+        "count": 3
+      }
+    ],
+    "unlocked_by": "tech_stm_chemistry"
+  },
+  {
     "id": "boil_water",
     "machine": "boiler",
     "tier": "STM",
@@ -12277,10 +14185,10 @@
   },
   {
     "id": "reduce_silicon",
-    "machine": "furnace",
-    "tier": "STM",
+    "machine": "arc_furnace",
+    "tier": "ARC",
     "duration_ticks": 400,
-    "power_draw": 8,
+    "power_draw": 128,
     "inputs": [
       {
         "item": "quartz_dust",
@@ -12297,69 +14205,89 @@
         "count": 1
       }
     ],
-    "unlocked_by": "tech_stm_chemistry"
+    "unlocked_by": "tech_arc_chemistry"
   },
   {
-    "id": "vulcanize_rubber",
+    "id": "haber_ammonia",
     "machine": "chemical_reactor",
-    "tier": "STM",
-    "duration_ticks": 280,
-    "power_draw": 8,
+    "tier": "ARC",
+    "duration_ticks": 400,
+    "power_draw": 256,
     "inputs": [
       {
-        "item": "crude_oil",
-        "count": 2
+        "item": "nitrogen",
+        "count": 1
       },
       {
-        "item": "sulfur_dust",
-        "count": 1
+        "item": "hydrogen",
+        "count": 3
       }
     ],
     "outputs": [
       {
-        "item": "rubber_ingot",
-        "count": 3
+        "item": "ammonia",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_arc_chemistry"
+  },
+  {
+    "id": "gasify_coal",
+    "machine": "gasifier",
+    "tier": "STM",
+    "duration_ticks": 240,
+    "power_draw": 8,
+    "inputs": [
+      {
+        "item": "coal_deposit",
+        "count": 2
+      },
+      {
+        "item": "steam",
+        "count": 2
+      }
+    ],
+    "outputs": [
+      {
+        "item": "syngas",
+        "count": 4
+      },
+      {
+        "item": "coal_tar",
+        "count": 1
       }
     ],
     "unlocked_by": "tech_stm_chemistry"
   },
   {
-    "id": "distill_crude_oil",
-    "machine": "distillery",
-    "tier": "VLT",
-    "duration_ticks": 240,
-    "power_draw": 32,
+    "id": "synthesise_methanol",
+    "machine": "chemical_reactor",
+    "tier": "STM",
+    "duration_ticks": 320,
+    "power_draw": 8,
     "inputs": [
       {
-        "item": "crude_oil",
+        "item": "syngas",
         "count": 4
       }
     ],
     "outputs": [
       {
-        "item": "naphtha",
+        "item": "methanol",
         "count": 2
-      },
-      {
-        "item": "lubricant",
-        "count": 1
-      },
-      {
-        "item": "fuel_oil",
-        "count": 1
       }
     ],
-    "unlocked_by": "tech_vlt_chemistry"
+    "unlocked_by": "tech_stm_chemistry"
   },
   {
-    "id": "polymerize_plastic",
+    "id": "oxidise_formaldehyde",
     "machine": "chemical_reactor",
-    "tier": "VLT",
-    "duration_ticks": 320,
-    "power_draw": 32,
+    "tier": "STM",
+    "duration_ticks": 260,
+    "power_draw": 8,
     "inputs": [
       {
-        "item": "naphtha",
+        "item": "methanol",
         "count": 2
       },
       {
@@ -12369,11 +14297,1423 @@
     ],
     "outputs": [
       {
-        "item": "plastic_ingot",
+        "item": "formaldehyde",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_stm_chemistry"
+  },
+  {
+    "id": "extract_phenol",
+    "machine": "distillery",
+    "tier": "STM",
+    "duration_ticks": 300,
+    "power_draw": 8,
+    "inputs": [
+      {
+        "item": "coal_tar",
+        "count": 2
+      }
+    ],
+    "outputs": [
+      {
+        "item": "phenol",
+        "count": 1
+      },
+      {
+        "item": "benzene",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_stm_chemistry"
+  },
+  {
+    "id": "cure_bakelite",
+    "machine": "polymerizer",
+    "tier": "STM",
+    "duration_ticks": 420,
+    "power_draw": 8,
+    "inputs": [
+      {
+        "item": "phenol",
+        "count": 2
+      },
+      {
+        "item": "formaldehyde",
         "count": 3
       }
     ],
+    "outputs": [
+      {
+        "item": "bakelite_ingot",
+        "count": 4
+      }
+    ],
+    "unlocked_by": "tech_stm_chemistry"
+  },
+  {
+    "id": "distil_crude",
+    "machine": "distillery",
+    "tier": "VLT",
+    "duration_ticks": 300,
+    "power_draw": 32,
+    "inputs": [
+      {
+        "item": "crude_oil",
+        "count": 12
+      }
+    ],
+    "outputs": [
+      {
+        "item": "refinery_gas",
+        "count": 1
+      },
+      {
+        "item": "naphtha",
+        "count": 4
+      },
+      {
+        "item": "kerosene",
+        "count": 2
+      },
+      {
+        "item": "diesel",
+        "count": 3
+      },
+      {
+        "item": "atmospheric_residue",
+        "count": 2
+      }
+    ],
     "unlocked_by": "tech_vlt_chemistry"
+  },
+  {
+    "id": "split_refinery_gas",
+    "machine": "distillery",
+    "tier": "VLT",
+    "duration_ticks": 160,
+    "power_draw": 32,
+    "inputs": [
+      {
+        "item": "refinery_gas",
+        "count": 2
+      }
+    ],
+    "outputs": [
+      {
+        "item": "methane",
+        "count": 2
+      },
+      {
+        "item": "ethane",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_vlt_chemistry"
+  },
+  {
+    "id": "distil_vacuum",
+    "machine": "vacuum_distillation",
+    "tier": "ARC",
+    "duration_ticks": 320,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "atmospheric_residue",
+        "count": 4
+      }
+    ],
+    "outputs": [
+      {
+        "item": "vacuum_gas_oil",
+        "count": 3
+      },
+      {
+        "item": "vacuum_residue",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_chemistry"
+  },
+  {
+    "id": "hydrotreat_naphtha",
+    "machine": "hydrotreater",
+    "tier": "ARC",
+    "duration_ticks": 280,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "naphtha",
+        "count": 4
+      },
+      {
+        "item": "hydrogen",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "treated_naphtha",
+        "count": 4
+      },
+      {
+        "item": "hydrogen_sulfide",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_chemistry"
+  },
+  {
+    "id": "claus_sulfur",
+    "machine": "claus_unit",
+    "tier": "ARC",
+    "duration_ticks": 240,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "hydrogen_sulfide",
+        "count": 2
+      },
+      {
+        "item": "oxygen",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "sulfur_dust",
+        "count": 2
+      },
+      {
+        "item": "water",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_arc_chemistry"
+  },
+  {
+    "id": "crack_naphtha",
+    "machine": "steam_cracker",
+    "tier": "ARC",
+    "duration_ticks": 360,
+    "power_draw": 256,
+    "inputs": [
+      {
+        "item": "treated_naphtha",
+        "count": 6
+      },
+      {
+        "item": "steam",
+        "count": 4
+      }
+    ],
+    "outputs": [
+      {
+        "item": "ethylene",
+        "count": 3
+      },
+      {
+        "item": "propylene",
+        "count": 2
+      },
+      {
+        "item": "butadiene",
+        "count": 1
+      },
+      {
+        "item": "pyrolysis_gasoline",
+        "count": 2
+      },
+      {
+        "item": "hydrogen",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_chemistry"
+  },
+  {
+    "id": "reform_naphtha",
+    "machine": "catalytic_reformer",
+    "tier": "ARC",
+    "duration_ticks": 340,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "treated_naphtha",
+        "count": 4
+      }
+    ],
+    "outputs": [
+      {
+        "item": "benzene",
+        "count": 1
+      },
+      {
+        "item": "toluene",
+        "count": 1
+      },
+      {
+        "item": "xylene",
+        "count": 1
+      },
+      {
+        "item": "hydrogen",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_arc_chemistry"
+  },
+  {
+    "id": "extract_aromatics",
+    "machine": "distillery",
+    "tier": "ARC",
+    "duration_ticks": 220,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "pyrolysis_gasoline",
+        "count": 3
+      }
+    ],
+    "outputs": [
+      {
+        "item": "benzene",
+        "count": 2
+      },
+      {
+        "item": "toluene",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_chemistry"
+  },
+  {
+    "id": "crack_catalytic",
+    "machine": "fcc_unit",
+    "tier": "PLS",
+    "duration_ticks": 360,
+    "power_draw": 1024,
+    "inputs": [
+      {
+        "item": "vacuum_gas_oil",
+        "count": 6
+      }
+    ],
+    "outputs": [
+      {
+        "item": "propylene",
+        "count": 2
+      },
+      {
+        "item": "butylene",
+        "count": 1
+      },
+      {
+        "item": "fcc_slurry",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_pls_chemistry"
+  },
+  {
+    "id": "coke_residue",
+    "machine": "coker",
+    "tier": "PLS",
+    "duration_ticks": 400,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "vacuum_residue",
+        "count": 4
+      }
+    ],
+    "outputs": [
+      {
+        "item": "petroleum_coke",
+        "count": 2
+      },
+      {
+        "item": "refinery_gas",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_pls_chemistry"
+  },
+  {
+    "id": "furnace_black",
+    "machine": "chemical_reactor",
+    "tier": "PLS",
+    "duration_ticks": 300,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "diesel",
+        "count": 3
+      },
+      {
+        "item": "fcc_slurry",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "carbon_black",
+        "count": 4
+      }
+    ],
+    "unlocked_by": "tech_pls_chemistry"
+  },
+  {
+    "id": "graphitise_coke",
+    "machine": "arc_furnace",
+    "tier": "FUS",
+    "duration_ticks": 600,
+    "power_draw": 4096,
+    "inputs": [
+      {
+        "item": "petroleum_coke",
+        "count": 3
+      }
+    ],
+    "outputs": [
+      {
+        "item": "graphite",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_fus_chemistry"
+  },
+  {
+    "id": "chlorinate_ethylene",
+    "machine": "chemical_reactor",
+    "tier": "VLT",
+    "duration_ticks": 260,
+    "power_draw": 32,
+    "inputs": [
+      {
+        "item": "ethylene",
+        "count": 2
+      },
+      {
+        "item": "chlorine",
+        "count": 2
+      }
+    ],
+    "outputs": [
+      {
+        "item": "ethylene_dichloride",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_vlt_chemistry"
+  },
+  {
+    "id": "crack_vcm",
+    "machine": "steam_cracker",
+    "tier": "VLT",
+    "duration_ticks": 280,
+    "power_draw": 32,
+    "inputs": [
+      {
+        "item": "ethylene_dichloride",
+        "count": 2
+      }
+    ],
+    "outputs": [
+      {
+        "item": "vinyl_chloride",
+        "count": 2
+      },
+      {
+        "item": "hydrogen",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_vlt_chemistry"
+  },
+  {
+    "id": "polymerise_pvc",
+    "machine": "polymerizer",
+    "tier": "VLT",
+    "duration_ticks": 380,
+    "power_draw": 32,
+    "inputs": [
+      {
+        "item": "vinyl_chloride",
+        "count": 3
+      }
+    ],
+    "outputs": [
+      {
+        "item": "pvc_ingot",
+        "count": 4
+      }
+    ],
+    "unlocked_by": "tech_vlt_chemistry"
+  },
+  {
+    "id": "polymerise_polyethylene",
+    "machine": "polymerizer",
+    "tier": "ARC",
+    "duration_ticks": 360,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "ethylene",
+        "count": 3
+      }
+    ],
+    "outputs": [
+      {
+        "item": "polyethylene_ingot",
+        "count": 4
+      }
+    ],
+    "unlocked_by": "tech_arc_chemistry"
+  },
+  {
+    "id": "polymerise_polypropylene",
+    "machine": "polymerizer",
+    "tier": "ARC",
+    "duration_ticks": 360,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "propylene",
+        "count": 3
+      }
+    ],
+    "outputs": [
+      {
+        "item": "polypropylene_ingot",
+        "count": 4
+      }
+    ],
+    "unlocked_by": "tech_arc_chemistry"
+  },
+  {
+    "id": "alkylate_ethylbenzene",
+    "machine": "chemical_reactor",
+    "tier": "ARC",
+    "duration_ticks": 300,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "ethylene",
+        "count": 1
+      },
+      {
+        "item": "benzene",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "ethylbenzene",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_arc_chemistry"
+  },
+  {
+    "id": "dehydrogenate_styrene",
+    "machine": "chemical_reactor",
+    "tier": "ARC",
+    "duration_ticks": 320,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "ethylbenzene",
+        "count": 2
+      }
+    ],
+    "outputs": [
+      {
+        "item": "styrene",
+        "count": 2
+      },
+      {
+        "item": "hydrogen",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_chemistry"
+  },
+  {
+    "id": "polymerise_polystyrene",
+    "machine": "polymerizer",
+    "tier": "ARC",
+    "duration_ticks": 360,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "styrene",
+        "count": 3
+      }
+    ],
+    "outputs": [
+      {
+        "item": "polystyrene_ingot",
+        "count": 4
+      }
+    ],
+    "unlocked_by": "tech_arc_chemistry"
+  },
+  {
+    "id": "copolymerise_sbr",
+    "machine": "polymerizer",
+    "tier": "PLS",
+    "duration_ticks": 420,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "butadiene",
+        "count": 3
+      },
+      {
+        "item": "styrene",
+        "count": 1
+      },
+      {
+        "item": "carbon_black",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "sbr_rubber_ingot",
+        "count": 4
+      }
+    ],
+    "unlocked_by": "tech_pls_chemistry"
+  },
+  {
+    "id": "oxidise_ethylene_oxide",
+    "machine": "chemical_reactor",
+    "tier": "PLS",
+    "duration_ticks": 300,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "ethylene",
+        "count": 2
+      },
+      {
+        "item": "oxygen",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "ethylene_oxide",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_pls_chemistry"
+  },
+  {
+    "id": "hydrate_ethylene_glycol",
+    "machine": "chemical_reactor",
+    "tier": "PLS",
+    "duration_ticks": 280,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "ethylene_oxide",
+        "count": 2
+      },
+      {
+        "item": "water",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "ethylene_glycol",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_pls_chemistry"
+  },
+  {
+    "id": "oxidise_terephthalic_acid",
+    "machine": "chemical_reactor",
+    "tier": "PLS",
+    "duration_ticks": 340,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "xylene",
+        "count": 2
+      },
+      {
+        "item": "oxygen",
+        "count": 3
+      }
+    ],
+    "outputs": [
+      {
+        "item": "terephthalic_acid",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_pls_chemistry"
+  },
+  {
+    "id": "polymerise_pet",
+    "machine": "polymerizer",
+    "tier": "PLS",
+    "duration_ticks": 400,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "terephthalic_acid",
+        "count": 2
+      },
+      {
+        "item": "ethylene_glycol",
+        "count": 2
+      }
+    ],
+    "outputs": [
+      {
+        "item": "pet_ingot",
+        "count": 4
+      }
+    ],
+    "unlocked_by": "tech_pls_chemistry"
+  },
+  {
+    "id": "ammoxidise_acrylonitrile",
+    "machine": "chemical_reactor",
+    "tier": "PLS",
+    "duration_ticks": 340,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "propylene",
+        "count": 2
+      },
+      {
+        "item": "ammonia",
+        "count": 2
+      },
+      {
+        "item": "oxygen",
+        "count": 3
+      }
+    ],
+    "outputs": [
+      {
+        "item": "acrylonitrile",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_pls_chemistry"
+  },
+  {
+    "id": "polymerise_abs",
+    "machine": "polymerizer",
+    "tier": "PLS",
+    "duration_ticks": 420,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "acrylonitrile",
+        "count": 1
+      },
+      {
+        "item": "butadiene",
+        "count": 1
+      },
+      {
+        "item": "styrene",
+        "count": 2
+      }
+    ],
+    "outputs": [
+      {
+        "item": "abs_ingot",
+        "count": 4
+      }
+    ],
+    "unlocked_by": "tech_pls_chemistry"
+  },
+  {
+    "id": "hydrogenate_cyclohexane",
+    "machine": "chemical_reactor",
+    "tier": "PLS",
+    "duration_ticks": 300,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "benzene",
+        "count": 2
+      },
+      {
+        "item": "hydrogen",
+        "count": 3
+      }
+    ],
+    "outputs": [
+      {
+        "item": "cyclohexane",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_pls_chemistry"
+  },
+  {
+    "id": "oxidise_adipic_acid",
+    "machine": "chemical_reactor",
+    "tier": "PLS",
+    "duration_ticks": 340,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "cyclohexane",
+        "count": 2
+      },
+      {
+        "item": "oxygen",
+        "count": 3
+      }
+    ],
+    "outputs": [
+      {
+        "item": "adipic_acid",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_pls_chemistry"
+  },
+  {
+    "id": "aminate_hmda",
+    "machine": "chemical_reactor",
+    "tier": "PLS",
+    "duration_ticks": 360,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "butadiene",
+        "count": 2
+      },
+      {
+        "item": "ammonia",
+        "count": 2
+      },
+      {
+        "item": "hydrogen",
+        "count": 2
+      }
+    ],
+    "outputs": [
+      {
+        "item": "hexamethylenediamine",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_pls_chemistry"
+  },
+  {
+    "id": "polymerise_nylon",
+    "machine": "polymerizer",
+    "tier": "PLS",
+    "duration_ticks": 420,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "adipic_acid",
+        "count": 2
+      },
+      {
+        "item": "hexamethylenediamine",
+        "count": 2
+      }
+    ],
+    "outputs": [
+      {
+        "item": "nylon_ingot",
+        "count": 4
+      }
+    ],
+    "unlocked_by": "tech_pls_chemistry"
+  },
+  {
+    "id": "alkylate_cumene",
+    "machine": "chemical_reactor",
+    "tier": "ARC",
+    "duration_ticks": 300,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "benzene",
+        "count": 1
+      },
+      {
+        "item": "propylene",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "cumene",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_arc_chemistry"
+  },
+  {
+    "id": "cumene_to_bpa",
+    "machine": "chemical_reactor",
+    "tier": "PLS",
+    "duration_ticks": 360,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "cumene",
+        "count": 2
+      },
+      {
+        "item": "oxygen",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "bisphenol_a",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_pls_chemistry"
+  },
+  {
+    "id": "make_phosgene",
+    "machine": "chemical_reactor",
+    "tier": "PLS",
+    "duration_ticks": 280,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "carbon_monoxide",
+        "count": 1
+      },
+      {
+        "item": "chlorine",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "phosgene",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_pls_chemistry"
+  },
+  {
+    "id": "polymerise_polycarbonate",
+    "machine": "polymerizer",
+    "tier": "PLS",
+    "duration_ticks": 440,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "bisphenol_a",
+        "count": 2
+      },
+      {
+        "item": "phosgene",
+        "count": 2
+      }
+    ],
+    "outputs": [
+      {
+        "item": "polycarbonate_ingot",
+        "count": 4
+      }
+    ],
+    "unlocked_by": "tech_pls_chemistry"
+  },
+  {
+    "id": "make_carbon_monoxide",
+    "machine": "chemical_reactor",
+    "tier": "VLT",
+    "duration_ticks": 220,
+    "power_draw": 32,
+    "inputs": [
+      {
+        "item": "coal_dust",
+        "count": 1
+      },
+      {
+        "item": "oxygen",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "carbon_monoxide",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_vlt_chemistry"
+  },
+  {
+    "id": "make_hydrogen_fluoride",
+    "machine": "chemical_reactor",
+    "tier": "PLS",
+    "duration_ticks": 300,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "fluorite_dust",
+        "count": 2
+      },
+      {
+        "item": "sulfuric_acid",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "hydrogen_fluoride",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_pls_chemistry"
+  },
+  {
+    "id": "chlorinate_methane",
+    "machine": "chemical_reactor",
+    "tier": "PLS",
+    "duration_ticks": 280,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "methane",
+        "count": 2
+      },
+      {
+        "item": "chlorine",
+        "count": 3
+      }
+    ],
+    "outputs": [
+      {
+        "item": "chloroform",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_pls_chemistry"
+  },
+  {
+    "id": "make_r22",
+    "machine": "chemical_reactor",
+    "tier": "PLS",
+    "duration_ticks": 300,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "chloroform",
+        "count": 2
+      },
+      {
+        "item": "hydrogen_fluoride",
+        "count": 2
+      }
+    ],
+    "outputs": [
+      {
+        "item": "chlorodifluoromethane",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_pls_chemistry"
+  },
+  {
+    "id": "pyrolyse_tfe",
+    "machine": "steam_cracker",
+    "tier": "PLS",
+    "duration_ticks": 340,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "chlorodifluoromethane",
+        "count": 2
+      }
+    ],
+    "outputs": [
+      {
+        "item": "tetrafluoroethylene",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_pls_chemistry"
+  },
+  {
+    "id": "polymerise_ptfe",
+    "machine": "polymerizer",
+    "tier": "PLS",
+    "duration_ticks": 440,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "tetrafluoroethylene",
+        "count": 3
+      }
+    ],
+    "outputs": [
+      {
+        "item": "ptfe_ingot",
+        "count": 4
+      }
+    ],
+    "unlocked_by": "tech_pls_chemistry"
+  },
+  {
+    "id": "make_epichlorohydrin",
+    "machine": "chemical_reactor",
+    "tier": "FUS",
+    "duration_ticks": 320,
+    "power_draw": 2048,
+    "inputs": [
+      {
+        "item": "propylene",
+        "count": 2
+      },
+      {
+        "item": "chlorine",
+        "count": 2
+      },
+      {
+        "item": "water",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "epichlorohydrin",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_fus_chemistry"
+  },
+  {
+    "id": "cure_epoxy",
+    "machine": "polymerizer",
+    "tier": "FUS",
+    "duration_ticks": 420,
+    "power_draw": 2048,
+    "inputs": [
+      {
+        "item": "bisphenol_a",
+        "count": 2
+      },
+      {
+        "item": "epichlorohydrin",
+        "count": 2
+      }
+    ],
+    "outputs": [
+      {
+        "item": "epoxy_ingot",
+        "count": 4
+      }
+    ],
+    "unlocked_by": "tech_fus_chemistry"
+  },
+  {
+    "id": "make_tdi",
+    "machine": "chemical_reactor",
+    "tier": "FUS",
+    "duration_ticks": 360,
+    "power_draw": 2048,
+    "inputs": [
+      {
+        "item": "toluene",
+        "count": 2
+      },
+      {
+        "item": "ammonia",
+        "count": 2
+      },
+      {
+        "item": "phosgene",
+        "count": 2
+      }
+    ],
+    "outputs": [
+      {
+        "item": "toluene_diisocyanate",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_fus_chemistry"
+  },
+  {
+    "id": "make_polyol",
+    "machine": "chemical_reactor",
+    "tier": "FUS",
+    "duration_ticks": 320,
+    "power_draw": 2048,
+    "inputs": [
+      {
+        "item": "propylene",
+        "count": 2
+      },
+      {
+        "item": "ethylene_glycol",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "polyol",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_fus_chemistry"
+  },
+  {
+    "id": "cure_polyurethane",
+    "machine": "polymerizer",
+    "tier": "FUS",
+    "duration_ticks": 440,
+    "power_draw": 2048,
+    "inputs": [
+      {
+        "item": "toluene_diisocyanate",
+        "count": 2
+      },
+      {
+        "item": "polyol",
+        "count": 2
+      }
+    ],
+    "outputs": [
+      {
+        "item": "polyurethane_ingot",
+        "count": 4
+      }
+    ],
+    "unlocked_by": "tech_fus_chemistry"
+  },
+  {
+    "id": "make_methyl_chloride",
+    "machine": "chemical_reactor",
+    "tier": "FUS",
+    "duration_ticks": 280,
+    "power_draw": 2048,
+    "inputs": [
+      {
+        "item": "methanol",
+        "count": 2
+      },
+      {
+        "item": "chlorine",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "methyl_chloride",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_fus_chemistry"
+  },
+  {
+    "id": "rochow_process",
+    "machine": "chemical_reactor",
+    "tier": "FUS",
+    "duration_ticks": 380,
+    "power_draw": 2048,
+    "inputs": [
+      {
+        "item": "silicon_ingot",
+        "count": 1
+      },
+      {
+        "item": "methyl_chloride",
+        "count": 3
+      }
+    ],
+    "outputs": [
+      {
+        "item": "dimethyldichlorosilane",
+        "count": 3
+      }
+    ],
+    "unlocked_by": "tech_fus_chemistry"
+  },
+  {
+    "id": "cure_silicone",
+    "machine": "polymerizer",
+    "tier": "FUS",
+    "duration_ticks": 420,
+    "power_draw": 2048,
+    "inputs": [
+      {
+        "item": "dimethyldichlorosilane",
+        "count": 3
+      },
+      {
+        "item": "water",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "silicone_ingot",
+        "count": 4
+      }
+    ],
+    "unlocked_by": "tech_fus_chemistry"
+  },
+  {
+    "id": "make_hydroquinone",
+    "machine": "chemical_reactor",
+    "tier": "FUS",
+    "duration_ticks": 400,
+    "power_draw": 2048,
+    "inputs": [
+      {
+        "item": "benzene",
+        "count": 2
+      },
+      {
+        "item": "oxygen",
+        "count": 2
+      }
+    ],
+    "outputs": [
+      {
+        "item": "hydroquinone",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_fus_chemistry"
+  },
+  {
+    "id": "make_dfbp",
+    "machine": "chemical_reactor",
+    "tier": "FUS",
+    "duration_ticks": 420,
+    "power_draw": 2048,
+    "inputs": [
+      {
+        "item": "toluene",
+        "count": 2
+      },
+      {
+        "item": "hydrogen_fluoride",
+        "count": 2
+      }
+    ],
+    "outputs": [
+      {
+        "item": "difluorobenzophenone",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_fus_chemistry"
+  },
+  {
+    "id": "polymerise_peek",
+    "machine": "polymerizer",
+    "tier": "FUS",
+    "duration_ticks": 520,
+    "power_draw": 4096,
+    "inputs": [
+      {
+        "item": "hydroquinone",
+        "count": 2
+      },
+      {
+        "item": "difluorobenzophenone",
+        "count": 2
+      }
+    ],
+    "outputs": [
+      {
+        "item": "peek_ingot",
+        "count": 4
+      }
+    ],
+    "unlocked_by": "tech_fus_chemistry"
+  },
+  {
+    "id": "make_ppd",
+    "machine": "chemical_reactor",
+    "tier": "QNT",
+    "duration_ticks": 400,
+    "power_draw": 8192,
+    "inputs": [
+      {
+        "item": "benzene",
+        "count": 2
+      },
+      {
+        "item": "ammonia",
+        "count": 2
+      }
+    ],
+    "outputs": [
+      {
+        "item": "paraphenylenediamine",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_qnt_chemistry"
+  },
+  {
+    "id": "make_tpc",
+    "machine": "chemical_reactor",
+    "tier": "QNT",
+    "duration_ticks": 400,
+    "power_draw": 8192,
+    "inputs": [
+      {
+        "item": "terephthalic_acid",
+        "count": 2
+      },
+      {
+        "item": "chlorine",
+        "count": 2
+      }
+    ],
+    "outputs": [
+      {
+        "item": "terephthaloyl_chloride",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_qnt_chemistry"
+  },
+  {
+    "id": "spin_aramid",
+    "machine": "spinneret",
+    "tier": "QNT",
+    "duration_ticks": 520,
+    "power_draw": 16384,
+    "inputs": [
+      {
+        "item": "paraphenylenediamine",
+        "count": 2
+      },
+      {
+        "item": "terephthaloyl_chloride",
+        "count": 2
+      }
+    ],
+    "outputs": [
+      {
+        "item": "aramid_ingot",
+        "count": 4
+      }
+    ],
+    "unlocked_by": "tech_qnt_chemistry"
   },
   {
     "id": "leach_bauxite",
@@ -12504,34 +15844,6 @@
     "unlocked_by": "tech_arc_chemistry"
   },
   {
-    "id": "cure_silicone",
-    "machine": "chemical_reactor",
-    "tier": "PLS",
-    "duration_ticks": 400,
-    "power_draw": 512,
-    "inputs": [
-      {
-        "item": "silicon_ingot",
-        "count": 1
-      },
-      {
-        "item": "naphtha",
-        "count": 2
-      },
-      {
-        "item": "chlorine",
-        "count": 1
-      }
-    ],
-    "outputs": [
-      {
-        "item": "silicone_ingot",
-        "count": 3
-      }
-    ],
-    "unlocked_by": "tech_pls_chemistry"
-  },
-  {
     "id": "electrolyze_fluorite",
     "machine": "electrolyzer",
     "tier": "PLS",
@@ -12551,30 +15863,6 @@
       {
         "item": "fluorine",
         "count": 2
-      }
-    ],
-    "unlocked_by": "tech_pls_chemistry"
-  },
-  {
-    "id": "polymerize_ptfe",
-    "machine": "chemical_reactor",
-    "tier": "PLS",
-    "duration_ticks": 560,
-    "power_draw": 512,
-    "inputs": [
-      {
-        "item": "naphtha",
-        "count": 2
-      },
-      {
-        "item": "fluorine",
-        "count": 4
-      }
-    ],
-    "outputs": [
-      {
-        "item": "ptfe_ingot",
-        "count": 3
       }
     ],
     "unlocked_by": "tech_pls_chemistry"
@@ -12734,5 +16022,57 @@
       }
     ],
     "unlocked_by": "tech_qnt_metallurgy"
+  },
+  {
+    "id": "crack_ethane",
+    "machine": "steam_cracker",
+    "tier": "VLT",
+    "duration_ticks": 320,
+    "power_draw": 32,
+    "inputs": [
+      {
+        "item": "ethane",
+        "count": 3
+      },
+      {
+        "item": "steam",
+        "count": 2
+      }
+    ],
+    "outputs": [
+      {
+        "item": "ethylene",
+        "count": 3
+      },
+      {
+        "item": "hydrogen",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_vlt_chemistry"
+  },
+  {
+    "id": "alkylate_kerosene",
+    "machine": "chemical_reactor",
+    "tier": "PLS",
+    "duration_ticks": 300,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "butylene",
+        "count": 2
+      },
+      {
+        "item": "refinery_gas",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "kerosene",
+        "count": 3
+      }
+    ],
+    "unlocked_by": "tech_pls_chemistry"
   }
 ]

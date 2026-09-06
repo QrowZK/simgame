@@ -247,13 +247,14 @@
     "id": "distillery",
     "name": "Distillery",
     "tiers": [
+      "STM",
       "VLT",
       "ARC",
       "PLS",
       "FUS",
       "QNT"
     ],
-    "min_tier": "VLT"
+    "min_tier": "STM"
   },
   {
     "id": "arc_furnace",
@@ -303,5 +304,116 @@
       "SNG"
     ],
     "min_tier": "SNG"
+  },
+  {
+    "id": "vacuum_distillation",
+    "name": "Vacuum Distillation",
+    "tiers": [
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT"
+    ],
+    "min_tier": "ARC"
+  },
+  {
+    "id": "steam_cracker",
+    "name": "Steam Cracker",
+    "tiers": [
+      "VLT",
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT"
+    ],
+    "min_tier": "VLT"
+  },
+  {
+    "id": "catalytic_reformer",
+    "name": "Catalytic Reformer",
+    "tiers": [
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT"
+    ],
+    "min_tier": "ARC"
+  },
+  {
+    "id": "fcc_unit",
+    "name": "Catalytic Cracker",
+    "tiers": [
+      "PLS",
+      "FUS",
+      "QNT"
+    ],
+    "min_tier": "PLS"
+  },
+  {
+    "id": "hydrotreater",
+    "name": "Hydrotreater",
+    "tiers": [
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT"
+    ],
+    "min_tier": "ARC"
+  },
+  {
+    "id": "claus_unit",
+    "name": "Claus Sulfur Unit",
+    "tiers": [
+      "ARC",
+      "PLS",
+      "FUS"
+    ],
+    "min_tier": "ARC"
+  },
+  {
+    "id": "coker",
+    "name": "Delayed Coker",
+    "tiers": [
+      "PLS",
+      "FUS",
+      "QNT"
+    ],
+    "min_tier": "PLS"
+  },
+  {
+    "id": "gasifier",
+    "name": "Gasifier",
+    "tiers": [
+      "STM",
+      "VLT",
+      "ARC",
+      "PLS"
+    ],
+    "min_tier": "STM"
+  },
+  {
+    "id": "polymerizer",
+    "name": "Polymerization Reactor",
+    "tiers": [
+      "STM",
+      "VLT",
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT",
+      "SNG"
+    ],
+    "min_tier": "STM"
+  },
+  {
+    "id": "spinneret",
+    "name": "Fibre Spinneret",
+    "tiers": [
+      "PLS",
+      "FUS",
+      "QNT",
+      "SNG"
+    ],
+    "min_tier": "PLS"
   }
 ]

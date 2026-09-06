@@ -21,6 +21,7 @@ public sealed class ItemDef
     [JsonPropertyName("tier")] public string Tier { get; set; } = "";
     [JsonPropertyName("form")] public string Form { get; set; } = "solid";
     [JsonPropertyName("raw")] public bool Raw { get; set; }
+    [JsonPropertyName("tags")] public List<string> Tags { get; set; } = new();
 }
 
 public sealed class MachineDef

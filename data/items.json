@@ -5,7 +5,17 @@
     "category": "fluid",
     "tier": "MAN",
     "form": "fluid",
-    "raw": true
+    "raw": true,
+    "tags": []
+  },
+  {
+    "id": "air",
+    "name": "Air",
+    "category": "fluid",
+    "tier": "MAN",
+    "form": "fluid",
+    "raw": true,
+    "tags": []
   },
   {
     "id": "crude_oil",
@@ -13,7 +23,10 @@
     "category": "fluid",
     "tier": "STM",
     "form": "fluid",
-    "raw": true
+    "raw": true,
+    "tags": [
+      "petrochem"
+    ]
   },
   {
     "id": "steam",
@@ -21,7 +34,63 @@
     "category": "fluid",
     "tier": "STM",
     "form": "fluid",
-    "raw": false
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "syngas",
+    "name": "Synthesis Gas",
+    "category": "fluid",
+    "tier": "STM",
+    "form": "fluid",
+    "raw": false,
+    "tags": [
+      "petrochem"
+    ]
+  },
+  {
+    "id": "coal_tar",
+    "name": "Coal Tar",
+    "category": "fluid",
+    "tier": "STM",
+    "form": "fluid",
+    "raw": false,
+    "tags": [
+      "petrochem"
+    ]
+  },
+  {
+    "id": "methanol",
+    "name": "Methanol",
+    "category": "fluid",
+    "tier": "STM",
+    "form": "fluid",
+    "raw": false,
+    "tags": [
+      "petrochem"
+    ]
+  },
+  {
+    "id": "formaldehyde",
+    "name": "Formaldehyde",
+    "category": "fluid",
+    "tier": "STM",
+    "form": "fluid",
+    "raw": false,
+    "tags": [
+      "petrochem"
+    ]
+  },
+  {
+    "id": "phenol",
+    "name": "Phenol",
+    "category": "fluid",
+    "tier": "STM",
+    "form": "fluid",
+    "raw": false,
+    "tags": [
+      "petrochem"
+    ]
   },
   {
     "id": "oxygen",
@@ -29,7 +98,8 @@
     "category": "fluid",
     "tier": "VLT",
     "form": "fluid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "hydrogen",
@@ -37,7 +107,17 @@
     "category": "fluid",
     "tier": "VLT",
     "form": "fluid",
-    "raw": false
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "nitrogen",
+    "name": "Nitrogen",
+    "category": "fluid",
+    "tier": "VLT",
+    "form": "fluid",
+    "raw": false,
+    "tags": []
   },
   {
     "id": "chlorine",
@@ -45,7 +125,19 @@
     "category": "fluid",
     "tier": "VLT",
     "form": "fluid",
-    "raw": false
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "carbon_monoxide",
+    "name": "Carbon Monoxide",
+    "category": "fluid",
+    "tier": "VLT",
+    "form": "fluid",
+    "raw": false,
+    "tags": [
+      "petrochem"
+    ]
   },
   {
     "id": "sodium_hydroxide",
@@ -53,7 +145,8 @@
     "category": "fluid",
     "tier": "VLT",
     "form": "fluid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "sulfuric_acid",
@@ -61,31 +154,466 @@
     "category": "fluid",
     "tier": "VLT",
     "form": "fluid",
-    "raw": false
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "ammonia",
+    "name": "Ammonia",
+    "category": "fluid",
+    "tier": "ARC",
+    "form": "fluid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "refinery_gas",
+    "name": "Refinery Gas",
+    "category": "fluid",
+    "tier": "VLT",
+    "form": "fluid",
+    "raw": false,
+    "tags": [
+      "petrochem"
+    ]
   },
   {
     "id": "naphtha",
     "name": "Naphtha",
     "category": "fluid",
-    "tier": "ARC",
+    "tier": "VLT",
     "form": "fluid",
-    "raw": false
+    "raw": false,
+    "tags": [
+      "petrochem"
+    ]
   },
   {
-    "id": "lubricant",
-    "name": "Lubricant",
+    "id": "kerosene",
+    "name": "Kerosene",
+    "category": "fluid",
+    "tier": "VLT",
+    "form": "fluid",
+    "raw": false,
+    "tags": [
+      "petrochem"
+    ]
+  },
+  {
+    "id": "diesel",
+    "name": "Diesel",
+    "category": "fluid",
+    "tier": "VLT",
+    "form": "fluid",
+    "raw": false,
+    "tags": [
+      "petrochem"
+    ]
+  },
+  {
+    "id": "atmospheric_residue",
+    "name": "Atmospheric Residue",
+    "category": "fluid",
+    "tier": "VLT",
+    "form": "fluid",
+    "raw": false,
+    "tags": [
+      "petrochem"
+    ]
+  },
+  {
+    "id": "methane",
+    "name": "Methane",
+    "category": "fluid",
+    "tier": "VLT",
+    "form": "fluid",
+    "raw": false,
+    "tags": [
+      "petrochem"
+    ]
+  },
+  {
+    "id": "ethane",
+    "name": "Ethane",
+    "category": "fluid",
+    "tier": "VLT",
+    "form": "fluid",
+    "raw": false,
+    "tags": [
+      "petrochem"
+    ]
+  },
+  {
+    "id": "vacuum_gas_oil",
+    "name": "Vacuum Gas Oil",
     "category": "fluid",
     "tier": "ARC",
     "form": "fluid",
-    "raw": false
+    "raw": false,
+    "tags": [
+      "petrochem"
+    ]
   },
   {
-    "id": "fuel_oil",
-    "name": "Fuel Oil",
+    "id": "vacuum_residue",
+    "name": "Vacuum Residue",
     "category": "fluid",
     "tier": "ARC",
     "form": "fluid",
-    "raw": false
+    "raw": false,
+    "tags": [
+      "petrochem"
+    ]
+  },
+  {
+    "id": "hydrogen_sulfide",
+    "name": "Hydrogen Sulfide",
+    "category": "fluid",
+    "tier": "ARC",
+    "form": "fluid",
+    "raw": false,
+    "tags": [
+      "petrochem"
+    ]
+  },
+  {
+    "id": "treated_naphtha",
+    "name": "Treated Naphtha",
+    "category": "fluid",
+    "tier": "ARC",
+    "form": "fluid",
+    "raw": false,
+    "tags": [
+      "petrochem"
+    ]
+  },
+  {
+    "id": "fcc_slurry",
+    "name": "FCC Slurry Oil",
+    "category": "fluid",
+    "tier": "PLS",
+    "form": "fluid",
+    "raw": false,
+    "tags": [
+      "petrochem"
+    ]
+  },
+  {
+    "id": "butylene",
+    "name": "Butylene",
+    "category": "fluid",
+    "tier": "PLS",
+    "form": "fluid",
+    "raw": false,
+    "tags": [
+      "petrochem"
+    ]
+  },
+  {
+    "id": "ethylene",
+    "name": "Ethylene",
+    "category": "fluid",
+    "tier": "VLT",
+    "form": "fluid",
+    "raw": false,
+    "tags": [
+      "petrochem"
+    ]
+  },
+  {
+    "id": "propylene",
+    "name": "Propylene",
+    "category": "fluid",
+    "tier": "ARC",
+    "form": "fluid",
+    "raw": false,
+    "tags": [
+      "petrochem"
+    ]
+  },
+  {
+    "id": "butadiene",
+    "name": "Butadiene",
+    "category": "fluid",
+    "tier": "ARC",
+    "form": "fluid",
+    "raw": false,
+    "tags": [
+      "petrochem"
+    ]
+  },
+  {
+    "id": "pyrolysis_gasoline",
+    "name": "Pyrolysis Gasoline",
+    "category": "fluid",
+    "tier": "ARC",
+    "form": "fluid",
+    "raw": false,
+    "tags": [
+      "petrochem"
+    ]
+  },
+  {
+    "id": "benzene",
+    "name": "Benzene",
+    "category": "fluid",
+    "tier": "ARC",
+    "form": "fluid",
+    "raw": false,
+    "tags": [
+      "petrochem"
+    ]
+  },
+  {
+    "id": "toluene",
+    "name": "Toluene",
+    "category": "fluid",
+    "tier": "ARC",
+    "form": "fluid",
+    "raw": false,
+    "tags": [
+      "petrochem"
+    ]
+  },
+  {
+    "id": "xylene",
+    "name": "Xylene",
+    "category": "fluid",
+    "tier": "ARC",
+    "form": "fluid",
+    "raw": false,
+    "tags": [
+      "petrochem"
+    ]
+  },
+  {
+    "id": "ethylene_dichloride",
+    "name": "Ethylene Dichloride",
+    "category": "fluid",
+    "tier": "VLT",
+    "form": "fluid",
+    "raw": false,
+    "tags": [
+      "petrochem"
+    ]
+  },
+  {
+    "id": "vinyl_chloride",
+    "name": "Vinyl Chloride",
+    "category": "fluid",
+    "tier": "VLT",
+    "form": "fluid",
+    "raw": false,
+    "tags": [
+      "petrochem"
+    ]
+  },
+  {
+    "id": "ethylbenzene",
+    "name": "Ethylbenzene",
+    "category": "fluid",
+    "tier": "ARC",
+    "form": "fluid",
+    "raw": false,
+    "tags": [
+      "petrochem"
+    ]
+  },
+  {
+    "id": "styrene",
+    "name": "Styrene",
+    "category": "fluid",
+    "tier": "ARC",
+    "form": "fluid",
+    "raw": false,
+    "tags": [
+      "petrochem"
+    ]
+  },
+  {
+    "id": "cumene",
+    "name": "Cumene",
+    "category": "fluid",
+    "tier": "ARC",
+    "form": "fluid",
+    "raw": false,
+    "tags": [
+      "petrochem"
+    ]
+  },
+  {
+    "id": "ethylene_oxide",
+    "name": "Ethylene Oxide",
+    "category": "fluid",
+    "tier": "PLS",
+    "form": "fluid",
+    "raw": false,
+    "tags": [
+      "petrochem"
+    ]
+  },
+  {
+    "id": "ethylene_glycol",
+    "name": "Ethylene Glycol",
+    "category": "fluid",
+    "tier": "PLS",
+    "form": "fluid",
+    "raw": false,
+    "tags": [
+      "petrochem"
+    ]
+  },
+  {
+    "id": "acrylonitrile",
+    "name": "Acrylonitrile",
+    "category": "fluid",
+    "tier": "PLS",
+    "form": "fluid",
+    "raw": false,
+    "tags": [
+      "petrochem"
+    ]
+  },
+  {
+    "id": "cyclohexane",
+    "name": "Cyclohexane",
+    "category": "fluid",
+    "tier": "PLS",
+    "form": "fluid",
+    "raw": false,
+    "tags": [
+      "petrochem"
+    ]
+  },
+  {
+    "id": "phosgene",
+    "name": "Phosgene",
+    "category": "fluid",
+    "tier": "PLS",
+    "form": "fluid",
+    "raw": false,
+    "tags": [
+      "petrochem"
+    ]
+  },
+  {
+    "id": "hydrogen_fluoride",
+    "name": "Hydrogen Fluoride",
+    "category": "fluid",
+    "tier": "PLS",
+    "form": "fluid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "chloroform",
+    "name": "Chloroform",
+    "category": "fluid",
+    "tier": "PLS",
+    "form": "fluid",
+    "raw": false,
+    "tags": [
+      "petrochem"
+    ]
+  },
+  {
+    "id": "chlorodifluoromethane",
+    "name": "Chlorodifluoromethane",
+    "category": "fluid",
+    "tier": "PLS",
+    "form": "fluid",
+    "raw": false,
+    "tags": [
+      "petrochem"
+    ]
+  },
+  {
+    "id": "tetrafluoroethylene",
+    "name": "Tetrafluoroethylene",
+    "category": "fluid",
+    "tier": "PLS",
+    "form": "fluid",
+    "raw": false,
+    "tags": [
+      "petrochem"
+    ]
+  },
+  {
+    "id": "methyl_chloride",
+    "name": "Methyl Chloride",
+    "category": "fluid",
+    "tier": "FUS",
+    "form": "fluid",
+    "raw": false,
+    "tags": [
+      "petrochem"
+    ]
+  },
+  {
+    "id": "dimethyldichlorosilane",
+    "name": "Dimethyldichlorosilane",
+    "category": "fluid",
+    "tier": "FUS",
+    "form": "fluid",
+    "raw": false,
+    "tags": [
+      "petrochem"
+    ]
+  },
+  {
+    "id": "epichlorohydrin",
+    "name": "Epichlorohydrin",
+    "category": "fluid",
+    "tier": "FUS",
+    "form": "fluid",
+    "raw": false,
+    "tags": [
+      "petrochem"
+    ]
+  },
+  {
+    "id": "toluene_diisocyanate",
+    "name": "Toluene Diisocyanate",
+    "category": "fluid",
+    "tier": "FUS",
+    "form": "fluid",
+    "raw": false,
+    "tags": [
+      "petrochem"
+    ]
+  },
+  {
+    "id": "polyol",
+    "name": "Polyol",
+    "category": "fluid",
+    "tier": "FUS",
+    "form": "fluid",
+    "raw": false,
+    "tags": [
+      "petrochem"
+    ]
+  },
+  {
+    "id": "difluorobenzophenone",
+    "name": "Difluorobenzophenone",
+    "category": "fluid",
+    "tier": "QNT",
+    "form": "fluid",
+    "raw": false,
+    "tags": [
+      "petrochem"
+    ]
+  },
+  {
+    "id": "terephthaloyl_chloride",
+    "name": "Terephthaloyl Chloride",
+    "category": "fluid",
+    "tier": "QNT",
+    "form": "fluid",
+    "raw": false,
+    "tags": [
+      "petrochem"
+    ]
   },
   {
     "id": "titanium_tetrachloride",
@@ -93,7 +621,8 @@
     "category": "fluid",
     "tier": "PLS",
     "form": "fluid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "magnesium_chloride",
@@ -101,7 +630,8 @@
     "category": "fluid",
     "tier": "PLS",
     "form": "fluid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "fluorine",
@@ -109,7 +639,8 @@
     "category": "fluid",
     "tier": "FUS",
     "form": "fluid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "deuterium",
@@ -117,7 +648,8 @@
     "category": "fluid",
     "tier": "FUS",
     "form": "fluid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "tritium",
@@ -125,7 +657,8 @@
     "category": "fluid",
     "tier": "FUS",
     "form": "fluid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "helium3",
@@ -133,15 +666,98 @@
     "category": "fluid",
     "tier": "FUS",
     "form": "fluid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "alumina",
     "name": "Alumina",
     "category": "intermediate",
-    "tier": "ARC",
+    "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "terephthalic_acid",
+    "name": "Terephthalic Acid",
+    "category": "intermediate",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "bisphenol_a",
+    "name": "Bisphenol A",
+    "category": "intermediate",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "adipic_acid",
+    "name": "Adipic Acid",
+    "category": "intermediate",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "hexamethylenediamine",
+    "name": "Hexamethylenediamine",
+    "category": "intermediate",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "paraphenylenediamine",
+    "name": "p-Phenylenediamine",
+    "category": "intermediate",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "hydroquinone",
+    "name": "Hydroquinone",
+    "category": "intermediate",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "carbon_black",
+    "name": "Carbon Black",
+    "category": "intermediate",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "petroleum_coke",
+    "name": "Petroleum Coke",
+    "category": "intermediate",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "graphite",
+    "name": "Synthetic Graphite",
+    "category": "intermediate",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false,
+    "tags": []
   },
   {
     "id": "copper_dust",
@@ -149,7 +765,8 @@
     "category": "dust",
     "tier": "MAN",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "copper_ingot",
@@ -157,7 +774,8 @@
     "category": "ingot",
     "tier": "MAN",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "copper_plate",
@@ -165,7 +783,8 @@
     "category": "plate",
     "tier": "MAN",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "copper_rod",
@@ -173,7 +792,8 @@
     "category": "rod",
     "tier": "MAN",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "copper_wire",
@@ -181,7 +801,8 @@
     "category": "wire",
     "tier": "MAN",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "copper_fine_wire",
@@ -189,7 +810,8 @@
     "category": "fine_wire",
     "tier": "MAN",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "chalcopyrite",
@@ -197,7 +819,8 @@
     "category": "raw_ore",
     "tier": "MAN",
     "form": "solid",
-    "raw": true
+    "raw": true,
+    "tags": []
   },
   {
     "id": "chalcopyrite_crushed",
@@ -205,7 +828,8 @@
     "category": "crushed_ore",
     "tier": "MAN",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "chalcopyrite_purified",
@@ -213,7 +837,8 @@
     "category": "purified_ore",
     "tier": "MAN",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "tin_dust",
@@ -221,7 +846,8 @@
     "category": "dust",
     "tier": "MAN",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "tin_ingot",
@@ -229,7 +855,8 @@
     "category": "ingot",
     "tier": "MAN",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "tin_plate",
@@ -237,7 +864,8 @@
     "category": "plate",
     "tier": "MAN",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "tin_rod",
@@ -245,7 +873,8 @@
     "category": "rod",
     "tier": "MAN",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "tin_wire",
@@ -253,7 +882,8 @@
     "category": "wire",
     "tier": "MAN",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "cassiterite",
@@ -261,7 +891,8 @@
     "category": "raw_ore",
     "tier": "MAN",
     "form": "solid",
-    "raw": true
+    "raw": true,
+    "tags": []
   },
   {
     "id": "cassiterite_crushed",
@@ -269,7 +900,8 @@
     "category": "crushed_ore",
     "tier": "MAN",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "cassiterite_purified",
@@ -277,7 +909,8 @@
     "category": "purified_ore",
     "tier": "MAN",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "iron_dust",
@@ -285,7 +918,8 @@
     "category": "dust",
     "tier": "MAN",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "iron_ingot",
@@ -293,7 +927,8 @@
     "category": "ingot",
     "tier": "MAN",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "iron_plate",
@@ -301,7 +936,8 @@
     "category": "plate",
     "tier": "MAN",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "iron_rod",
@@ -309,7 +945,8 @@
     "category": "rod",
     "tier": "MAN",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "iron_wire",
@@ -317,7 +954,8 @@
     "category": "wire",
     "tier": "MAN",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "iron_gear",
@@ -325,7 +963,8 @@
     "category": "gear",
     "tier": "MAN",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "magnetite",
@@ -333,7 +972,8 @@
     "category": "raw_ore",
     "tier": "MAN",
     "form": "solid",
-    "raw": true
+    "raw": true,
+    "tags": []
   },
   {
     "id": "magnetite_crushed",
@@ -341,7 +981,8 @@
     "category": "crushed_ore",
     "tier": "MAN",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "magnetite_purified",
@@ -349,7 +990,8 @@
     "category": "purified_ore",
     "tier": "MAN",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "coal_dust",
@@ -357,7 +999,8 @@
     "category": "dust",
     "tier": "MAN",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "coal_deposit",
@@ -365,7 +1008,8 @@
     "category": "raw_ore",
     "tier": "MAN",
     "form": "solid",
-    "raw": true
+    "raw": true,
+    "tags": []
   },
   {
     "id": "coal_deposit_crushed",
@@ -373,7 +1017,8 @@
     "category": "crushed_ore",
     "tier": "MAN",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "coal_deposit_purified",
@@ -381,7 +1026,8 @@
     "category": "purified_ore",
     "tier": "MAN",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "stone_dust",
@@ -389,7 +1035,8 @@
     "category": "dust",
     "tier": "MAN",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "stone_deposit",
@@ -397,7 +1044,8 @@
     "category": "raw_ore",
     "tier": "MAN",
     "form": "solid",
-    "raw": true
+    "raw": true,
+    "tags": []
   },
   {
     "id": "stone_deposit_crushed",
@@ -405,7 +1053,8 @@
     "category": "crushed_ore",
     "tier": "MAN",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "stone_deposit_purified",
@@ -413,7 +1062,8 @@
     "category": "purified_ore",
     "tier": "MAN",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "limestone_dust",
@@ -421,7 +1071,8 @@
     "category": "dust",
     "tier": "MAN",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "limestone_deposit",
@@ -429,7 +1080,8 @@
     "category": "raw_ore",
     "tier": "MAN",
     "form": "solid",
-    "raw": true
+    "raw": true,
+    "tags": []
   },
   {
     "id": "limestone_deposit_crushed",
@@ -437,7 +1089,8 @@
     "category": "crushed_ore",
     "tier": "MAN",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "limestone_deposit_purified",
@@ -445,7 +1098,8 @@
     "category": "purified_ore",
     "tier": "MAN",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "quartz_dust",
@@ -453,7 +1107,8 @@
     "category": "dust",
     "tier": "MAN",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "quartz_deposit",
@@ -461,7 +1116,8 @@
     "category": "raw_ore",
     "tier": "MAN",
     "form": "solid",
-    "raw": true
+    "raw": true,
+    "tags": []
   },
   {
     "id": "quartz_deposit_crushed",
@@ -469,7 +1125,8 @@
     "category": "crushed_ore",
     "tier": "MAN",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "quartz_deposit_purified",
@@ -477,7 +1134,8 @@
     "category": "purified_ore",
     "tier": "MAN",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "bronze_dust",
@@ -485,7 +1143,8 @@
     "category": "dust",
     "tier": "STM",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "bronze_ingot",
@@ -493,7 +1152,8 @@
     "category": "ingot",
     "tier": "STM",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "bronze_plate",
@@ -501,7 +1161,8 @@
     "category": "plate",
     "tier": "STM",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "bronze_rod",
@@ -509,7 +1170,8 @@
     "category": "rod",
     "tier": "STM",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "bronze_gear",
@@ -517,7 +1179,8 @@
     "category": "gear",
     "tier": "STM",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "lead_dust",
@@ -525,7 +1188,8 @@
     "category": "dust",
     "tier": "STM",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "lead_ingot",
@@ -533,7 +1197,8 @@
     "category": "ingot",
     "tier": "STM",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "lead_plate",
@@ -541,7 +1206,8 @@
     "category": "plate",
     "tier": "STM",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "galena",
@@ -549,7 +1215,8 @@
     "category": "raw_ore",
     "tier": "STM",
     "form": "solid",
-    "raw": true
+    "raw": true,
+    "tags": []
   },
   {
     "id": "galena_crushed",
@@ -557,7 +1224,8 @@
     "category": "crushed_ore",
     "tier": "STM",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "galena_purified",
@@ -565,7 +1233,8 @@
     "category": "purified_ore",
     "tier": "STM",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "silver_dust",
@@ -573,7 +1242,8 @@
     "category": "dust",
     "tier": "STM",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "silver_ingot",
@@ -581,7 +1251,8 @@
     "category": "ingot",
     "tier": "STM",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "silver_plate",
@@ -589,7 +1260,8 @@
     "category": "plate",
     "tier": "STM",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "silver_wire",
@@ -597,7 +1269,8 @@
     "category": "wire",
     "tier": "STM",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "silver_fine_wire",
@@ -605,7 +1278,8 @@
     "category": "fine_wire",
     "tier": "STM",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "zinc_dust",
@@ -613,7 +1287,8 @@
     "category": "dust",
     "tier": "STM",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "zinc_ingot",
@@ -621,7 +1296,8 @@
     "category": "ingot",
     "tier": "STM",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "zinc_plate",
@@ -629,7 +1305,8 @@
     "category": "plate",
     "tier": "STM",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "sphalerite",
@@ -637,7 +1314,8 @@
     "category": "raw_ore",
     "tier": "STM",
     "form": "solid",
-    "raw": true
+    "raw": true,
+    "tags": []
   },
   {
     "id": "sphalerite_crushed",
@@ -645,7 +1323,8 @@
     "category": "crushed_ore",
     "tier": "STM",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "sphalerite_purified",
@@ -653,7 +1332,8 @@
     "category": "purified_ore",
     "tier": "STM",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "brass_dust",
@@ -661,7 +1341,8 @@
     "category": "dust",
     "tier": "STM",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "brass_ingot",
@@ -669,7 +1350,8 @@
     "category": "ingot",
     "tier": "STM",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "brass_plate",
@@ -677,7 +1359,8 @@
     "category": "plate",
     "tier": "STM",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "brass_rod",
@@ -685,7 +1368,8 @@
     "category": "rod",
     "tier": "STM",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "steel_dust",
@@ -693,7 +1377,8 @@
     "category": "dust",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "steel_ingot",
@@ -701,7 +1386,8 @@
     "category": "ingot",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "steel_plate",
@@ -709,7 +1395,8 @@
     "category": "plate",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "steel_rod",
@@ -717,7 +1404,8 @@
     "category": "rod",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "steel_wire",
@@ -725,7 +1413,8 @@
     "category": "wire",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "steel_gear",
@@ -733,7 +1422,8 @@
     "category": "gear",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "steel_foil",
@@ -741,7 +1431,8 @@
     "category": "foil",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "nickel_dust",
@@ -749,7 +1440,8 @@
     "category": "dust",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "nickel_ingot",
@@ -757,7 +1449,8 @@
     "category": "ingot",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "nickel_plate",
@@ -765,7 +1458,8 @@
     "category": "plate",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "garnierite",
@@ -773,7 +1467,8 @@
     "category": "raw_ore",
     "tier": "VLT",
     "form": "solid",
-    "raw": true
+    "raw": true,
+    "tags": []
   },
   {
     "id": "garnierite_crushed",
@@ -781,7 +1476,8 @@
     "category": "crushed_ore",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "garnierite_purified",
@@ -789,7 +1485,8 @@
     "category": "purified_ore",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "cobalt_dust",
@@ -797,7 +1494,8 @@
     "category": "dust",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "cobalt_ingot",
@@ -805,7 +1503,8 @@
     "category": "ingot",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "gold_dust",
@@ -813,7 +1512,8 @@
     "category": "dust",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "gold_ingot",
@@ -821,7 +1521,8 @@
     "category": "ingot",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "gold_plate",
@@ -829,7 +1530,8 @@
     "category": "plate",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "gold_wire",
@@ -837,7 +1539,8 @@
     "category": "wire",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "gold_fine_wire",
@@ -845,7 +1548,8 @@
     "category": "fine_wire",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "gold_foil",
@@ -853,7 +1557,8 @@
     "category": "foil",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "native_gold",
@@ -861,7 +1566,8 @@
     "category": "raw_ore",
     "tier": "VLT",
     "form": "solid",
-    "raw": true
+    "raw": true,
+    "tags": []
   },
   {
     "id": "native_gold_crushed",
@@ -869,7 +1575,8 @@
     "category": "crushed_ore",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "native_gold_purified",
@@ -877,7 +1584,8 @@
     "category": "purified_ore",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "sulfur_dust",
@@ -885,7 +1593,8 @@
     "category": "dust",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "sulfur_deposit",
@@ -893,7 +1602,8 @@
     "category": "raw_ore",
     "tier": "VLT",
     "form": "solid",
-    "raw": true
+    "raw": true,
+    "tags": []
   },
   {
     "id": "sulfur_deposit_crushed",
@@ -901,7 +1611,8 @@
     "category": "crushed_ore",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "sulfur_deposit_purified",
@@ -909,7 +1620,8 @@
     "category": "purified_ore",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "salt_dust",
@@ -917,7 +1629,8 @@
     "category": "dust",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "halite",
@@ -925,7 +1638,8 @@
     "category": "raw_ore",
     "tier": "VLT",
     "form": "solid",
-    "raw": true
+    "raw": true,
+    "tags": []
   },
   {
     "id": "halite_crushed",
@@ -933,7 +1647,8 @@
     "category": "crushed_ore",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "halite_purified",
@@ -941,7 +1656,8 @@
     "category": "purified_ore",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "gallium_dust",
@@ -949,7 +1665,8 @@
     "category": "dust",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "gallium_ingot",
@@ -957,7 +1674,8 @@
     "category": "ingot",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "silicon_dust",
@@ -965,7 +1683,8 @@
     "category": "dust",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "silicon_ingot",
@@ -973,7 +1692,8 @@
     "category": "ingot",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "silicon_plate",
@@ -981,23 +1701,8 @@
     "category": "plate",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
-  },
-  {
-    "id": "rubber_ingot",
-    "name": "Rubber Ingot",
-    "category": "ingot",
-    "tier": "VLT",
-    "form": "solid",
-    "raw": false
-  },
-  {
-    "id": "rubber_plate",
-    "name": "Rubber Plate",
-    "category": "plate",
-    "tier": "VLT",
-    "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "magnesium_dust",
@@ -1005,7 +1710,8 @@
     "category": "dust",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "magnesium_ingot",
@@ -1013,7 +1719,8 @@
     "category": "ingot",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "dolomite",
@@ -1021,7 +1728,8 @@
     "category": "raw_ore",
     "tier": "VLT",
     "form": "solid",
-    "raw": true
+    "raw": true,
+    "tags": []
   },
   {
     "id": "dolomite_crushed",
@@ -1029,7 +1737,8 @@
     "category": "crushed_ore",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "dolomite_purified",
@@ -1037,7 +1746,8 @@
     "category": "purified_ore",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "aluminum_dust",
@@ -1045,7 +1755,8 @@
     "category": "dust",
     "tier": "ARC",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "aluminum_ingot",
@@ -1053,7 +1764,8 @@
     "category": "ingot",
     "tier": "ARC",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "aluminum_plate",
@@ -1061,7 +1773,8 @@
     "category": "plate",
     "tier": "ARC",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "aluminum_rod",
@@ -1069,7 +1782,8 @@
     "category": "rod",
     "tier": "ARC",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "aluminum_wire",
@@ -1077,7 +1791,8 @@
     "category": "wire",
     "tier": "ARC",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "aluminum_foil",
@@ -1085,7 +1800,8 @@
     "category": "foil",
     "tier": "ARC",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "bauxite",
@@ -1093,7 +1809,8 @@
     "category": "raw_ore",
     "tier": "ARC",
     "form": "solid",
-    "raw": true
+    "raw": true,
+    "tags": []
   },
   {
     "id": "bauxite_crushed",
@@ -1101,7 +1818,8 @@
     "category": "crushed_ore",
     "tier": "ARC",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "bauxite_purified",
@@ -1109,7 +1827,8 @@
     "category": "purified_ore",
     "tier": "ARC",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "chromium_dust",
@@ -1117,7 +1836,8 @@
     "category": "dust",
     "tier": "ARC",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "chromium_ingot",
@@ -1125,7 +1845,8 @@
     "category": "ingot",
     "tier": "ARC",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "chromium_plate",
@@ -1133,7 +1854,8 @@
     "category": "plate",
     "tier": "ARC",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "chromite",
@@ -1141,7 +1863,8 @@
     "category": "raw_ore",
     "tier": "ARC",
     "form": "solid",
-    "raw": true
+    "raw": true,
+    "tags": []
   },
   {
     "id": "chromite_crushed",
@@ -1149,7 +1872,8 @@
     "category": "crushed_ore",
     "tier": "ARC",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "chromite_purified",
@@ -1157,7 +1881,8 @@
     "category": "purified_ore",
     "tier": "ARC",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "manganese_dust",
@@ -1165,7 +1890,8 @@
     "category": "dust",
     "tier": "ARC",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "manganese_ingot",
@@ -1173,7 +1899,8 @@
     "category": "ingot",
     "tier": "ARC",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "pyrolusite",
@@ -1181,7 +1908,8 @@
     "category": "raw_ore",
     "tier": "ARC",
     "form": "solid",
-    "raw": true
+    "raw": true,
+    "tags": []
   },
   {
     "id": "pyrolusite_crushed",
@@ -1189,7 +1917,8 @@
     "category": "crushed_ore",
     "tier": "ARC",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "pyrolusite_purified",
@@ -1197,7 +1926,8 @@
     "category": "purified_ore",
     "tier": "ARC",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "stainless_steel_dust",
@@ -1205,7 +1935,8 @@
     "category": "dust",
     "tier": "ARC",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "stainless_steel_ingot",
@@ -1213,7 +1944,8 @@
     "category": "ingot",
     "tier": "ARC",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "stainless_steel_plate",
@@ -1221,7 +1953,8 @@
     "category": "plate",
     "tier": "ARC",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "stainless_steel_rod",
@@ -1229,7 +1962,8 @@
     "category": "rod",
     "tier": "ARC",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "stainless_steel_gear",
@@ -1237,7 +1971,8 @@
     "category": "gear",
     "tier": "ARC",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "stainless_steel_foil",
@@ -1245,23 +1980,8 @@
     "category": "foil",
     "tier": "ARC",
     "form": "solid",
-    "raw": false
-  },
-  {
-    "id": "plastic_ingot",
-    "name": "Plastic Ingot",
-    "category": "ingot",
-    "tier": "ARC",
-    "form": "solid",
-    "raw": false
-  },
-  {
-    "id": "plastic_plate",
-    "name": "Plastic Plate",
-    "category": "plate",
-    "tier": "ARC",
-    "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "fluorite_dust",
@@ -1269,7 +1989,8 @@
     "category": "dust",
     "tier": "ARC",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "fluorite_deposit",
@@ -1277,7 +1998,8 @@
     "category": "raw_ore",
     "tier": "ARC",
     "form": "solid",
-    "raw": true
+    "raw": true,
+    "tags": []
   },
   {
     "id": "fluorite_deposit_crushed",
@@ -1285,7 +2007,8 @@
     "category": "crushed_ore",
     "tier": "ARC",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "fluorite_deposit_purified",
@@ -1293,7 +2016,8 @@
     "category": "purified_ore",
     "tier": "ARC",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "titanium_dust",
@@ -1301,7 +2025,8 @@
     "category": "dust",
     "tier": "PLS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "titanium_ingot",
@@ -1309,7 +2034,8 @@
     "category": "ingot",
     "tier": "PLS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "titanium_plate",
@@ -1317,7 +2043,8 @@
     "category": "plate",
     "tier": "PLS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "titanium_rod",
@@ -1325,7 +2052,8 @@
     "category": "rod",
     "tier": "PLS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "titanium_gear",
@@ -1333,7 +2061,8 @@
     "category": "gear",
     "tier": "PLS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "titanium_foil",
@@ -1341,7 +2070,8 @@
     "category": "foil",
     "tier": "PLS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "ilmenite",
@@ -1349,7 +2079,8 @@
     "category": "raw_ore",
     "tier": "PLS",
     "form": "solid",
-    "raw": true
+    "raw": true,
+    "tags": []
   },
   {
     "id": "ilmenite_crushed",
@@ -1357,7 +2088,8 @@
     "category": "crushed_ore",
     "tier": "PLS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "ilmenite_purified",
@@ -1365,7 +2097,8 @@
     "category": "purified_ore",
     "tier": "PLS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "platinum_dust",
@@ -1373,7 +2106,8 @@
     "category": "dust",
     "tier": "PLS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "platinum_ingot",
@@ -1381,7 +2115,8 @@
     "category": "ingot",
     "tier": "PLS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "platinum_plate",
@@ -1389,7 +2124,8 @@
     "category": "plate",
     "tier": "PLS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "platinum_wire",
@@ -1397,7 +2133,8 @@
     "category": "wire",
     "tier": "PLS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "platinum_fine_wire",
@@ -1405,7 +2142,8 @@
     "category": "fine_wire",
     "tier": "PLS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "sperrylite",
@@ -1413,7 +2151,8 @@
     "category": "raw_ore",
     "tier": "PLS",
     "form": "solid",
-    "raw": true
+    "raw": true,
+    "tags": []
   },
   {
     "id": "sperrylite_crushed",
@@ -1421,7 +2160,8 @@
     "category": "crushed_ore",
     "tier": "PLS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "sperrylite_purified",
@@ -1429,7 +2169,8 @@
     "category": "purified_ore",
     "tier": "PLS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "palladium_dust",
@@ -1437,7 +2178,8 @@
     "category": "dust",
     "tier": "PLS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "palladium_ingot",
@@ -1445,7 +2187,8 @@
     "category": "ingot",
     "tier": "PLS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "palladium_plate",
@@ -1453,7 +2196,8 @@
     "category": "plate",
     "tier": "PLS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "lithium_dust",
@@ -1461,7 +2205,8 @@
     "category": "dust",
     "tier": "PLS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "lithium_ingot",
@@ -1469,7 +2214,8 @@
     "category": "ingot",
     "tier": "PLS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "spodumene",
@@ -1477,7 +2223,8 @@
     "category": "raw_ore",
     "tier": "PLS",
     "form": "solid",
-    "raw": true
+    "raw": true,
+    "tags": []
   },
   {
     "id": "spodumene_crushed",
@@ -1485,7 +2232,8 @@
     "category": "crushed_ore",
     "tier": "PLS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "spodumene_purified",
@@ -1493,23 +2241,8 @@
     "category": "purified_ore",
     "tier": "PLS",
     "form": "solid",
-    "raw": false
-  },
-  {
-    "id": "silicone_ingot",
-    "name": "Silicone Ingot",
-    "category": "ingot",
-    "tier": "PLS",
-    "form": "solid",
-    "raw": false
-  },
-  {
-    "id": "silicone_plate",
-    "name": "Silicone Plate",
-    "category": "plate",
-    "tier": "PLS",
-    "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "tungsten_dust",
@@ -1517,7 +2250,8 @@
     "category": "dust",
     "tier": "FUS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "tungsten_ingot",
@@ -1525,7 +2259,8 @@
     "category": "ingot",
     "tier": "FUS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "tungsten_plate",
@@ -1533,7 +2268,8 @@
     "category": "plate",
     "tier": "FUS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "tungsten_rod",
@@ -1541,7 +2277,8 @@
     "category": "rod",
     "tier": "FUS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "tungsten_wire",
@@ -1549,7 +2286,8 @@
     "category": "wire",
     "tier": "FUS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "scheelite",
@@ -1557,7 +2295,8 @@
     "category": "raw_ore",
     "tier": "FUS",
     "form": "solid",
-    "raw": true
+    "raw": true,
+    "tags": []
   },
   {
     "id": "scheelite_crushed",
@@ -1565,7 +2304,8 @@
     "category": "crushed_ore",
     "tier": "FUS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "scheelite_purified",
@@ -1573,7 +2313,8 @@
     "category": "purified_ore",
     "tier": "FUS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "tungsten_steel_dust",
@@ -1581,7 +2322,8 @@
     "category": "dust",
     "tier": "FUS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "tungsten_steel_ingot",
@@ -1589,7 +2331,8 @@
     "category": "ingot",
     "tier": "FUS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "tungsten_steel_plate",
@@ -1597,7 +2340,8 @@
     "category": "plate",
     "tier": "FUS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "tungsten_steel_rod",
@@ -1605,7 +2349,8 @@
     "category": "rod",
     "tier": "FUS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "tungsten_steel_gear",
@@ -1613,7 +2358,8 @@
     "category": "gear",
     "tier": "FUS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "tungsten_steel_foil",
@@ -1621,7 +2367,8 @@
     "category": "foil",
     "tier": "FUS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "neodymium_dust",
@@ -1629,7 +2376,8 @@
     "category": "dust",
     "tier": "FUS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "neodymium_ingot",
@@ -1637,7 +2385,8 @@
     "category": "ingot",
     "tier": "FUS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "neodymium_rod",
@@ -1645,7 +2394,8 @@
     "category": "rod",
     "tier": "FUS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "monazite",
@@ -1653,7 +2403,8 @@
     "category": "raw_ore",
     "tier": "FUS",
     "form": "solid",
-    "raw": true
+    "raw": true,
+    "tags": []
   },
   {
     "id": "monazite_crushed",
@@ -1661,7 +2412,8 @@
     "category": "crushed_ore",
     "tier": "FUS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "monazite_purified",
@@ -1669,7 +2421,8 @@
     "category": "purified_ore",
     "tier": "FUS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "cerium_dust",
@@ -1677,7 +2430,8 @@
     "category": "dust",
     "tier": "FUS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "cerium_ingot",
@@ -1685,7 +2439,8 @@
     "category": "ingot",
     "tier": "FUS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "niobium_dust",
@@ -1693,7 +2448,8 @@
     "category": "dust",
     "tier": "FUS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "niobium_ingot",
@@ -1701,7 +2457,8 @@
     "category": "ingot",
     "tier": "FUS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "niobium_plate",
@@ -1709,7 +2466,8 @@
     "category": "plate",
     "tier": "FUS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "pyrochlore",
@@ -1717,7 +2475,8 @@
     "category": "raw_ore",
     "tier": "FUS",
     "form": "solid",
-    "raw": true
+    "raw": true,
+    "tags": []
   },
   {
     "id": "pyrochlore_crushed",
@@ -1725,7 +2484,8 @@
     "category": "crushed_ore",
     "tier": "FUS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "pyrochlore_purified",
@@ -1733,23 +2493,8 @@
     "category": "purified_ore",
     "tier": "FUS",
     "form": "solid",
-    "raw": false
-  },
-  {
-    "id": "ptfe_ingot",
-    "name": "PTFE Ingot",
-    "category": "ingot",
-    "tier": "FUS",
-    "form": "solid",
-    "raw": false
-  },
-  {
-    "id": "ptfe_plate",
-    "name": "PTFE Plate",
-    "category": "plate",
-    "tier": "FUS",
-    "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "iridium_dust",
@@ -1757,7 +2502,8 @@
     "category": "dust",
     "tier": "QNT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "iridium_ingot",
@@ -1765,7 +2511,8 @@
     "category": "ingot",
     "tier": "QNT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "iridium_plate",
@@ -1773,7 +2520,8 @@
     "category": "plate",
     "tier": "QNT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "iridium_rod",
@@ -1781,7 +2529,8 @@
     "category": "rod",
     "tier": "QNT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "iridium_wire",
@@ -1789,7 +2538,8 @@
     "category": "wire",
     "tier": "QNT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "iridium_fine_wire",
@@ -1797,7 +2547,8 @@
     "category": "fine_wire",
     "tier": "QNT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "iridium_foil",
@@ -1805,7 +2556,8 @@
     "category": "foil",
     "tier": "QNT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "osmium_dust",
@@ -1813,7 +2565,8 @@
     "category": "dust",
     "tier": "QNT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "osmium_ingot",
@@ -1821,7 +2574,8 @@
     "category": "ingot",
     "tier": "QNT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "osmium_plate",
@@ -1829,7 +2583,8 @@
     "category": "plate",
     "tier": "QNT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "osmium_wire",
@@ -1837,7 +2592,8 @@
     "category": "wire",
     "tier": "QNT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "xenite_dust",
@@ -1845,7 +2601,8 @@
     "category": "dust",
     "tier": "QNT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "xenite_ingot",
@@ -1853,7 +2610,8 @@
     "category": "ingot",
     "tier": "QNT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "xenite_plate",
@@ -1861,7 +2619,8 @@
     "category": "plate",
     "tier": "QNT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "xenite_rod",
@@ -1869,7 +2628,8 @@
     "category": "rod",
     "tier": "QNT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "xenite_deposit",
@@ -1877,7 +2637,8 @@
     "category": "raw_ore",
     "tier": "QNT",
     "form": "solid",
-    "raw": true
+    "raw": true,
+    "tags": []
   },
   {
     "id": "xenite_deposit_crushed",
@@ -1885,7 +2646,8 @@
     "category": "crushed_ore",
     "tier": "QNT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "xenite_deposit_purified",
@@ -1893,7 +2655,8 @@
     "category": "purified_ore",
     "tier": "QNT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "collapsium_dust",
@@ -1901,7 +2664,8 @@
     "category": "dust",
     "tier": "SNG",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "collapsium_ingot",
@@ -1909,7 +2673,8 @@
     "category": "ingot",
     "tier": "SNG",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "collapsium_plate",
@@ -1917,7 +2682,8 @@
     "category": "plate",
     "tier": "SNG",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "collapsium_rod",
@@ -1925,7 +2691,8 @@
     "category": "rod",
     "tier": "SNG",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "collapsium_wire",
@@ -1933,7 +2700,8 @@
     "category": "wire",
     "tier": "SNG",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "collapsium_fine_wire",
@@ -1941,7 +2709,360 @@
     "category": "fine_wire",
     "tier": "SNG",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "bakelite_ingot",
+    "name": "Bakelite Resin",
+    "category": "ingot",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false,
+    "tags": [
+      "polymer"
+    ]
+  },
+  {
+    "id": "bakelite_plate",
+    "name": "Bakelite Board",
+    "category": "plate",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false,
+    "tags": [
+      "polymer"
+    ]
+  },
+  {
+    "id": "pvc_ingot",
+    "name": "PVC Pellets",
+    "category": "ingot",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false,
+    "tags": [
+      "polymer"
+    ]
+  },
+  {
+    "id": "pvc_plate",
+    "name": "PVC Sheet",
+    "category": "plate",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false,
+    "tags": [
+      "polymer"
+    ]
+  },
+  {
+    "id": "polyethylene_ingot",
+    "name": "Polyethylene Pellets",
+    "category": "ingot",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false,
+    "tags": [
+      "polymer"
+    ]
+  },
+  {
+    "id": "polyethylene_plate",
+    "name": "Polyethylene Sheet",
+    "category": "plate",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false,
+    "tags": [
+      "polymer"
+    ]
+  },
+  {
+    "id": "polypropylene_ingot",
+    "name": "Polypropylene Pellets",
+    "category": "ingot",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false,
+    "tags": [
+      "polymer"
+    ]
+  },
+  {
+    "id": "polypropylene_plate",
+    "name": "Polypropylene Sheet",
+    "category": "plate",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false,
+    "tags": [
+      "polymer"
+    ]
+  },
+  {
+    "id": "polystyrene_ingot",
+    "name": "Polystyrene Pellets",
+    "category": "ingot",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false,
+    "tags": [
+      "polymer"
+    ]
+  },
+  {
+    "id": "polystyrene_plate",
+    "name": "Polystyrene Sheet",
+    "category": "plate",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false,
+    "tags": [
+      "polymer"
+    ]
+  },
+  {
+    "id": "sbr_rubber_ingot",
+    "name": "SBR Rubber Bale",
+    "category": "ingot",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false,
+    "tags": [
+      "polymer"
+    ]
+  },
+  {
+    "id": "sbr_rubber_plate",
+    "name": "SBR Rubber Sheet",
+    "category": "plate",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false,
+    "tags": [
+      "polymer"
+    ]
+  },
+  {
+    "id": "pet_ingot",
+    "name": "PET Pellets",
+    "category": "ingot",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false,
+    "tags": [
+      "polymer"
+    ]
+  },
+  {
+    "id": "pet_plate",
+    "name": "PET Sheet",
+    "category": "plate",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false,
+    "tags": [
+      "polymer"
+    ]
+  },
+  {
+    "id": "abs_ingot",
+    "name": "ABS Pellets",
+    "category": "ingot",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false,
+    "tags": [
+      "polymer"
+    ]
+  },
+  {
+    "id": "abs_plate",
+    "name": "ABS Sheet",
+    "category": "plate",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false,
+    "tags": [
+      "polymer"
+    ]
+  },
+  {
+    "id": "nylon_ingot",
+    "name": "Nylon 6,6 Pellets",
+    "category": "ingot",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false,
+    "tags": [
+      "polymer"
+    ]
+  },
+  {
+    "id": "nylon_plate",
+    "name": "Nylon 6,6 Fibre Mat",
+    "category": "plate",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false,
+    "tags": [
+      "polymer"
+    ]
+  },
+  {
+    "id": "polycarbonate_ingot",
+    "name": "Polycarbonate Pellets",
+    "category": "ingot",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false,
+    "tags": [
+      "polymer"
+    ]
+  },
+  {
+    "id": "polycarbonate_plate",
+    "name": "Polycarbonate Sheet",
+    "category": "plate",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false,
+    "tags": [
+      "polymer"
+    ]
+  },
+  {
+    "id": "ptfe_ingot",
+    "name": "PTFE Pellets",
+    "category": "ingot",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false,
+    "tags": [
+      "polymer"
+    ]
+  },
+  {
+    "id": "ptfe_plate",
+    "name": "PTFE Sheet",
+    "category": "plate",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false,
+    "tags": [
+      "polymer"
+    ]
+  },
+  {
+    "id": "epoxy_ingot",
+    "name": "Epoxy Resin",
+    "category": "ingot",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false,
+    "tags": [
+      "polymer"
+    ]
+  },
+  {
+    "id": "epoxy_plate",
+    "name": "Epoxy Laminate",
+    "category": "plate",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false,
+    "tags": [
+      "polymer"
+    ]
+  },
+  {
+    "id": "polyurethane_ingot",
+    "name": "Polyurethane Prepolymer",
+    "category": "ingot",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false,
+    "tags": [
+      "polymer"
+    ]
+  },
+  {
+    "id": "polyurethane_plate",
+    "name": "Polyurethane Foam Panel",
+    "category": "plate",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false,
+    "tags": [
+      "polymer"
+    ]
+  },
+  {
+    "id": "silicone_ingot",
+    "name": "Silicone Gum",
+    "category": "ingot",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false,
+    "tags": [
+      "polymer"
+    ]
+  },
+  {
+    "id": "silicone_plate",
+    "name": "Silicone Sheet",
+    "category": "plate",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false,
+    "tags": [
+      "polymer"
+    ]
+  },
+  {
+    "id": "aramid_ingot",
+    "name": "Aramid Staple",
+    "category": "ingot",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false,
+    "tags": [
+      "polymer"
+    ]
+  },
+  {
+    "id": "aramid_plate",
+    "name": "Aramid Weave",
+    "category": "plate",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false,
+    "tags": [
+      "polymer"
+    ]
+  },
+  {
+    "id": "peek_ingot",
+    "name": "PEEK Pellets",
+    "category": "ingot",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false,
+    "tags": [
+      "polymer"
+    ]
+  },
+  {
+    "id": "peek_plate",
+    "name": "PEEK Sheet",
+    "category": "plate",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false,
+    "tags": [
+      "polymer"
+    ]
   },
   {
     "id": "stm_cable",
@@ -1949,7 +3070,8 @@
     "category": "component",
     "tier": "STM",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "stm_machine_hull",
@@ -1957,7 +3079,8 @@
     "category": "component",
     "tier": "STM",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "stm_motor",
@@ -1965,7 +3088,8 @@
     "category": "component",
     "tier": "STM",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "stm_piston",
@@ -1973,7 +3097,8 @@
     "category": "component",
     "tier": "STM",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "stm_pump",
@@ -1981,7 +3106,8 @@
     "category": "component",
     "tier": "STM",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "stm_conveyor",
@@ -1989,7 +3115,8 @@
     "category": "component",
     "tier": "STM",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "vlt_cable",
@@ -1997,7 +3124,8 @@
     "category": "component",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "vlt_machine_hull",
@@ -2005,7 +3133,8 @@
     "category": "component",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "vlt_motor",
@@ -2013,7 +3142,8 @@
     "category": "component",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "vlt_piston",
@@ -2021,7 +3151,8 @@
     "category": "component",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "vlt_pump",
@@ -2029,7 +3160,8 @@
     "category": "component",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "vlt_conveyor",
@@ -2037,7 +3169,8 @@
     "category": "component",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "vlt_board",
@@ -2045,7 +3178,8 @@
     "category": "component",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "vlt_circuit",
@@ -2053,7 +3187,8 @@
     "category": "component",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "arc_cable",
@@ -2061,7 +3196,8 @@
     "category": "component",
     "tier": "ARC",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "arc_machine_hull",
@@ -2069,7 +3205,8 @@
     "category": "component",
     "tier": "ARC",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "arc_motor",
@@ -2077,7 +3214,8 @@
     "category": "component",
     "tier": "ARC",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "arc_piston",
@@ -2085,7 +3223,8 @@
     "category": "component",
     "tier": "ARC",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "arc_pump",
@@ -2093,7 +3232,8 @@
     "category": "component",
     "tier": "ARC",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "arc_conveyor",
@@ -2101,7 +3241,8 @@
     "category": "component",
     "tier": "ARC",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "arc_board",
@@ -2109,7 +3250,8 @@
     "category": "component",
     "tier": "ARC",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "arc_circuit",
@@ -2117,7 +3259,8 @@
     "category": "component",
     "tier": "ARC",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "pls_cable",
@@ -2125,7 +3268,8 @@
     "category": "component",
     "tier": "PLS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "pls_machine_hull",
@@ -2133,7 +3277,8 @@
     "category": "component",
     "tier": "PLS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "pls_motor",
@@ -2141,7 +3286,8 @@
     "category": "component",
     "tier": "PLS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "pls_piston",
@@ -2149,7 +3295,8 @@
     "category": "component",
     "tier": "PLS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "pls_pump",
@@ -2157,7 +3304,8 @@
     "category": "component",
     "tier": "PLS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "pls_conveyor",
@@ -2165,7 +3313,8 @@
     "category": "component",
     "tier": "PLS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "pls_board",
@@ -2173,7 +3322,8 @@
     "category": "component",
     "tier": "PLS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "pls_circuit",
@@ -2181,7 +3331,8 @@
     "category": "component",
     "tier": "PLS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "fus_cable",
@@ -2189,7 +3340,8 @@
     "category": "component",
     "tier": "FUS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "fus_machine_hull",
@@ -2197,7 +3349,8 @@
     "category": "component",
     "tier": "FUS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "fus_motor",
@@ -2205,7 +3358,8 @@
     "category": "component",
     "tier": "FUS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "fus_piston",
@@ -2213,7 +3367,8 @@
     "category": "component",
     "tier": "FUS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "fus_pump",
@@ -2221,7 +3376,8 @@
     "category": "component",
     "tier": "FUS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "fus_conveyor",
@@ -2229,7 +3385,8 @@
     "category": "component",
     "tier": "FUS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "fus_board",
@@ -2237,7 +3394,8 @@
     "category": "component",
     "tier": "FUS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "fus_circuit",
@@ -2245,7 +3403,8 @@
     "category": "component",
     "tier": "FUS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "qnt_cable",
@@ -2253,7 +3412,8 @@
     "category": "component",
     "tier": "QNT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "qnt_machine_hull",
@@ -2261,7 +3421,8 @@
     "category": "component",
     "tier": "QNT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "qnt_motor",
@@ -2269,7 +3430,8 @@
     "category": "component",
     "tier": "QNT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "qnt_piston",
@@ -2277,7 +3439,8 @@
     "category": "component",
     "tier": "QNT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "qnt_pump",
@@ -2285,7 +3448,8 @@
     "category": "component",
     "tier": "QNT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "qnt_conveyor",
@@ -2293,7 +3457,8 @@
     "category": "component",
     "tier": "QNT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "qnt_board",
@@ -2301,7 +3466,8 @@
     "category": "component",
     "tier": "QNT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "qnt_circuit",
@@ -2309,7 +3475,8 @@
     "category": "component",
     "tier": "QNT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "sng_cable",
@@ -2317,7 +3484,8 @@
     "category": "component",
     "tier": "SNG",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "sng_machine_hull",
@@ -2325,7 +3493,8 @@
     "category": "component",
     "tier": "SNG",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "sng_motor",
@@ -2333,7 +3502,8 @@
     "category": "component",
     "tier": "SNG",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "sng_piston",
@@ -2341,7 +3511,8 @@
     "category": "component",
     "tier": "SNG",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "sng_pump",
@@ -2349,7 +3520,8 @@
     "category": "component",
     "tier": "SNG",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "sng_conveyor",
@@ -2357,7 +3529,8 @@
     "category": "component",
     "tier": "SNG",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "sng_board",
@@ -2365,7 +3538,8 @@
     "category": "component",
     "tier": "SNG",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "sng_circuit",
@@ -2373,7 +3547,8 @@
     "category": "component",
     "tier": "SNG",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "man_furnace",
@@ -2381,7 +3556,8 @@
     "category": "machine",
     "tier": "MAN",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "stm_furnace",
@@ -2389,7 +3565,8 @@
     "category": "machine",
     "tier": "STM",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "vlt_furnace",
@@ -2397,7 +3574,8 @@
     "category": "machine",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "arc_furnace",
@@ -2405,7 +3583,8 @@
     "category": "machine",
     "tier": "ARC",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "pls_furnace",
@@ -2413,7 +3592,8 @@
     "category": "machine",
     "tier": "PLS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "fus_furnace",
@@ -2421,7 +3601,8 @@
     "category": "machine",
     "tier": "FUS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "man_manual_crafting",
@@ -2429,7 +3610,8 @@
     "category": "machine",
     "tier": "MAN",
     "form": "solid",
-    "raw": true
+    "raw": true,
+    "tags": []
   },
   {
     "id": "man_alloy_smelter",
@@ -2437,7 +3619,8 @@
     "category": "machine",
     "tier": "MAN",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "stm_alloy_smelter",
@@ -2445,7 +3628,8 @@
     "category": "machine",
     "tier": "STM",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "vlt_alloy_smelter",
@@ -2453,7 +3637,8 @@
     "category": "machine",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "arc_alloy_smelter",
@@ -2461,7 +3646,8 @@
     "category": "machine",
     "tier": "ARC",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "pls_alloy_smelter",
@@ -2469,7 +3655,8 @@
     "category": "machine",
     "tier": "PLS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "fus_alloy_smelter",
@@ -2477,7 +3664,8 @@
     "category": "machine",
     "tier": "FUS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "stm_crusher",
@@ -2485,7 +3673,8 @@
     "category": "machine",
     "tier": "STM",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "vlt_crusher",
@@ -2493,7 +3682,8 @@
     "category": "machine",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "arc_crusher",
@@ -2501,7 +3691,8 @@
     "category": "machine",
     "tier": "ARC",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "pls_crusher",
@@ -2509,7 +3700,8 @@
     "category": "machine",
     "tier": "PLS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "fus_crusher",
@@ -2517,7 +3709,8 @@
     "category": "machine",
     "tier": "FUS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "qnt_crusher",
@@ -2525,7 +3718,8 @@
     "category": "machine",
     "tier": "QNT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "stm_macerator",
@@ -2533,7 +3727,8 @@
     "category": "machine",
     "tier": "STM",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "vlt_macerator",
@@ -2541,7 +3736,8 @@
     "category": "machine",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "arc_macerator",
@@ -2549,7 +3745,8 @@
     "category": "machine",
     "tier": "ARC",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "pls_macerator",
@@ -2557,7 +3754,8 @@
     "category": "machine",
     "tier": "PLS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "fus_macerator",
@@ -2565,7 +3763,8 @@
     "category": "machine",
     "tier": "FUS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "qnt_macerator",
@@ -2573,7 +3772,8 @@
     "category": "machine",
     "tier": "QNT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "stm_sifter",
@@ -2581,7 +3781,8 @@
     "category": "machine",
     "tier": "STM",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "vlt_sifter",
@@ -2589,7 +3790,8 @@
     "category": "machine",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "arc_sifter",
@@ -2597,7 +3799,8 @@
     "category": "machine",
     "tier": "ARC",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "stm_bender",
@@ -2605,7 +3808,8 @@
     "category": "machine",
     "tier": "STM",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "vlt_bender",
@@ -2613,7 +3817,8 @@
     "category": "machine",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "arc_bender",
@@ -2621,7 +3826,8 @@
     "category": "machine",
     "tier": "ARC",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "pls_bender",
@@ -2629,7 +3835,8 @@
     "category": "machine",
     "tier": "PLS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "fus_bender",
@@ -2637,7 +3844,8 @@
     "category": "machine",
     "tier": "FUS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "qnt_bender",
@@ -2645,7 +3853,8 @@
     "category": "machine",
     "tier": "QNT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "stm_lathe",
@@ -2653,7 +3862,8 @@
     "category": "machine",
     "tier": "STM",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "vlt_lathe",
@@ -2661,7 +3871,8 @@
     "category": "machine",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "arc_lathe",
@@ -2669,7 +3880,8 @@
     "category": "machine",
     "tier": "ARC",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "pls_lathe",
@@ -2677,7 +3889,8 @@
     "category": "machine",
     "tier": "PLS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "fus_lathe",
@@ -2685,7 +3898,8 @@
     "category": "machine",
     "tier": "FUS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "qnt_lathe",
@@ -2693,7 +3907,8 @@
     "category": "machine",
     "tier": "QNT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "stm_assembler",
@@ -2701,7 +3916,8 @@
     "category": "machine",
     "tier": "STM",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "vlt_assembler",
@@ -2709,7 +3925,8 @@
     "category": "machine",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "arc_assembler",
@@ -2717,7 +3934,8 @@
     "category": "machine",
     "tier": "ARC",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "pls_assembler",
@@ -2725,7 +3943,8 @@
     "category": "machine",
     "tier": "PLS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "fus_assembler",
@@ -2733,7 +3952,8 @@
     "category": "machine",
     "tier": "FUS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "qnt_assembler",
@@ -2741,7 +3961,8 @@
     "category": "machine",
     "tier": "QNT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "sng_assembler",
@@ -2749,7 +3970,8 @@
     "category": "machine",
     "tier": "SNG",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "stm_boiler",
@@ -2757,7 +3979,8 @@
     "category": "machine",
     "tier": "STM",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "stm_miner",
@@ -2765,7 +3988,8 @@
     "category": "machine",
     "tier": "STM",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "vlt_miner",
@@ -2773,7 +3997,8 @@
     "category": "machine",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "arc_miner",
@@ -2781,7 +4006,8 @@
     "category": "machine",
     "tier": "ARC",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "pls_miner",
@@ -2789,7 +4015,8 @@
     "category": "machine",
     "tier": "PLS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "fus_miner",
@@ -2797,7 +4024,8 @@
     "category": "machine",
     "tier": "FUS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "qnt_miner",
@@ -2805,7 +4033,8 @@
     "category": "machine",
     "tier": "QNT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "sng_miner",
@@ -2813,7 +4042,8 @@
     "category": "machine",
     "tier": "SNG",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "stm_pump_station",
@@ -2821,7 +4051,8 @@
     "category": "machine",
     "tier": "STM",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "vlt_pump_station",
@@ -2829,7 +4060,8 @@
     "category": "machine",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "arc_pump_station",
@@ -2837,7 +4069,8 @@
     "category": "machine",
     "tier": "ARC",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "pls_pump_station",
@@ -2845,7 +4078,8 @@
     "category": "machine",
     "tier": "PLS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "fus_pump_station",
@@ -2853,7 +4087,8 @@
     "category": "machine",
     "tier": "FUS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "qnt_pump_station",
@@ -2861,7 +4096,8 @@
     "category": "machine",
     "tier": "QNT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "stm_generator",
@@ -2869,7 +4105,8 @@
     "category": "machine",
     "tier": "STM",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "vlt_generator",
@@ -2877,7 +4114,8 @@
     "category": "machine",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "arc_generator",
@@ -2885,7 +4123,8 @@
     "category": "machine",
     "tier": "ARC",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "pls_generator",
@@ -2893,7 +4132,8 @@
     "category": "machine",
     "tier": "PLS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "fus_generator",
@@ -2901,7 +4141,8 @@
     "category": "machine",
     "tier": "FUS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "qnt_generator",
@@ -2909,7 +4150,8 @@
     "category": "machine",
     "tier": "QNT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "sng_generator",
@@ -2917,7 +4159,8 @@
     "category": "machine",
     "tier": "SNG",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "vlt_washer",
@@ -2925,7 +4168,8 @@
     "category": "machine",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "arc_washer",
@@ -2933,7 +4177,8 @@
     "category": "machine",
     "tier": "ARC",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "pls_washer",
@@ -2941,7 +4186,8 @@
     "category": "machine",
     "tier": "PLS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "fus_washer",
@@ -2949,7 +4195,8 @@
     "category": "machine",
     "tier": "FUS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "qnt_washer",
@@ -2957,7 +4204,8 @@
     "category": "machine",
     "tier": "QNT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "stm_wire_mill",
@@ -2965,7 +4213,8 @@
     "category": "machine",
     "tier": "STM",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "vlt_wire_mill",
@@ -2973,7 +4222,8 @@
     "category": "machine",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "arc_wire_mill",
@@ -2981,7 +4231,8 @@
     "category": "machine",
     "tier": "ARC",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "pls_wire_mill",
@@ -2989,7 +4240,8 @@
     "category": "machine",
     "tier": "PLS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "fus_wire_mill",
@@ -2997,7 +4249,8 @@
     "category": "machine",
     "tier": "FUS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "qnt_wire_mill",
@@ -3005,7 +4258,8 @@
     "category": "machine",
     "tier": "QNT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "vlt_mixer",
@@ -3013,7 +4267,8 @@
     "category": "machine",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "arc_mixer",
@@ -3021,7 +4276,8 @@
     "category": "machine",
     "tier": "ARC",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "pls_mixer",
@@ -3029,7 +4285,8 @@
     "category": "machine",
     "tier": "PLS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "fus_mixer",
@@ -3037,7 +4294,8 @@
     "category": "machine",
     "tier": "FUS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "stm_chemical_reactor",
@@ -3045,7 +4303,8 @@
     "category": "machine",
     "tier": "STM",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "vlt_chemical_reactor",
@@ -3053,7 +4312,8 @@
     "category": "machine",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "arc_chemical_reactor",
@@ -3061,7 +4321,8 @@
     "category": "machine",
     "tier": "ARC",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "pls_chemical_reactor",
@@ -3069,7 +4330,8 @@
     "category": "machine",
     "tier": "PLS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "fus_chemical_reactor",
@@ -3077,7 +4339,8 @@
     "category": "machine",
     "tier": "FUS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "qnt_chemical_reactor",
@@ -3085,7 +4348,8 @@
     "category": "machine",
     "tier": "QNT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "sng_chemical_reactor",
@@ -3093,7 +4357,8 @@
     "category": "machine",
     "tier": "SNG",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "vlt_electrolyzer",
@@ -3101,7 +4366,8 @@
     "category": "machine",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "arc_electrolyzer",
@@ -3109,7 +4375,8 @@
     "category": "machine",
     "tier": "ARC",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "pls_electrolyzer",
@@ -3117,7 +4384,8 @@
     "category": "machine",
     "tier": "PLS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "fus_electrolyzer",
@@ -3125,7 +4393,8 @@
     "category": "machine",
     "tier": "FUS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "qnt_electrolyzer",
@@ -3133,7 +4402,8 @@
     "category": "machine",
     "tier": "QNT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "sng_electrolyzer",
@@ -3141,7 +4411,8 @@
     "category": "machine",
     "tier": "SNG",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "vlt_cutter",
@@ -3149,7 +4420,8 @@
     "category": "machine",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "arc_cutter",
@@ -3157,7 +4429,8 @@
     "category": "machine",
     "tier": "ARC",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "pls_cutter",
@@ -3165,7 +4438,8 @@
     "category": "machine",
     "tier": "PLS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "arc_centrifuge",
@@ -3173,7 +4447,8 @@
     "category": "machine",
     "tier": "ARC",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "pls_centrifuge",
@@ -3181,7 +4456,8 @@
     "category": "machine",
     "tier": "PLS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "fus_centrifuge",
@@ -3189,7 +4465,8 @@
     "category": "machine",
     "tier": "FUS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "qnt_centrifuge",
@@ -3197,7 +4474,8 @@
     "category": "machine",
     "tier": "QNT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "sng_centrifuge",
@@ -3205,7 +4483,17 @@
     "category": "machine",
     "tier": "SNG",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "stm_distillery",
+    "name": "Steam Distillery",
+    "category": "machine",
+    "tier": "STM",
+    "form": "solid",
+    "raw": false,
+    "tags": []
   },
   {
     "id": "vlt_distillery",
@@ -3213,7 +4501,8 @@
     "category": "machine",
     "tier": "VLT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "arc_distillery",
@@ -3221,7 +4510,8 @@
     "category": "machine",
     "tier": "ARC",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "pls_distillery",
@@ -3229,7 +4519,8 @@
     "category": "machine",
     "tier": "PLS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "fus_distillery",
@@ -3237,7 +4528,8 @@
     "category": "machine",
     "tier": "FUS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "qnt_distillery",
@@ -3245,7 +4537,8 @@
     "category": "machine",
     "tier": "QNT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "arc_arc_furnace",
@@ -3253,7 +4546,8 @@
     "category": "machine",
     "tier": "ARC",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "pls_arc_furnace",
@@ -3261,7 +4555,8 @@
     "category": "machine",
     "tier": "PLS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "fus_arc_furnace",
@@ -3269,7 +4564,8 @@
     "category": "machine",
     "tier": "FUS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "pls_chemical_bath",
@@ -3277,7 +4573,8 @@
     "category": "machine",
     "tier": "PLS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "fus_chemical_bath",
@@ -3285,7 +4582,8 @@
     "category": "machine",
     "tier": "FUS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "qnt_chemical_bath",
@@ -3293,7 +4591,8 @@
     "category": "machine",
     "tier": "QNT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "pls_vacuum_freezer",
@@ -3301,7 +4600,8 @@
     "category": "machine",
     "tier": "PLS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "fus_vacuum_freezer",
@@ -3309,7 +4609,8 @@
     "category": "machine",
     "tier": "FUS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "qnt_vacuum_freezer",
@@ -3317,7 +4618,8 @@
     "category": "machine",
     "tier": "QNT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "sng_vacuum_freezer",
@@ -3325,7 +4627,8 @@
     "category": "machine",
     "tier": "SNG",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "fus_fusion_reactor",
@@ -3333,7 +4636,8 @@
     "category": "machine",
     "tier": "FUS",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "qnt_fusion_reactor",
@@ -3341,7 +4645,8 @@
     "category": "machine",
     "tier": "QNT",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "sng_fusion_reactor",
@@ -3349,7 +4654,8 @@
     "category": "machine",
     "tier": "SNG",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
   },
   {
     "id": "sng_replicator",
@@ -3357,6 +4663,442 @@
     "category": "machine",
     "tier": "SNG",
     "form": "solid",
-    "raw": false
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "arc_vacuum_distillation",
+    "name": "Arc Vacuum Distillation",
+    "category": "machine",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "pls_vacuum_distillation",
+    "name": "Plasma Vacuum Distillation",
+    "category": "machine",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "fus_vacuum_distillation",
+    "name": "Fusion Vacuum Distillation",
+    "category": "machine",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "qnt_vacuum_distillation",
+    "name": "Quantum Vacuum Distillation",
+    "category": "machine",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "vlt_steam_cracker",
+    "name": "Voltaic Steam Cracker",
+    "category": "machine",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "arc_steam_cracker",
+    "name": "Arc Steam Cracker",
+    "category": "machine",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "pls_steam_cracker",
+    "name": "Plasma Steam Cracker",
+    "category": "machine",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "fus_steam_cracker",
+    "name": "Fusion Steam Cracker",
+    "category": "machine",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "qnt_steam_cracker",
+    "name": "Quantum Steam Cracker",
+    "category": "machine",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "arc_catalytic_reformer",
+    "name": "Arc Catalytic Reformer",
+    "category": "machine",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "pls_catalytic_reformer",
+    "name": "Plasma Catalytic Reformer",
+    "category": "machine",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "fus_catalytic_reformer",
+    "name": "Fusion Catalytic Reformer",
+    "category": "machine",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "qnt_catalytic_reformer",
+    "name": "Quantum Catalytic Reformer",
+    "category": "machine",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "pls_fcc_unit",
+    "name": "Plasma Catalytic Cracker",
+    "category": "machine",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "fus_fcc_unit",
+    "name": "Fusion Catalytic Cracker",
+    "category": "machine",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "qnt_fcc_unit",
+    "name": "Quantum Catalytic Cracker",
+    "category": "machine",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "arc_hydrotreater",
+    "name": "Arc Hydrotreater",
+    "category": "machine",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "pls_hydrotreater",
+    "name": "Plasma Hydrotreater",
+    "category": "machine",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "fus_hydrotreater",
+    "name": "Fusion Hydrotreater",
+    "category": "machine",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "qnt_hydrotreater",
+    "name": "Quantum Hydrotreater",
+    "category": "machine",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "arc_claus_unit",
+    "name": "Arc Claus Sulfur Unit",
+    "category": "machine",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "pls_claus_unit",
+    "name": "Plasma Claus Sulfur Unit",
+    "category": "machine",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "fus_claus_unit",
+    "name": "Fusion Claus Sulfur Unit",
+    "category": "machine",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "pls_coker",
+    "name": "Plasma Delayed Coker",
+    "category": "machine",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "fus_coker",
+    "name": "Fusion Delayed Coker",
+    "category": "machine",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "qnt_coker",
+    "name": "Quantum Delayed Coker",
+    "category": "machine",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "stm_gasifier",
+    "name": "Steam Gasifier",
+    "category": "machine",
+    "tier": "STM",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "vlt_gasifier",
+    "name": "Voltaic Gasifier",
+    "category": "machine",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "arc_gasifier",
+    "name": "Arc Gasifier",
+    "category": "machine",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "pls_gasifier",
+    "name": "Plasma Gasifier",
+    "category": "machine",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "stm_polymerizer",
+    "name": "Steam Polymerization Reactor",
+    "category": "machine",
+    "tier": "STM",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "vlt_polymerizer",
+    "name": "Voltaic Polymerization Reactor",
+    "category": "machine",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "arc_polymerizer",
+    "name": "Arc Polymerization Reactor",
+    "category": "machine",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "pls_polymerizer",
+    "name": "Plasma Polymerization Reactor",
+    "category": "machine",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "fus_polymerizer",
+    "name": "Fusion Polymerization Reactor",
+    "category": "machine",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "qnt_polymerizer",
+    "name": "Quantum Polymerization Reactor",
+    "category": "machine",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "sng_polymerizer",
+    "name": "Singular Polymerization Reactor",
+    "category": "machine",
+    "tier": "SNG",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "pls_spinneret",
+    "name": "Plasma Fibre Spinneret",
+    "category": "machine",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "fus_spinneret",
+    "name": "Fusion Fibre Spinneret",
+    "category": "machine",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "qnt_spinneret",
+    "name": "Quantum Fibre Spinneret",
+    "category": "machine",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "sng_spinneret",
+    "name": "Singular Fibre Spinneret",
+    "category": "machine",
+    "tier": "SNG",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "pressure_hull_assembly",
+    "name": "Pressure Hull Assembly",
+    "category": "assembly",
+    "tier": "SNG",
+    "form": "solid",
+    "raw": false,
+    "tags": [
+      "goal"
+    ]
+  },
+  {
+    "id": "fabrication_core",
+    "name": "Fabrication Core",
+    "category": "assembly",
+    "tier": "SNG",
+    "form": "solid",
+    "raw": false,
+    "tags": [
+      "goal"
+    ]
+  },
+  {
+    "id": "life_support_loop",
+    "name": "Life Support Loop",
+    "category": "assembly",
+    "tier": "SNG",
+    "form": "solid",
+    "raw": false,
+    "tags": [
+      "goal"
+    ]
+  },
+  {
+    "id": "cable_harness",
+    "name": "Cable Harness",
+    "category": "assembly",
+    "tier": "SNG",
+    "form": "solid",
+    "raw": false,
+    "tags": [
+      "goal"
+    ]
+  },
+  {
+    "id": "propellant_tank",
+    "name": "Propellant Tank",
+    "category": "assembly",
+    "tier": "SNG",
+    "form": "solid",
+    "raw": false,
+    "tags": [
+      "goal"
+    ]
+  },
+  {
+    "id": "von_neumann_seed",
+    "name": "Von Neumann Seed",
+    "category": "goal",
+    "tier": "SNG",
+    "form": "solid",
+    "raw": false,
+    "tags": [
+      "goal"
+    ]
   }
 ]

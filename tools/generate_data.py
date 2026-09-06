@@ -54,12 +54,13 @@ def main():
                 if all(i["item"].rsplit("_", 1)[0] in man_metals for i in m["alloy"]["inputs"]):
                     man_metals.add(m["id"])
 
-    def add_item(iid, name, category, tier, raw=False, form="solid"):
+    def add_item(iid, name, category, tier, raw=False, form="solid", tags=None):
         if iid in seen_items:
             return
         seen_items.add(iid)
         items.append({"id": iid, "name": name, "category": category,
-                      "tier": tier, "form": form, "raw": raw})
+                      "tier": tier, "form": form, "raw": raw,
+                      "tags": tags or []})
 
     def prod_tier(tier_id):
         """The tier that must be able to produce tier_id's own materials."""
@@ -102,7 +103,8 @@ def main():
 
     # ---- fluids and hand-written extra items --------------------------------
     for f in spec["fluids"]:
-        add_item(f["id"], f["name"], "fluid", f["tier"], raw=f.get("raw", False), form="fluid")
+        add_item(f["id"], f["name"], "fluid", f["tier"], raw=f.get("raw", False), form="fluid",
+                 tags=["petrochem"] if f.get("petrochem") else [])
     for e in spec["extra_items"]:
         add_item(e["id"], e["name"], e.get("category", "intermediate"), e["tier"])
 
@@ -113,15 +115,22 @@ def main():
         pt = prod_tier(mtier)["id"]
         direct = m.get("direct_smelt", True)
 
+        labels = m.get("form_labels", {})
+        tags = ["polymer"] if m.get("polymer") else []
+
+        def form_item(form, default_label):
+            add_item("%s_%s" % (mid, form), "%s %s" % (mname, labels.get(form, default_label)),
+                     form, mtier, tags=tags)
+
         for form in forms:
             if form == "dust":
-                add_item("%s_dust" % mid, "%s %s" % (mname, DUST_NAME), "dust", mtier)
+                form_item("dust", DUST_NAME)
             elif form == "ingot":
-                add_item("%s_ingot" % mid, "%s %s" % (mname, INGOT_NAME), "ingot", mtier)
+                form_item("ingot", INGOT_NAME)
             elif form == "gear":
-                add_item("%s_gear" % mid, "%s Gear" % mname, "gear", mtier)
+                form_item("gear", "Gear")
             else:
-                add_item("%s_%s" % (mid, form), "%s %s" % (mname, FORM_RULES[form][0]), form, mtier)
+                form_item(form, FORM_RULES[form][0])
 
         ore = m.get("ore")
         if ore:
@@ -278,6 +287,20 @@ def main():
                     ins.append({"item": "%s_%s" % (lo, part["component"]), "count": part["count"]})
             add_recipe("build_%s" % item_id, builder, pt, 400, ins,
                        [{"item": item_id, "count": 1}], "fabrication")
+
+    # ---- the goal ----------------------------------------------------------
+    goal = spec.get("goal")
+    if goal:
+        for a in goal["assemblies"]:
+            add_item(a["id"], a["name"], "assembly", a["tier"], tags=["goal"])
+            add_recipe("build_%s" % a["id"], "assembler", a["tier"], a["ticks"],
+                       [{"item": i, "count": c} for i, c in a["inputs"]],
+                       [{"item": a["id"], "count": 1}], "fabrication")
+        add_item(goal["id"], goal["name"], "goal", goal["tier"], tags=["goal"])
+        add_recipe("build_%s" % goal["id"], goal["machine"], goal["tier"], goal["ticks"],
+                   [{"item": i, "count": c} for i, c in goal["inputs"]],
+                   [{"item": goal["id"], "count": 1}], "fabrication",
+                   goal.get("power_multiplier", 1))
 
     # ---- hand-written chemistry --------------------------------------------
     for c in spec["chemistry"]:

@@ -27,7 +27,7 @@
     "name": "Voltaic",
     "power": 32,
     "metal": "steel",
-    "insulator": "rubber",
+    "insulator": "bakelite",
     "wire_metal": "copper",
     "magnet_metal": "steel",
     "electronics": true
@@ -38,7 +38,7 @@
     "name": "Arc",
     "power": 128,
     "metal": "aluminum",
-    "insulator": "plastic",
+    "insulator": "pvc",
     "wire_metal": "gold",
     "magnet_metal": "steel",
     "electronics": true
@@ -49,7 +49,7 @@
     "name": "Plasma",
     "power": 512,
     "metal": "titanium",
-    "insulator": "plastic",
+    "insulator": "polyethylene",
     "wire_metal": "platinum",
     "magnet_metal": "steel",
     "electronics": true
@@ -60,7 +60,7 @@
     "name": "Fusion",
     "power": 2048,
     "metal": "tungsten_steel",
-    "insulator": "silicone",
+    "insulator": "ptfe",
     "wire_metal": "platinum",
     "magnet_metal": "neodymium",
     "electronics": true
@@ -71,7 +71,7 @@
     "name": "Quantum",
     "power": 8192,
     "metal": "iridium",
-    "insulator": "ptfe",
+    "insulator": "peek",
     "wire_metal": "iridium",
     "magnet_metal": "neodymium",
     "electronics": true
@@ -82,7 +82,7 @@
     "name": "Singular",
     "power": 32768,
     "metal": "collapsium",
-    "insulator": "ptfe",
+    "insulator": "peek",
     "wire_metal": "collapsium",
     "magnet_metal": "neodymium",
     "electronics": true
