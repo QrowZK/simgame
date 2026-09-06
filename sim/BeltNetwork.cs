@@ -45,6 +45,19 @@ public sealed class Splitter
 
     public int Buffered => _buffer.Count;
 
+    /// Save surface. `Next` is the round-robin cursor: dropping it would nudge
+    /// every balanced split off-balance on each load.
+    public int Next => _next;
+
+    public IEnumerable<ItemId> BufferedItems => _buffer;
+
+    public void Restore(IReadOnlyList<ItemId> buffered, int next)
+    {
+        _buffer.Clear();
+        foreach (var item in buffered) _buffer.Enqueue(item);
+        _next = next;
+    }
+
     /// Tries each output in turn starting from whichever is next in rotation, so
     /// a blocked side never starves the other.
     public void Push(Func<Endpoint, ItemId, bool> deliver)
@@ -101,6 +114,15 @@ public sealed class Inserter
 
     public int Held => _held;
     public ItemId HeldItem => _heldItem;
+    public int Cooldown => _cooldown;
+
+    /// Save surface: what the arm is carrying and how far through its swing.
+    public void Restore(ItemId heldItem, int held, int cooldown)
+    {
+        _heldItem = heldItem;
+        _held = held;
+        _cooldown = cooldown;
+    }
 
     public void Tick(BeltNetwork network, IReadOnlyList<Machine> machines)
     {
@@ -180,6 +202,10 @@ public sealed class BeltNetwork
         _inserters.Add(new Inserter(source, target, swingTicks, stackSize));
         return _inserters.Count - 1;
     }
+
+    /// Every lane output in index order, for saving. `OutputOf` answers one at
+    /// a time; a save needs the whole table.
+    public IReadOnlyList<Endpoint> LaneOutputs => _laneOutputs;
 
     public Endpoint OutputOf(int segment, int lane) =>
         _laneOutputs[segment * BeltSegment.LaneCount + lane];

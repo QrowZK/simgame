@@ -18,6 +18,14 @@ public sealed class Inventory
         _contents[item] = _contents.GetValueOrDefault(item) + count;
     }
 
+    /// Replaces the whole inventory. Save surface only.
+    public void Restore(IReadOnlyList<(ItemId Item, int Count)> contents)
+    {
+        _contents.Clear();
+        foreach (var (item, count) in contents)
+            if (count > 0) _contents[item] = count;
+    }
+
     /// Removes up to `count`, returning how many were actually taken.
     public int Take(ItemId item, int count)
     {
