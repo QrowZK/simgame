@@ -513,5 +513,29 @@
       "QNT"
     ],
     "min_tier": "VLT"
+  },
+  {
+    "id": "prospector",
+    "name": "Prospector",
+    "tiers": [
+      "MAN",
+      "STM",
+      "VLT",
+      "ARC",
+      "PLS"
+    ],
+    "min_tier": "MAN"
+  },
+  {
+    "id": "oil_derrick",
+    "name": "Oil Derrick",
+    "tiers": [
+      "STM",
+      "VLT",
+      "ARC",
+      "PLS",
+      "FUS"
+    ],
+    "min_tier": "STM"
   }
 ]

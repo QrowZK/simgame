@@ -15208,6 +15208,182 @@
     "unlocked_by": "tech_fus_fabrication"
   },
   {
+    "id": "build_stm_oil_derrick",
+    "machine": "manual_crafting",
+    "tier": "MAN",
+    "duration_ticks": 400,
+    "power_draw": 0,
+    "inputs": [
+      {
+        "item": "stm_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "stm_cable",
+        "count": 4
+      },
+      {
+        "item": "stm_pump",
+        "count": 2
+      },
+      {
+        "item": "stm_motor",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "stm_oil_derrick",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_man_fabrication"
+  },
+  {
+    "id": "build_vlt_oil_derrick",
+    "machine": "assembler",
+    "tier": "ARC",
+    "duration_ticks": 400,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "vlt_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "vlt_circuit",
+        "count": 2
+      },
+      {
+        "item": "vlt_cable",
+        "count": 4
+      },
+      {
+        "item": "vlt_pump",
+        "count": 2
+      },
+      {
+        "item": "vlt_motor",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "vlt_oil_derrick",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_fabrication"
+  },
+  {
+    "id": "build_arc_oil_derrick",
+    "machine": "assembler",
+    "tier": "ARC",
+    "duration_ticks": 400,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "arc_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "arc_circuit",
+        "count": 2
+      },
+      {
+        "item": "arc_cable",
+        "count": 4
+      },
+      {
+        "item": "arc_pump",
+        "count": 2
+      },
+      {
+        "item": "arc_motor",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "arc_oil_derrick",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_fabrication"
+  },
+  {
+    "id": "build_pls_oil_derrick",
+    "machine": "assembler",
+    "tier": "ARC",
+    "duration_ticks": 400,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "pls_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "pls_circuit",
+        "count": 2
+      },
+      {
+        "item": "pls_cable",
+        "count": 4
+      },
+      {
+        "item": "pls_pump",
+        "count": 2
+      },
+      {
+        "item": "pls_motor",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "pls_oil_derrick",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_fabrication"
+  },
+  {
+    "id": "build_fus_oil_derrick",
+    "machine": "assembler",
+    "tier": "PLS",
+    "duration_ticks": 400,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "fus_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "fus_circuit",
+        "count": 2
+      },
+      {
+        "item": "fus_cable",
+        "count": 4
+      },
+      {
+        "item": "fus_pump",
+        "count": 2
+      },
+      {
+        "item": "fus_motor",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "fus_oil_derrick",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_pls_fabrication"
+  },
+  {
     "id": "build_pressure_hull_assembly",
     "machine": "assembler",
     "tier": "SNG",

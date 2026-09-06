@@ -5414,6 +5414,96 @@
     "tags": []
   },
   {
+    "id": "man_prospector",
+    "name": "Manual Prospector",
+    "category": "machine",
+    "tier": "MAN",
+    "form": "solid",
+    "raw": true,
+    "tags": []
+  },
+  {
+    "id": "stm_prospector",
+    "name": "Steam Prospector",
+    "category": "machine",
+    "tier": "STM",
+    "form": "solid",
+    "raw": true,
+    "tags": []
+  },
+  {
+    "id": "vlt_prospector",
+    "name": "Voltaic Prospector",
+    "category": "machine",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": true,
+    "tags": []
+  },
+  {
+    "id": "arc_prospector",
+    "name": "Arc Prospector",
+    "category": "machine",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": true,
+    "tags": []
+  },
+  {
+    "id": "pls_prospector",
+    "name": "Plasma Prospector",
+    "category": "machine",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": true,
+    "tags": []
+  },
+  {
+    "id": "stm_oil_derrick",
+    "name": "Steam Oil Derrick",
+    "category": "machine",
+    "tier": "STM",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "vlt_oil_derrick",
+    "name": "Voltaic Oil Derrick",
+    "category": "machine",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "arc_oil_derrick",
+    "name": "Arc Oil Derrick",
+    "category": "machine",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "pls_oil_derrick",
+    "name": "Plasma Oil Derrick",
+    "category": "machine",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "fus_oil_derrick",
+    "name": "Fusion Oil Derrick",
+    "category": "machine",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
     "id": "pressure_hull_assembly",
     "name": "Pressure Hull Assembly",
     "category": "assembly",

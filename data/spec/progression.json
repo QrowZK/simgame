@@ -2429,6 +2429,40 @@
           "count": 1
         }
       ]
+    },
+    {
+      "id": "prospector",
+      "name": "Prospector",
+      "tiers": [
+        "MAN",
+        "STM",
+        "VLT",
+        "ARC",
+        "PLS"
+      ],
+      "parts": [],
+      "starting": true
+    },
+    {
+      "id": "oil_derrick",
+      "name": "Oil Derrick",
+      "tiers": [
+        "STM",
+        "VLT",
+        "ARC",
+        "PLS",
+        "FUS"
+      ],
+      "parts": [
+        {
+          "component": "pump",
+          "count": 2
+        },
+        {
+          "component": "motor",
+          "count": 1
+        }
+      ]
     }
   ],
   "_chemistry_comment": "Hand-written recipes that do not fit a generated pattern. These are the real tier gates.",
