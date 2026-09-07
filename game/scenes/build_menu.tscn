@@ -1,0 +1,68 @@
+[gd_scene load_steps=3 format=3 uid="uid://b8k2v1qm3xw0c"]
+
+[ext_resource type="Script" path="res://scripts/BuildMenu.cs" id="1_build"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+bg_color = Color(0.08, 0.09, 0.11, 0.96)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.35, 0.38, 0.44, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[node name="BuildMenu" type="PanelContainer"]
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = -360.0
+offset_right = 760.0
+offset_bottom = -16.0
+grow_vertical = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+script = ExtResource("1_build")
+
+[node name="Margin" type="MarginContainer" parent="."]
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 12
+
+[node name="Rows" type="VBoxContainer" parent="Margin"]
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="Margin/Rows"]
+text = "Build"
+
+[node name="Columns" type="HBoxContainer" parent="Margin/Rows"]
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+
+[node name="Items" type="ItemList" parent="Margin/Rows/Columns"]
+custom_minimum_size = Vector2(240, 0)
+size_flags_vertical = 3
+
+[node name="RecipeSide" type="VBoxContainer" parent="Margin/Rows/Columns"]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 6
+
+[node name="RecipeTitle" type="Label" parent="Margin/Rows/Columns/RecipeSide"]
+text = "makes:"
+
+[node name="Recipes" type="ItemList" parent="Margin/Rows/Columns/RecipeSide"]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Hint" type="Label" parent="Margin/Rows"]
+text = "Click a tile to place.   Esc or right-click to stop building."
+
+[node name="Buttons" type="HBoxContainer" parent="Margin/Rows"]
+theme_override_constants/separation = 8
+
+[node name="Close" type="Button" parent="Margin/Rows/Buttons"]
+text = "Close"

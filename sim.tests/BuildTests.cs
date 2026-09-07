@@ -186,6 +186,52 @@ public class BuildTests
                     "a higher-tier pole should reach further");
     }
 
+    /// The opening loop: the starter kit's bench goes down, and it can run a
+    /// hand recipe. Nothing else in the kit is placeable, so if the bench is
+    /// not, a new game can never build anything at all.
+    [Fact]
+    public void TheStarterKitsCraftingBenchCanBePlacedAndHasRecipes()
+    {
+        var world = NewWorld();
+        var bench = Get("man_manual_crafting");
+        var (x, y) = BareTile(world);
+
+        Assert.Equal(BuildKind.Machine, bench.Kind);
+        Assert.NotEmpty(Buildables.RecipesFor(bench));
+
+        // Straight from the starter kit, with nothing added.
+        Assert.Equal(1, world.PlayerInventory.Count(bench.Item));
+
+        var recipe = Buildables.RecipesFor(bench)[0];
+        Assert.Equal(BuildResult.Ok, world.TryBuild(Buildables, bench.Item, x, y, recipe));
+        Assert.Equal(0, world.PlayerInventory.Count(bench.Item));
+        Assert.Equal(1, world.MachineCount);
+    }
+
+    /// Two tiers of the same machine must not read identically. A build menu
+    /// showing only the machine name put three rows of "Alloy Smelter x3" in
+    /// front of a player carrying a Steam, an Arc and a Fusion one.
+    [Fact]
+    public void TiersOfTheSameMachineAreToldApartByName()
+    {
+        var steam = Get("stm_furnace");
+        var arc = Get("arc_furnace");
+
+        Assert.Equal(steam.Name, arc.Name);
+        Assert.NotEqual(steam.DisplayName, arc.DisplayName);
+
+        // And no two offerable things share a display name at all, or the menu
+        // is ambiguous somewhere else instead.
+        var duplicates = Buildables.Offerable
+            .GroupBy(b => b.DisplayName)
+            .Where(g => g.Count() > 1)
+            .Select(g => g.Key)
+            .ToList();
+
+        Assert.True(duplicates.Count == 0,
+                    "buildables sharing a display name: " + string.Join(", ", duplicates));
+    }
+
     /// A pole holds its tile like anything else. Poles live in the power grid
     /// rather than the machine array, so nothing else would stop a furnace
     /// being dropped straight on top of one.

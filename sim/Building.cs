@@ -34,7 +34,14 @@ public sealed class Buildable
     public readonly ItemId Item;
     public readonly string ItemId;
     public readonly string MachineId;
+
+    /// The machine's own name ("Furnace"), shared by every tier of it.
     public readonly string Name;
+
+    /// What the player sees ("Steam Furnace"). The tier is half the identity:
+    /// a list showing only Name puts three identical "Alloy Smelter" rows in
+    /// front of someone carrying a Steam, an Arc and a Fusion one.
+    public readonly string DisplayName;
     public readonly BuildKind Kind;
 
     /// Index into the tier ladder, which is also the hull mesh.
@@ -54,10 +61,11 @@ public sealed class Buildable
     public readonly int TierPower;
 
     public Buildable(ItemId item, string itemId, string machineId, string name,
-                     BuildKind kind, byte tier, string tierId, byte category, byte size,
-                     int tierPower)
+                     string displayName, BuildKind kind, byte tier, string tierId,
+                     byte category, byte size, int tierPower)
     {
         TierId = tierId;
+        DisplayName = displayName;
         Item = item;
         ItemId = itemId;
         MachineId = machineId;
@@ -111,6 +119,7 @@ public sealed class BuildCatalogue
     {
         var tierIndex = catalogue.Data.Tiers.ToDictionary(t => t.Id, t => t.Index);
         var tierPower = catalogue.Data.Tiers.ToDictionary(t => t.Id, t => t.Power);
+        var itemNames = catalogue.Data.Items.ToDictionary(i => i.Id, i => i.Name);
 
         foreach (var def in catalogue.Data.Recipes)
         {
@@ -130,7 +139,8 @@ public sealed class BuildCatalogue
                     continue;
 
                 var buildable = new Buildable(
-                    item, itemId, machine.Id, machine.Name, kind,
+                    item, itemId, machine.Id, machine.Name,
+                    itemNames.GetValueOrDefault(itemId, machine.Name), kind,
                     (byte)Math.Clamp(tierIndex.GetValueOrDefault(tier), 0, 255), tier,
                     (byte)Math.Clamp(machine.Category, 0, 255),
                     (byte)Math.Max(1, machine.Size),
@@ -158,8 +168,12 @@ public sealed class BuildCatalogue
         "transport_belt" or "underground_belt" or "splitter"
             or "inserter" or "stack_inserter" => BuildKind.NotPlaceable,
 
-        // Carried, not built.
-        "prospector" or "manual_crafting" => BuildKind.NotPlaceable,
+        // Carried, not built. The manual crafting bench is NOT in this list:
+        // it is the one machine the starter kit hands over, and placing it is
+        // how the player crafts their first furnace. Marking it unplaceable
+        // made the opening loop impossible -- you would carry a bench you
+        // could never put down.
+        "prospector" => BuildKind.NotPlaceable,
 
         _ => BuildKind.Machine,
     };

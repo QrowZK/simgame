@@ -140,9 +140,72 @@ public sealed partial class Boot : Node
         GD.Print($"after 600       buffered={miner?.Buffered} ground={after}");
         GD.Print($"ground fell     {after < before - dug}");
 
+        RunBuildFlow();
         RunPowerFlow(world, hit.X, hit.Y);
         RunFluidFlow(world);
         GD.Print("--- start flow ok ---");
+    }
+
+    /// Building as a player does it: a new game, the starter kit's bench put
+    /// down on a chosen tile, and the refusals that protect them on the way.
+    ///
+    /// The unit tests cover TryBuild; this covers the path the GUI actually
+    /// takes to it, including that a new game can build anything at all. If
+    /// the starter kit ever stops containing something placeable, the opening
+    /// loop is broken and this is what says so.
+    private void RunBuildFlow()
+    {
+        GD.Print("--- building ---");
+
+        var world = GameSession.NewGame(seed: 20260907);
+        var catalogue = new Sim.BuildCatalogue(Sim.Data.Catalogue.Instance);
+
+        var carried = catalogue.Offerable
+                               .Where(b => world.PlayerInventory.Count(b.Item) > 0)
+                               .ToList();
+        GD.Print($"can build       {carried.Count} kinds from the starter kit");
+
+        if (carried.Count == 0)
+        {
+            GD.Print("building        FAILED: a new game can place nothing");
+            return;
+        }
+
+        var bench = carried[0];
+        var recipe = catalogue.RecipesFor(bench).FirstOrDefault();
+        GD.Print($"holding         {bench.Name} ({catalogue.RecipesFor(bench).Count} recipes)");
+
+        // A bare tile near spawn, chosen the way the ghost chooses one.
+        var (x, y) = (0, 0);
+        for (var r = 0; r < 200 && !Free(world, bench, x, y); r++)
+            (x, y) = (r, 0);
+
+        var first = world.TryBuild(catalogue, bench.Item, x, y, recipe);
+        GD.Print($"built           {first} at {x},{y}");
+        GD.Print($"machines        {world.MachineCount}");
+
+        // The same tile again: refused, and it must not have cost anything.
+        world.PlayerInventory.Add(bench.Item, 1);
+        var again = world.TryBuild(catalogue, bench.Item, x, y, recipe);
+        GD.Print($"same tile       {again} (still carrying {world.PlayerInventory.Count(bench.Item)})");
+
+        // And a machine with no recipe chosen, which is what an impatient click
+        // through the build menu does.
+        var nowhere = world.TryBuild(catalogue, bench.Item, x + 6, y + 6);
+        GD.Print($"no recipe       {nowhere}");
+
+        var ok = first == Sim.BuildResult.Ok
+                 && again == Sim.BuildResult.Blocked
+                 && nowhere == Sim.BuildResult.NeedsRecipe
+                 && world.PlayerInventory.Count(bench.Item) == 1;
+
+        GD.Print(ok ? "--- building ok ---" : "building        FAILED");
+    }
+
+    private static bool Free(Sim.World world, Sim.Buildable buildable, int x, int y)
+    {
+        var placement = buildable.PlacementAt(x, y);
+        return world.CanPlace(placement) && !world.CoversFluidNode(placement);
     }
 
     /// The power loop, end to end: a machine that needs electricity sits dark
@@ -319,7 +382,8 @@ public static class Cli
     public static bool Has(string flag) => All().Any(a => a == flag || a.StartsWith(flag + "="));
 
     public static bool WantsHeadlessRun() =>
-        Has("--smoke") || Has("--screenshot") || Has("--machines") || Has("--start-shot");
+        Has("--smoke") || Has("--screenshot") || Has("--machines") || Has("--start-shot")
+        || Has("--build-shot");
 
     public static int ReadInt(string name, int fallback)
     {

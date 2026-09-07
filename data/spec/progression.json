@@ -1663,7 +1663,7 @@
     },
     {
       "id": "manual_crafting",
-      "name": "Manual Crafting",
+      "name": "Crafting Bench",
       "category": 6,
       "tiers": [
         "MAN"

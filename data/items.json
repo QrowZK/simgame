@@ -3606,7 +3606,7 @@
   },
   {
     "id": "man_manual_crafting",
-    "name": "Manual Manual Crafting",
+    "name": "Manual Crafting Bench",
     "category": "machine",
     "tier": "MAN",
     "form": "solid",

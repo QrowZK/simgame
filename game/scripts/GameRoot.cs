@@ -32,6 +32,11 @@ public sealed partial class GameRoot : Node3D
     private Label _hud = null!;
     private MachinePanel _panel = null!;
     private PauseMenu _pause = null!;
+    private BuildMenu _build = null!;
+    private BuildGhost _ghost = null!;
+    private BuildCatalogue _buildables = null!;
+    private Buildable? _holding;
+    private Recipe? _holdingRecipe;
     private double _accumulator;
     private int _screenshotCountdown = -1;
     private string _toast = "";
@@ -61,6 +66,10 @@ public sealed partial class GameRoot : Node3D
         AddChild(BuildLighting());
         _hud = BuildHud();
         _panel = BuildPanel();
+        _buildables = new BuildCatalogue(Sim.Data.Catalogue.Instance);
+        _build = BuildBuildMenu();
+        _ghost = new BuildGhost { Name = "BuildGhost" };
+        AddChild(_ghost);
         _pause = BuildPauseMenu();
         _editor = BuildScriptEditor();
 
@@ -94,7 +103,7 @@ public sealed partial class GameRoot : Node3D
         if (AllArgs().Contains("--smoke"))
             CallDeferred(nameof(RunSmokeTest));
 
-        if (AllArgs().Contains("--screenshot"))
+        if (AllArgs().Contains("--screenshot") || AllArgs().Contains("--build-shot"))
         {
             _screenshotCountdown = 12;      // let a few frames draw first
 
@@ -144,7 +153,10 @@ public sealed partial class GameRoot : Node3D
         // shows the GUI rather than only proving the world draws. It has to
         // happen after some ticks: nothing is Working before the first one.
         if (_screenshotCountdown == 2)
-            ShowAnyRunningMachine();
+        {
+            if (AllArgs().Contains("--build-shot")) OpenBuildForCapture();
+            else ShowAnyRunningMachine();
+        }
 
         if (_screenshotCountdown > 0 && --_screenshotCountdown == 0)
         {
@@ -154,6 +166,8 @@ public sealed partial class GameRoot : Node3D
             GD.Print($"screenshot {image.GetWidth()}x{image.GetHeight()} -> {ProjectSettings.GlobalizePath(path)}");
             GetTree().Quit();
         }
+
+        UpdateGhost();
 
         if (_toastFrames > 0) _toastFrames--;
 
@@ -185,7 +199,7 @@ public sealed partial class GameRoot : Node3D
                         $"batches {_renderer.BatchCount}   fps {Engine.GetFramesPerSecond():0}" +
                         power + stored + "\n" +
                         "WASD pan   Q/E rotate   wheel zoom   click a machine to inspect   " +
-                        "F5 save   F9 load   F1 script   Esc menu" +
+                        "B build   F5 save   F9 load   F1 script   Esc menu" +
                         (_toastFrames > 0 ? "\n" + _toast : "");
         }
     }
@@ -288,6 +302,25 @@ public sealed partial class GameRoot : Node3D
         // Accumulators go through the machine renderer's hull pools, so the
         // instance count above already covers them. What that count cannot say
         // is whether they are on a grid and taking charge, so say it here.
+        // Build mode, exercised rather than described: turn it on, take what
+        // the menu offers, and report whether the ghost actually appeared. A
+        // build UI that lists things and previews nothing looks fine in a
+        // screenshot and is unusable.
+        _world.PlayerInventory.Add(_buildables.Offerable.First().Item, 1);
+        StartBuilding();
+        var offered = _build.OfferedCount;
+        var ghostShown = false;
+        if (_holding is not null)
+        {
+            _ghost.Show(_holding, 0, -6, true, _renderer.TileSize);
+            ghostShown = _ghost.Visible;
+        }
+
+        GD.Print($"build menu      offered={offered} " +
+                 $"holding={_holding?.DisplayName ?? "<none>"} ghost={ghostShown}");
+        StopBuilding();
+        GD.Print($"build closed    menu={_build.IsShowing} ghost={_ghost.Visible}");
+
         GD.Print($"accumulators    {_world.Power.Accumulators.Count} " +
                  $"stored={_world.StoredEnergy}/{_world.StorageCapacity}");
 
@@ -358,9 +391,26 @@ public sealed partial class GameRoot : Node3D
             // Escape backs out one level at a time: the inspection panel first,
             // then the pause menu. Jumping straight to a menu from an open panel
             // would feel like the game ignored the panel.
-            if (_panel.IsShowing) _panel.Close();
+            if (_build.IsShowing) StopBuilding();
+            else if (_panel.IsShowing) _panel.Close();
             else if (_pause.Visible) _pause.Close();
             else _pause.Open();
+            return;
+        }
+
+        if (@event is InputEventKey { Pressed: true, Keycode: Key.B })
+        {
+            if (_build.IsShowing) StopBuilding();
+            else StartBuilding();
+            return;
+        }
+
+        // Right-click leaves build mode, the same as Escape. A player holding a
+        // machine wants out without moving their hand to the keyboard.
+        if (_build.IsShowing && @event is InputEventMouseButton
+            { Pressed: true, ButtonIndex: MouseButton.Right })
+        {
+            StopBuilding();
             return;
         }
 
@@ -390,6 +440,12 @@ public sealed partial class GameRoot : Node3D
         var tileX = Mathf.FloorToInt(point.X / _renderer.TileSize);
         var tileY = Mathf.FloorToInt(point.Z / _renderer.TileSize);
 
+        if (_build.IsShowing)
+        {
+            PlaceHeld(tileX, tileY);
+            return;
+        }
+
         if (_world.TryMachineAt(tileX, tileY, out var machine, out var index))
             _panel.Show(machine, _world.PlacementOf(index));
         else if (_world.TryMinerAt(tileX, tileY, out var miner, out var minerIndex))
@@ -412,6 +468,152 @@ public sealed partial class GameRoot : Node3D
 
         if (_world.MachineCount > 0)
             _panel.Show(_world.Machines[0], _world.PlacementOf(0));
+    }
+
+    private BuildMenu BuildBuildMenu()
+    {
+        var layer = new CanvasLayer { Name = "BuildUi" };
+        var menu = GD.Load<PackedScene>("res://scenes/build_menu.tscn").Instantiate<BuildMenu>();
+        menu.Bind(_buildables, _world.PlayerInventory, _world.Items);
+        menu.Selected += OnBuildSelected;
+        menu.Closed += StopBuilding;
+        layer.AddChild(menu);
+        AddChild(layer);
+        return menu;
+    }
+
+    public void StartBuilding()
+    {
+        // The inspection panel and build mode both own the left mouse button,
+        // so only one may be up at a time.
+        _panel.Close();
+        _build.Open();
+    }
+
+    public void StopBuilding()
+    {
+        _build.Close();
+        _ghost.Hide();
+        _holding = null;
+        _holdingRecipe = null;
+    }
+
+    private void OnBuildSelected(Buildable buildable, Recipe? recipe)
+    {
+        _holding = buildable;
+        _holdingRecipe = recipe;
+    }
+
+    /// Draws the held machine where it would land, coloured by whether it could
+    /// actually go there. Asking the sim the same question the click will ask
+    /// means the ghost can never promise a placement the build then refuses.
+    private void UpdateGhost()
+    {
+        if (!_build.IsShowing || _holding is null)
+        {
+            _ghost.Hide();
+            return;
+        }
+
+        // Over the menu itself the ghost is a lie: the click will be eaten by
+        // the panel, so previewing a placement it will never make is worse than
+        // showing nothing.
+        if (_build.GetGlobalRect().HasPoint(GetViewport().GetMousePosition()))
+        {
+            _ghost.Hide();
+            return;
+        }
+
+        if (!TileUnderCursor(out var tileX, out var tileY))
+        {
+            _ghost.Hide();
+            return;
+        }
+
+        var placement = _holding.PlacementAt(tileX, tileY);
+        var allowed = _world.CanPlace(placement) && !_world.CoversFluidNode(placement)
+                      && (_holding.Kind != BuildKind.Miner
+                          || _world.Ground.TryResourceAt(tileX, tileY, out _, out _));
+
+        _ghost.Show(_holding, tileX, tileY, allowed, _renderer.TileSize);
+    }
+
+    private bool TileUnderCursor(out int tileX, out int tileY)
+    {
+        tileX = tileY = 0;
+        var viewport = GetViewport();
+        if (viewport is null) return false;
+
+        if (!_rig.TryGroundPoint(viewport.GetMousePosition(), out var point))
+            return false;
+
+        tileX = Mathf.FloorToInt(point.X / _renderer.TileSize);
+        tileY = Mathf.FloorToInt(point.Z / _renderer.TileSize);
+        return true;
+    }
+
+    /// Places what the player is holding, and says what happened.
+    ///
+    /// Every refusal gets its own sentence. A build button that goes dead
+    /// without saying why is the single most confusing thing a build UI can do,
+    /// which is exactly why the sim returns a reason rather than a bool.
+    public void PlaceHeld(int tileX, int tileY)
+    {
+        if (_holding is null)
+        {
+            Say("Pick something to build first.");
+            return;
+        }
+
+        var result = _world.TryBuild(_buildables, _holding.Item, tileX, tileY, _holdingRecipe);
+
+        Say(result switch
+        {
+            BuildResult.Ok => $"Built {_holding.DisplayName} at {tileX},{tileY}.",
+            BuildResult.Blocked => "Something is already there.",
+            BuildResult.NoneCarried => $"You have no {_holding.DisplayName} left.",
+            BuildResult.NoResource => "A miner needs ore under it.",
+            BuildResult.NoFluid => "A pump needs water or a fluid deposit under it.",
+            BuildResult.NeedsRecipe => $"Choose what the {_holding.DisplayName} should make.",
+            BuildResult.NotPlaceableYet => $"Nothing places a {_holding.DisplayName} yet.",
+            _ => $"Cannot build a {_holding.DisplayName}.",
+        });
+
+        // Refresh either way: a successful build changes the count beside the
+        // entry, and a failed one may have been the last of its kind anyway.
+        _build.Refresh();
+    }
+
+    /// Capture path: open build mode holding something, with the ghost parked
+    /// on a tile, so a screenshot shows the menu and the preview together
+    /// rather than proving only that the menu exists.
+    private void OpenBuildForCapture()
+    {
+        // Hand over one of everything placeable, so the menu has a real list
+        // rather than the one bench a new game carries.
+        foreach (var buildable in _buildables.Offerable)
+            _world.PlayerInventory.Add(buildable.Item, 3);
+
+        StartBuilding();
+
+        if (_holding is null) return;
+
+        // Somewhere it would actually be allowed, so the capture shows the
+        // ordinary case. The refusal colour is covered by the unit tests.
+        for (var d = 0; d < 40; d++)
+        {
+            var placement = _holding.PlacementAt(d, -4);
+            if (!_world.CanPlace(placement) || _world.CoversFluidNode(placement)) continue;
+
+            _ghost.Show(_holding, d, -4, true, _renderer.TileSize);
+            return;
+        }
+    }
+
+    private void Say(string message)
+    {
+        _toast = message;
+        _toastFrames = 180;
     }
 
     private void QuickSave()

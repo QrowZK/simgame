@@ -98,6 +98,11 @@ jobs:
           # Accumulators must exist and be taking charge: a bank that is on no
           # network stores nothing and would pass a count-only check.
           grep -qE "accumulators    [1-9][0-9]* stored=[1-9]" smoke.log
+          # Build mode: the menu offers something and the ghost actually
+          # appears. A build UI that lists machines and previews nothing looks
+          # fine in a screenshot and cannot be used.
+          grep -qE "build menu      offered=[1-9][0-9]* holding=.+ ghost=True" smoke.log
+          grep -q "build closed    menu=False ghost=False" smoke.log
 
       # The save loop as a player takes it: new game, save to disk, list it,
       # load it back, and stay identical after running on. The unit tests stop
@@ -124,6 +129,15 @@ jobs:
           # survives the save round trip above rather than reloading empty.
           grep -qE "stored          [1-9][0-9]*/[0-9]+" session.log
           grep -q "storage         .*part-full: True" session.log
+          # Building: a new game must be able to place something from its
+          # starter kit, refuse a second one on the same tile, and refuse a
+          # machine with no recipe chosen. If a new game can build nothing,
+          # the opening loop is unplayable whatever the unit tests say.
+          grep -q -- "--- building ok ---" session.log
+          grep -qE "can build       [1-9][0-9]* kinds" session.log
+          grep -q "built           Ok" session.log
+          grep -q "same tile       Blocked" session.log
+          grep -q "no recipe       NeedsRecipe" session.log
           # Fluids: water pumped from a lake, piped inland, and consumed by a
           # machine. The whole chain, with nothing hand-fed.
           grep -q -- "--- fluids ok ---" session.log
