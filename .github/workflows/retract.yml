@@ -1,0 +1,51 @@
+name: Retract a release
+
+# Deleting a published release is a thing you do rarely and want to be sure
+# about, so it is manual only and it asks you to type the tag twice. There is
+# no automatic path: nothing here fires on a push.
+#
+# It exists because a broken build is worse than no build. v0.1.0 shipped and
+# could not start a new game (ADR 0027); leaving it up meant every download
+# was a download of the broken one.
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to delete, e.g. v0.1.0'
+        required: true
+        type: string
+      confirm:
+        description: 'Type the same tag again to confirm'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  retract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Confirm the two inputs match
+        run: |
+          if [ "${{ inputs.tag }}" != "${{ inputs.confirm }}" ]; then
+            echo "::error::tag and confirm differ -- nothing deleted"
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+
+      # The release first, then the tag it points at. Deleting the release
+      # alone leaves a tag that looks like a version nobody can download.
+      - name: Delete the release and its tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          if ! gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "::error::no release tagged $TAG"
+            exit 1
+          fi
+
+          gh release delete "$TAG" --repo "$GITHUB_REPOSITORY" --yes --cleanup-tag
+          echo "deleted release $TAG and its tag"
