@@ -328,7 +328,7 @@ public class RemovalTests
                          world.TryBuild(Buildables, belt.Item, 20 + i, 5, null, Direction.East));
 
         world.SyncBelts();
-        Assert.Equal(1, world.Belts.Segments.Count);
+        Assert.Single(world.Belts.Segments);
 
         var ore = Data.Item("magnetite");
         var coal = Data.Item("coal_deposit");
@@ -454,7 +454,7 @@ public class RemovalTests
 
         // A long belt is one segment. Freeing the tiles the inserter read is
         // what puts it back together.
-        Assert.Equal(1, world.Belts.Segments.Count);
+        Assert.Single(world.Belts.Segments);
         Assert.Equal(4, world.Belts.Segment(0).Tiles);
         Assert.Equal(1, world.PlayerInventory.Count(inserter.Item));
     }
@@ -635,7 +635,7 @@ public class RemovalTests
             Assert.True(map.PlaceBelt(20 + i, 70, Direction.East));
 
         map.RebuildIfDirty(network, (_, _) => Endpoint.None);
-        Assert.Equal(1, network.Segments.Count);
+        Assert.Single(network.Segments);
         Assert.Equal(4, network.Segment(0).Tiles);
 
         Assert.True(map.Remove(22, 70));
