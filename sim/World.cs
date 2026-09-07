@@ -31,6 +31,10 @@ public sealed class World
     /// under one deterministic tick.
     public BeltNetwork Belts { get; } = new();
 
+    /// Belts and inserters as tiles on the map. `Belts` moves items; this says
+    /// where they are.
+    public BeltMap BeltMap { get; } = new();
+
     /// Pipe networks. Fluids move by network flow rather than as discrete items,
     /// so this costs one budget reset per network per tick.
     public FluidSystem Fluids { get; } = new();
@@ -650,7 +654,7 @@ public sealed class World
     /// machine's recipe would mean evicting whatever is already inside it,
     /// which is its own decision and is not made here.
     public BuildResult TryBuild(BuildCatalogue catalogue, ItemId item, int x, int y,
-                                Recipe? recipe = null)
+                                Recipe? recipe = null, Direction facing = Direction.East)
     {
         if (!catalogue.TryGet(item, out var buildable))
             return BuildResult.NotBuildable;
@@ -663,7 +667,7 @@ public sealed class World
 
         var placement = buildable.PlacementAt(x, y);
 
-        if (!CanPlace(placement) || CoversFluidNode(placement))
+        if (!CanPlace(placement) || CoversFluidNode(placement) || CoversBeltTile(placement))
             return BuildResult.Blocked;
 
         if (buildable.Kind == BuildKind.Machine && (recipe is null || !catalogue.CanRun(buildable, recipe)))
@@ -697,6 +701,11 @@ public sealed class World
             BuildKind.Pipe => Fluids.AddPipe(x, y),
             BuildKind.Tank => Fluids.AddTank(x, y),
 
+            BuildKind.Belt => BeltMap.PlaceBelt(x, y, facing, buildable.BeltSpeed),
+
+            BuildKind.Inserter => BeltMap.PlaceInserter(
+                x, y, facing, buildable.InserterSwingTicks, buildable.InserterStackSize),
+
             _ => false,
         };
 
@@ -712,6 +721,17 @@ public sealed class World
 
         PlayerInventory.Take(item, 1);
         return BuildResult.Ok;
+    }
+
+    /// Belts and inserters keep their own tile map, so the occupancy grid does
+    /// not know about them either. Same rule, same reason as fluid nodes.
+    public bool CoversBeltTile(in MachinePlacement placement)
+    {
+        for (var dy = 0; dy < placement.Size; dy++)
+            for (var dx = 0; dx < placement.Size; dx++)
+                if (BeltMap.HasAnythingAt(placement.X + dx, placement.Y + dy))
+                    return true;
+        return false;
     }
 
     /// Pipes and machines are tracked by separate systems, so neither knows
@@ -747,6 +767,23 @@ public sealed class World
 
     private ItemId WaterItem()
         => Items.TryGetId("water", out var water) ? water : default;
+
+    /// What a belt or an inserter finds on a tile that is not a belt.
+    ///
+    /// The belt map deliberately does not know about machines and miners -- it
+    /// would have to depend on the whole world to place one tile -- so it asks
+    /// this instead.
+    public Endpoint EndpointAt(int x, int y)
+    {
+        if (TryMachineAt(x, y, out _, out var machine)) return Endpoint.Machine(machine);
+        if (TryMinerAt(x, y, out _, out var miner)) return Endpoint.Miner(miner);
+        return Endpoint.None;
+    }
+
+    /// Forces the belt map to recompile now rather than at the next tick. The
+    /// build path calls this so a freshly placed belt reports its segment
+    /// immediately, which is what a test -- and a renderer -- asks for.
+    public void SyncBelts() => BeltMap.RebuildIfDirty(Belts, EndpointAt);
 
     public bool CanPlace(in MachinePlacement placement)
     {
@@ -853,6 +890,9 @@ public sealed class World
 
         // Then transport. Fixed order, so the tick is reproducible.
         DrainFluidOutputs();
+        // Recompile before moving anything, so a belt placed this tick carries
+        // items this tick rather than sitting inert until the next one.
+        BeltMap.RebuildIfDirty(Belts, EndpointAt);
         Belts.Tick(_machines, _miners);
         // Controllers run last, on a world that has finished moving for this
         // tick. A program reading a machine's output sees a settled number

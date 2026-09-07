@@ -97,8 +97,14 @@ public sealed class Splitter
 /// than of how fast the belt happens to be running.
 public sealed class Inserter
 {
-    public readonly Endpoint Source;
-    public readonly Endpoint Target;
+    /// Where the arm reaches from and to.
+    ///
+    /// Not readonly, because a tile-placed inserter's endpoints are recompiled
+    /// whenever the belt map changes: segment numbering is rebuild output, so
+    /// an inserter holding its old indices would quietly start feeding a
+    /// different belt. What the arm is *carrying* survives that.
+    public Endpoint Source { get; private set; }
+    public Endpoint Target { get; private set; }
     public readonly int SwingTicks;
     public readonly int StackSize;
 
@@ -115,6 +121,13 @@ public sealed class Inserter
         Target = target;
         SwingTicks = swingTicks;
         StackSize = stackSize;
+    }
+
+    /// Re-points the arm after a rebuild, keeping whatever it is holding.
+    public void Retarget(Endpoint source, Endpoint target)
+    {
+        Source = source;
+        Target = target;
     }
 
     public int Held => _held;
@@ -176,7 +189,21 @@ public sealed class BeltNetwork
     public IReadOnlyList<Splitter> Splitters => _splitters;
     public IReadOnlyList<Inserter> Inserters => _inserters;
 
+    /// True once a segment has been added by hand rather than compiled from
+    /// the belt map. The two cannot coexist: compiling replaces the whole
+    /// segment list, so a hand-built segment would silently vanish the first
+    /// time the player placed a belt tile.
+    public bool HasHandBuiltSegments { get; private set; }
+
     public int AddSegment(int tiles, int speed = BeltUnits.SpeedBasic)
+    {
+        HasHandBuiltSegments = true;
+        return AddCompiledSegment(tiles, speed);
+    }
+
+    /// Adds a segment the belt map compiled. Same thing, minus the hand-built
+    /// mark -- the map is allowed to replace its own output.
+    public int AddCompiledSegment(int tiles, int speed)
     {
         var id = _segments.Count;
         _segments.Add(new BeltSegment(tiles, speed));
@@ -186,6 +213,16 @@ public sealed class BeltNetwork
     }
 
     public BeltSegment Segment(int id) => _segments[id];
+
+    /// Throws away every segment, for the belt map to recompile tiles into new
+    /// ones. Inserters and splitters survive: they are placed things, whereas a
+    /// segment is derived from what the player laid down.
+    public void ClearSegments()
+    {
+        _segments.Clear();
+        _laneOutputs.Clear();
+        HasHandBuiltSegments = false;
+    }
 
     public void SetOutput(int segment, int lane, Endpoint target) =>
         _laneOutputs[segment * BeltSegment.LaneCount + lane] = target;

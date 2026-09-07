@@ -22,8 +22,12 @@ public enum BuildKind
     Tank,
     Pump,
 
-    /// In the data and craftable, but nothing places it yet -- belts and
-    /// inserters need routing, which is its own decision. Named rather than
+    /// Carries items, and has a direction. So do inserters and splitters --
+    /// the direction is the decision a player is making when they place one.
+    Belt,
+    Inserter,
+
+    /// In the data and craftable, but nothing places it yet. Named rather than
     /// omitted so the UI can say "not yet" instead of silently not listing it.
     NotPlaceable,
 }
@@ -93,6 +97,22 @@ public sealed class Buildable
     /// Charge and discharge cap. Four machines' worth, so a bank covers a spike
     /// rather than the whole factory.
     public int AccumulatorRate => Math.Max(1, TierPower) * 4;
+
+    /// Belt speed by tier. The ladder's most-felt upgrade after power: the same
+    /// line carries more without being rebuilt.
+    public int BeltSpeed => Tier switch
+    {
+        <= 1 => BeltUnits.SpeedBasic,
+        2 => BeltUnits.SpeedFast,
+        3 => BeltUnits.SpeedExpress,
+        _ => BeltUnits.SpeedTurbo,
+    };
+
+    /// Ticks an inserter takes to swing. Faster up the ladder, and a stack
+    /// inserter moves more per swing rather than swinging faster.
+    public int InserterSwingTicks => Math.Max(4, 20 - Tier * 2);
+
+    public int InserterStackSize => MachineId == "stack_inserter" ? 4 : 1;
 
     /// Poles reach further up the ladder, which is the upgrade a player feels:
     /// fewer poles for the same floor.
@@ -164,9 +184,13 @@ public sealed class BuildCatalogue
         "storage_tank" => BuildKind.Tank,
         "inline_pump" or "pump_station" => BuildKind.Pump,
 
-        // Craftable, but placing one is a routing decision nothing implements.
-        "transport_belt" or "underground_belt" or "splitter"
-            or "inserter" or "stack_inserter" => BuildKind.NotPlaceable,
+        "transport_belt" => BuildKind.Belt,
+        "inserter" or "stack_inserter" => BuildKind.Inserter,
+
+        // Still unplaceable. An underground belt is a *pair* of tiles with a
+        // span between them, and a splitter straddles two -- both are their own
+        // placement gesture rather than the single tile these two are.
+        "underground_belt" or "splitter" => BuildKind.NotPlaceable,
 
         // Carried, not built. The manual crafting bench is NOT in this list:
         // it is the one machine the starter kit hands over, and placing it is

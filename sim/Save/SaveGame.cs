@@ -115,7 +115,7 @@ public static class SaveGame
             });
         }
 
-        save.Belts = CaptureBelts(world.Belts);
+        save.Belts = CaptureBelts(world.Belts, world.BeltMap);
 
         for (var i = 0; i < world.Extractors.Count; i++)
         {
@@ -227,9 +227,28 @@ public static class SaveGame
         return entry;
     }
 
-    private static BeltNetworkSave CaptureBelts(BeltNetwork belts)
+    private static BeltNetworkSave CaptureBelts(BeltNetwork belts, BeltMap map)
     {
         var save = new BeltNetworkSave();
+
+        foreach (var belt in map.Belts)
+            save.Tiles.Add(new BeltTileSave
+            {
+                X = belt.X,
+                Y = belt.Y,
+                Facing = (int)belt.Facing,
+                Speed = belt.Speed,
+            });
+
+        foreach (var inserter in map.Inserters)
+            save.InserterTiles.Add(new InserterTileSave
+            {
+                X = inserter.X,
+                Y = inserter.Y,
+                Facing = (int)inserter.Facing,
+                SwingTicks = inserter.SwingTicks,
+                StackSize = inserter.StackSize,
+            });
 
         foreach (var segment in belts.Segments)
         {
@@ -379,7 +398,7 @@ public static class SaveGame
                 e => new KeyValuePair<string, string>(e.Key, e.Value)));
         }
 
-        RestoreBelts(world.Belts, save.Belts, save);
+        RestoreBelts(world, save.Belts, save);
 
         // Nodes first, in file order, so the rebuilt networks are numbered the
         // same way they were when the file was written.
@@ -427,11 +446,33 @@ public static class SaveGame
                         entry.Energy);
     }
 
-    private static void RestoreBelts(BeltNetwork belts, BeltNetworkSave save, SaveFile file)
+    private static void RestoreBelts(World world, BeltNetworkSave save, SaveFile file)
     {
-        foreach (var entry in save.Segments)
+        var belts = world.Belts;
+
+        // Tiles first. Segments are compiled from them, so placing the tiles in
+        // their saved order and compiling reproduces exactly the segment list
+        // that was saved -- which is what makes restoring lane contents by
+        // index below correct.
+        foreach (var entry in save.Tiles)
+            world.BeltMap.PlaceBelt(entry.X, entry.Y, (Direction)entry.Facing, entry.Speed);
+
+        foreach (var entry in save.InserterTiles)
+            world.BeltMap.PlaceInserter(entry.X, entry.Y, (Direction)entry.Facing,
+                                        entry.SwingTicks, entry.StackSize);
+
+        var compiled = save.Tiles.Count > 0;
+        if (compiled) world.SyncBelts();
+
+        for (var i = 0; i < save.Segments.Count; i++)
         {
-            var id = belts.AddSegment(entry.Tiles, entry.Speed);
+            var entry = save.Segments[i];
+
+            // A compiled world already has its segments; a hand-built one still
+            // needs them made.
+            var id = compiled ? i : belts.AddSegment(entry.Tiles, entry.Speed);
+            if (id >= belts.Segments.Count) continue;
+
             var segment = belts.Segment(id);
 
             for (var lane = 0; lane < entry.Lanes.Count && lane < BeltSegment.LaneCount; lane++)
@@ -442,12 +483,15 @@ public static class SaveGame
             }
         }
 
-        for (var i = 0; i < save.LaneOutputs.Count; i++)
-        {
-            var segment = i / BeltSegment.LaneCount;
-            var lane = i % BeltSegment.LaneCount;
-            belts.SetOutput(segment, lane, FromSave(save.LaneOutputs[i]));
-        }
+        // Compiled worlds already have their outputs wired by the compile; a
+        // hand-built one carries them in the save.
+        if (!compiled)
+            for (var i = 0; i < save.LaneOutputs.Count; i++)
+            {
+                var segment = i / BeltSegment.LaneCount;
+                var lane = i % BeltSegment.LaneCount;
+                belts.SetOutput(segment, lane, FromSave(save.LaneOutputs[i]));
+            }
 
         foreach (var entry in save.Splitters)
         {
@@ -457,8 +501,13 @@ public static class SaveGame
 
         foreach (var entry in save.Inserters)
         {
-            var id = belts.AddInserter(FromSave(entry.Source), FromSave(entry.Target),
-                                       entry.SwingTicks, entry.StackSize);
+            // A compiled world made its inserters from tiles already; only what
+            // their arms are holding still needs restoring.
+            var id = compiled
+                ? save.Inserters.IndexOf(entry)
+                : belts.AddInserter(FromSave(entry.Source), FromSave(entry.Target),
+                                    entry.SwingTicks, entry.StackSize);
+            if (id < 0 || id >= belts.Inserters.Count) continue;
             belts.Inserters[id].Restore(Item(entry.HeldItem, file), entry.Held, entry.Cooldown);
         }
     }

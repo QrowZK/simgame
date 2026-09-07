@@ -133,20 +133,22 @@ public class BuildTests
         Assert.Equal(BuildResult.NotBuildable, world.TryBuild(Buildables, stone, x, y));
     }
 
-    /// Belts are in the data and craftable, but nothing routes them yet. The
-    /// player is told that, rather than the button quietly doing nothing.
+    /// A splitter straddles two tiles and an underground belt is a *pair* with
+    /// a span between them. Both are their own placement gesture, so neither is
+    /// placeable yet -- and the player is told that rather than the button
+    /// quietly doing nothing.
     [Fact]
-    public void ABelt_ReportsThatNothingPlacesItYet()
+    public void ASplitter_ReportsThatNothingPlacesItYet()
     {
         var world = NewWorld();
-        var belt = Get("stm_transport_belt");
+        var splitter = Get("vlt_splitter");
         var (x, y) = BareTile(world);
 
-        Give(world, "stm_transport_belt", 5);
-        Assert.Equal(BuildKind.NotPlaceable, belt.Kind);
+        Give(world, "vlt_splitter", 5);
+        Assert.Equal(BuildKind.NotPlaceable, splitter.Kind);
         Assert.Equal(BuildResult.NotPlaceableYet,
-                     world.TryBuild(Buildables, belt.Item, x, y));
-        Assert.Equal(5, world.PlayerInventory.Count(belt.Item));
+                     world.TryBuild(Buildables, splitter.Item, x, y));
+        Assert.Equal(5, world.PlayerInventory.Count(splitter.Item));
     }
 
     [Fact]
