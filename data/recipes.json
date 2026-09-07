@@ -60,6 +60,30 @@
     "unlocked_by": "tech_stm_processing"
   },
   {
+    "id": "sift_chalcopyrite",
+    "machine": "sifter",
+    "tier": "STM",
+    "duration_ticks": 140,
+    "power_draw": 8,
+    "inputs": [
+      {
+        "item": "chalcopyrite_crushed",
+        "count": 3
+      }
+    ],
+    "outputs": [
+      {
+        "item": "chalcopyrite_purified",
+        "count": 2
+      },
+      {
+        "item": "stone_dust",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_stm_processing"
+  },
+  {
     "id": "wash_chalcopyrite",
     "machine": "washer",
     "tier": "VLT",
@@ -300,6 +324,26 @@
     "unlocked_by": "tech_man_metallurgy"
   },
   {
+    "id": "cut_copper_plate",
+    "machine": "cutter",
+    "tier": "VLT",
+    "duration_ticks": 80,
+    "power_draw": 32,
+    "inputs": [
+      {
+        "item": "copper_ingot",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "copper_plate",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_vlt_metallurgy"
+  },
+  {
     "id": "smelt_cassiterite",
     "machine": "furnace",
     "tier": "MAN",
@@ -354,6 +398,30 @@
     "outputs": [
       {
         "item": "tin_dust",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_stm_processing"
+  },
+  {
+    "id": "sift_cassiterite",
+    "machine": "sifter",
+    "tier": "STM",
+    "duration_ticks": 140,
+    "power_draw": 8,
+    "inputs": [
+      {
+        "item": "cassiterite_crushed",
+        "count": 3
+      }
+    ],
+    "outputs": [
+      {
+        "item": "cassiterite_purified",
+        "count": 2
+      },
+      {
+        "item": "stone_dust",
         "count": 1
       }
     ],
@@ -564,6 +632,26 @@
     "unlocked_by": "tech_man_metallurgy"
   },
   {
+    "id": "cut_tin_plate",
+    "machine": "cutter",
+    "tier": "VLT",
+    "duration_ticks": 80,
+    "power_draw": 32,
+    "inputs": [
+      {
+        "item": "tin_ingot",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "tin_plate",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_vlt_metallurgy"
+  },
+  {
     "id": "smelt_magnetite",
     "machine": "furnace",
     "tier": "MAN",
@@ -618,6 +706,30 @@
     "outputs": [
       {
         "item": "iron_dust",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_stm_processing"
+  },
+  {
+    "id": "sift_magnetite",
+    "machine": "sifter",
+    "tier": "STM",
+    "duration_ticks": 140,
+    "power_draw": 8,
+    "inputs": [
+      {
+        "item": "magnetite_crushed",
+        "count": 3
+      }
+    ],
+    "outputs": [
+      {
+        "item": "magnetite_purified",
+        "count": 2
+      },
+      {
+        "item": "stone_dust",
         "count": 1
       }
     ],
@@ -836,6 +948,26 @@
     "unlocked_by": "tech_man_metallurgy"
   },
   {
+    "id": "cut_iron_plate",
+    "machine": "cutter",
+    "tier": "VLT",
+    "duration_ticks": 80,
+    "power_draw": 32,
+    "inputs": [
+      {
+        "item": "iron_ingot",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "iron_plate",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_vlt_metallurgy"
+  },
+  {
     "id": "form_iron_gear",
     "machine": "manual_crafting",
     "tier": "MAN",
@@ -894,6 +1026,30 @@
     "outputs": [
       {
         "item": "coal_dust",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_stm_processing"
+  },
+  {
+    "id": "sift_coal_deposit",
+    "machine": "sifter",
+    "tier": "STM",
+    "duration_ticks": 140,
+    "power_draw": 8,
+    "inputs": [
+      {
+        "item": "coal_deposit_crushed",
+        "count": 3
+      }
+    ],
+    "outputs": [
+      {
+        "item": "coal_deposit_purified",
+        "count": 2
+      },
+      {
+        "item": "stone_dust",
         "count": 1
       }
     ],
@@ -1044,6 +1200,30 @@
     "unlocked_by": "tech_stm_processing"
   },
   {
+    "id": "sift_stone_deposit",
+    "machine": "sifter",
+    "tier": "STM",
+    "duration_ticks": 140,
+    "power_draw": 8,
+    "inputs": [
+      {
+        "item": "stone_deposit_crushed",
+        "count": 3
+      }
+    ],
+    "outputs": [
+      {
+        "item": "stone_deposit_purified",
+        "count": 2
+      },
+      {
+        "item": "stone_dust",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_stm_processing"
+  },
+  {
     "id": "wash_stone_deposit",
     "machine": "washer",
     "tier": "VLT",
@@ -1180,6 +1360,30 @@
     "unlocked_by": "tech_stm_processing"
   },
   {
+    "id": "sift_limestone_deposit",
+    "machine": "sifter",
+    "tier": "STM",
+    "duration_ticks": 140,
+    "power_draw": 8,
+    "inputs": [
+      {
+        "item": "limestone_deposit_crushed",
+        "count": 3
+      }
+    ],
+    "outputs": [
+      {
+        "item": "limestone_deposit_purified",
+        "count": 2
+      },
+      {
+        "item": "stone_dust",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_stm_processing"
+  },
+  {
     "id": "wash_limestone_deposit",
     "machine": "washer",
     "tier": "VLT",
@@ -1310,6 +1514,30 @@
     "outputs": [
       {
         "item": "quartz_dust",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_stm_processing"
+  },
+  {
+    "id": "sift_quartz_deposit",
+    "machine": "sifter",
+    "tier": "STM",
+    "duration_ticks": 140,
+    "power_draw": 8,
+    "inputs": [
+      {
+        "item": "quartz_deposit_crushed",
+        "count": 3
+      }
+    ],
+    "outputs": [
+      {
+        "item": "quartz_deposit_purified",
+        "count": 2
+      },
+      {
+        "item": "stone_dust",
         "count": 1
       }
     ],
@@ -1476,6 +1704,30 @@
     "unlocked_by": "tech_man_metallurgy"
   },
   {
+    "id": "mix_bronze",
+    "machine": "mixer",
+    "tier": "VLT",
+    "duration_ticks": 240,
+    "power_draw": 32,
+    "inputs": [
+      {
+        "item": "copper_dust",
+        "count": 3
+      },
+      {
+        "item": "tin_dust",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "bronze_dust",
+        "count": 4
+      }
+    ],
+    "unlocked_by": "tech_vlt_metallurgy"
+  },
+  {
     "id": "form_bronze_plate",
     "machine": "manual_crafting",
     "tier": "MAN",
@@ -1514,6 +1766,26 @@
       }
     ],
     "unlocked_by": "tech_man_metallurgy"
+  },
+  {
+    "id": "cut_bronze_plate",
+    "machine": "cutter",
+    "tier": "VLT",
+    "duration_ticks": 80,
+    "power_draw": 32,
+    "inputs": [
+      {
+        "item": "bronze_ingot",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "bronze_plate",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_vlt_metallurgy"
   },
   {
     "id": "form_bronze_gear",
@@ -1594,6 +1866,30 @@
     "outputs": [
       {
         "item": "lead_dust",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_stm_processing"
+  },
+  {
+    "id": "sift_galena",
+    "machine": "sifter",
+    "tier": "STM",
+    "duration_ticks": 140,
+    "power_draw": 8,
+    "inputs": [
+      {
+        "item": "galena_crushed",
+        "count": 3
+      }
+    ],
+    "outputs": [
+      {
+        "item": "galena_purified",
+        "count": 2
+      },
+      {
+        "item": "stone_dust",
         "count": 1
       }
     ],
@@ -1772,6 +2068,26 @@
     "unlocked_by": "tech_man_metallurgy"
   },
   {
+    "id": "cut_lead_plate",
+    "machine": "cutter",
+    "tier": "VLT",
+    "duration_ticks": 80,
+    "power_draw": 32,
+    "inputs": [
+      {
+        "item": "lead_ingot",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "lead_plate",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_vlt_metallurgy"
+  },
+  {
     "id": "smelt_silver_dust",
     "machine": "furnace",
     "tier": "VLT",
@@ -1872,6 +2188,26 @@
     "unlocked_by": "tech_vlt_metallurgy"
   },
   {
+    "id": "cut_silver_plate",
+    "machine": "cutter",
+    "tier": "VLT",
+    "duration_ticks": 80,
+    "power_draw": 32,
+    "inputs": [
+      {
+        "item": "silver_ingot",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "silver_plate",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_vlt_metallurgy"
+  },
+  {
     "id": "smelt_sphalerite",
     "machine": "furnace",
     "tier": "MAN",
@@ -1926,6 +2262,30 @@
     "outputs": [
       {
         "item": "zinc_dust",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_stm_processing"
+  },
+  {
+    "id": "sift_sphalerite",
+    "machine": "sifter",
+    "tier": "STM",
+    "duration_ticks": 140,
+    "power_draw": 8,
+    "inputs": [
+      {
+        "item": "sphalerite_crushed",
+        "count": 3
+      }
+    ],
+    "outputs": [
+      {
+        "item": "sphalerite_purified",
+        "count": 2
+      },
+      {
+        "item": "stone_dust",
         "count": 1
       }
     ],
@@ -2104,6 +2464,26 @@
     "unlocked_by": "tech_man_metallurgy"
   },
   {
+    "id": "cut_zinc_plate",
+    "machine": "cutter",
+    "tier": "VLT",
+    "duration_ticks": 80,
+    "power_draw": 32,
+    "inputs": [
+      {
+        "item": "zinc_ingot",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "zinc_plate",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_vlt_metallurgy"
+  },
+  {
     "id": "smelt_brass_dust",
     "machine": "furnace",
     "tier": "STM",
@@ -2168,6 +2548,30 @@
     "unlocked_by": "tech_man_metallurgy"
   },
   {
+    "id": "mix_brass",
+    "machine": "mixer",
+    "tier": "VLT",
+    "duration_ticks": 240,
+    "power_draw": 32,
+    "inputs": [
+      {
+        "item": "copper_dust",
+        "count": 3
+      },
+      {
+        "item": "zinc_dust",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "brass_dust",
+        "count": 4
+      }
+    ],
+    "unlocked_by": "tech_vlt_metallurgy"
+  },
+  {
     "id": "form_brass_plate",
     "machine": "manual_crafting",
     "tier": "MAN",
@@ -2206,6 +2610,26 @@
       }
     ],
     "unlocked_by": "tech_man_metallurgy"
+  },
+  {
+    "id": "cut_brass_plate",
+    "machine": "cutter",
+    "tier": "VLT",
+    "duration_ticks": 80,
+    "power_draw": 32,
+    "inputs": [
+      {
+        "item": "brass_ingot",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "brass_plate",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_vlt_metallurgy"
   },
   {
     "id": "smelt_steel_dust",
@@ -2270,6 +2694,30 @@
       }
     ],
     "unlocked_by": "tech_stm_metallurgy"
+  },
+  {
+    "id": "mix_steel",
+    "machine": "mixer",
+    "tier": "VLT",
+    "duration_ticks": 400,
+    "power_draw": 32,
+    "inputs": [
+      {
+        "item": "iron_dust",
+        "count": 4
+      },
+      {
+        "item": "coal_dust",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "steel_dust",
+        "count": 4
+      }
+    ],
+    "unlocked_by": "tech_vlt_metallurgy"
   },
   {
     "id": "form_steel_plate",
@@ -2352,6 +2800,26 @@
     "unlocked_by": "tech_stm_metallurgy"
   },
   {
+    "id": "cut_steel_plate",
+    "machine": "cutter",
+    "tier": "VLT",
+    "duration_ticks": 80,
+    "power_draw": 32,
+    "inputs": [
+      {
+        "item": "steel_ingot",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "steel_plate",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_vlt_metallurgy"
+  },
+  {
     "id": "form_steel_gear",
     "machine": "assembler",
     "tier": "STM",
@@ -2430,6 +2898,30 @@
     "outputs": [
       {
         "item": "nickel_dust",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_stm_processing"
+  },
+  {
+    "id": "sift_garnierite",
+    "machine": "sifter",
+    "tier": "STM",
+    "duration_ticks": 140,
+    "power_draw": 8,
+    "inputs": [
+      {
+        "item": "garnierite_crushed",
+        "count": 3
+      }
+    ],
+    "outputs": [
+      {
+        "item": "garnierite_purified",
+        "count": 2
+      },
+      {
+        "item": "stone_dust",
         "count": 1
       }
     ],
@@ -2608,6 +3100,26 @@
     "unlocked_by": "tech_stm_metallurgy"
   },
   {
+    "id": "cut_nickel_plate",
+    "machine": "cutter",
+    "tier": "VLT",
+    "duration_ticks": 80,
+    "power_draw": 32,
+    "inputs": [
+      {
+        "item": "nickel_ingot",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "nickel_plate",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_vlt_metallurgy"
+  },
+  {
     "id": "smelt_cobalt_dust",
     "machine": "furnace",
     "tier": "VLT",
@@ -2702,6 +3214,30 @@
     "outputs": [
       {
         "item": "gold_dust",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_stm_processing"
+  },
+  {
+    "id": "sift_native_gold",
+    "machine": "sifter",
+    "tier": "STM",
+    "duration_ticks": 140,
+    "power_draw": 8,
+    "inputs": [
+      {
+        "item": "native_gold_crushed",
+        "count": 3
+      }
+    ],
+    "outputs": [
+      {
+        "item": "native_gold_purified",
+        "count": 2
+      },
+      {
+        "item": "stone_dust",
         "count": 1
       }
     ],
@@ -2940,6 +3476,26 @@
     "unlocked_by": "tech_stm_metallurgy"
   },
   {
+    "id": "cut_gold_plate",
+    "machine": "cutter",
+    "tier": "VLT",
+    "duration_ticks": 80,
+    "power_draw": 32,
+    "inputs": [
+      {
+        "item": "gold_ingot",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "gold_plate",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_vlt_metallurgy"
+  },
+  {
     "id": "crush_sulfur_deposit",
     "machine": "crusher",
     "tier": "STM",
@@ -2974,6 +3530,30 @@
     "outputs": [
       {
         "item": "sulfur_dust",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_stm_processing"
+  },
+  {
+    "id": "sift_sulfur_deposit",
+    "machine": "sifter",
+    "tier": "STM",
+    "duration_ticks": 140,
+    "power_draw": 8,
+    "inputs": [
+      {
+        "item": "sulfur_deposit_crushed",
+        "count": 3
+      }
+    ],
+    "outputs": [
+      {
+        "item": "sulfur_deposit_purified",
+        "count": 2
+      },
+      {
+        "item": "stone_dust",
         "count": 1
       }
     ],
@@ -3110,6 +3690,30 @@
     "outputs": [
       {
         "item": "salt_dust",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_stm_processing"
+  },
+  {
+    "id": "sift_halite",
+    "machine": "sifter",
+    "tier": "STM",
+    "duration_ticks": 140,
+    "power_draw": 8,
+    "inputs": [
+      {
+        "item": "halite_crushed",
+        "count": 3
+      }
+    ],
+    "outputs": [
+      {
+        "item": "halite_purified",
+        "count": 2
+      },
+      {
+        "item": "stone_dust",
         "count": 1
       }
     ],
@@ -3292,6 +3896,26 @@
     "unlocked_by": "tech_arc_metallurgy"
   },
   {
+    "id": "cut_silicon_plate",
+    "machine": "cutter",
+    "tier": "ARC",
+    "duration_ticks": 80,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "silicon_ingot",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "silicon_plate",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_arc_metallurgy"
+  },
+  {
     "id": "smelt_dolomite",
     "machine": "furnace",
     "tier": "STM",
@@ -3346,6 +3970,30 @@
     "outputs": [
       {
         "item": "magnesium_dust",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_stm_processing"
+  },
+  {
+    "id": "sift_dolomite",
+    "machine": "sifter",
+    "tier": "STM",
+    "duration_ticks": 140,
+    "power_draw": 8,
+    "inputs": [
+      {
+        "item": "dolomite_crushed",
+        "count": 3
+      }
+    ],
+    "outputs": [
+      {
+        "item": "dolomite_purified",
+        "count": 2
+      },
+      {
+        "item": "stone_dust",
         "count": 1
       }
     ],
@@ -3530,6 +4178,30 @@
     "outputs": [
       {
         "item": "aluminum_dust",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_stm_processing"
+  },
+  {
+    "id": "sift_bauxite",
+    "machine": "sifter",
+    "tier": "STM",
+    "duration_ticks": 140,
+    "power_draw": 8,
+    "inputs": [
+      {
+        "item": "bauxite_crushed",
+        "count": 3
+      }
+    ],
+    "outputs": [
+      {
+        "item": "bauxite_purified",
+        "count": 2
+      },
+      {
+        "item": "stone_dust",
         "count": 1
       }
     ],
@@ -3748,6 +4420,26 @@
     "unlocked_by": "tech_vlt_metallurgy"
   },
   {
+    "id": "cut_aluminum_plate",
+    "machine": "cutter",
+    "tier": "VLT",
+    "duration_ticks": 80,
+    "power_draw": 32,
+    "inputs": [
+      {
+        "item": "aluminum_ingot",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "aluminum_plate",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_vlt_metallurgy"
+  },
+  {
     "id": "smelt_chromite",
     "machine": "furnace",
     "tier": "VLT",
@@ -3802,6 +4494,30 @@
     "outputs": [
       {
         "item": "chromium_dust",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_stm_processing"
+  },
+  {
+    "id": "sift_chromite",
+    "machine": "sifter",
+    "tier": "STM",
+    "duration_ticks": 140,
+    "power_draw": 8,
+    "inputs": [
+      {
+        "item": "chromite_crushed",
+        "count": 3
+      }
+    ],
+    "outputs": [
+      {
+        "item": "chromite_purified",
+        "count": 2
+      },
+      {
+        "item": "stone_dust",
         "count": 1
       }
     ],
@@ -3980,6 +4696,26 @@
     "unlocked_by": "tech_vlt_metallurgy"
   },
   {
+    "id": "cut_chromium_plate",
+    "machine": "cutter",
+    "tier": "VLT",
+    "duration_ticks": 80,
+    "power_draw": 32,
+    "inputs": [
+      {
+        "item": "chromium_ingot",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "chromium_plate",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_vlt_metallurgy"
+  },
+  {
     "id": "smelt_pyrolusite",
     "machine": "furnace",
     "tier": "VLT",
@@ -4034,6 +4770,30 @@
     "outputs": [
       {
         "item": "manganese_dust",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_stm_processing"
+  },
+  {
+    "id": "sift_pyrolusite",
+    "machine": "sifter",
+    "tier": "STM",
+    "duration_ticks": 140,
+    "power_draw": 8,
+    "inputs": [
+      {
+        "item": "pyrolusite_crushed",
+        "count": 3
+      }
+    ],
+    "outputs": [
+      {
+        "item": "pyrolusite_purified",
+        "count": 2
+      },
+      {
+        "item": "stone_dust",
         "count": 1
       }
     ],
@@ -4256,6 +5016,38 @@
     "unlocked_by": "tech_vlt_metallurgy"
   },
   {
+    "id": "mix_stainless_steel",
+    "machine": "mixer",
+    "tier": "VLT",
+    "duration_ticks": 600,
+    "power_draw": 32,
+    "inputs": [
+      {
+        "item": "steel_dust",
+        "count": 6
+      },
+      {
+        "item": "chromium_dust",
+        "count": 1
+      },
+      {
+        "item": "nickel_dust",
+        "count": 1
+      },
+      {
+        "item": "manganese_dust",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "stainless_steel_dust",
+        "count": 9
+      }
+    ],
+    "unlocked_by": "tech_vlt_metallurgy"
+  },
+  {
     "id": "form_stainless_steel_plate",
     "machine": "bender",
     "tier": "VLT",
@@ -4311,6 +5103,26 @@
       {
         "item": "stainless_steel_foil",
         "count": 4
+      }
+    ],
+    "unlocked_by": "tech_vlt_metallurgy"
+  },
+  {
+    "id": "cut_stainless_steel_plate",
+    "machine": "cutter",
+    "tier": "VLT",
+    "duration_ticks": 80,
+    "power_draw": 32,
+    "inputs": [
+      {
+        "item": "stainless_steel_ingot",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "stainless_steel_plate",
+        "count": 2
       }
     ],
     "unlocked_by": "tech_vlt_metallurgy"
@@ -4374,6 +5186,30 @@
     "outputs": [
       {
         "item": "fluorite_dust",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_stm_processing"
+  },
+  {
+    "id": "sift_fluorite_deposit",
+    "machine": "sifter",
+    "tier": "STM",
+    "duration_ticks": 140,
+    "power_draw": 8,
+    "inputs": [
+      {
+        "item": "fluorite_deposit_crushed",
+        "count": 3
+      }
+    ],
+    "outputs": [
+      {
+        "item": "fluorite_deposit_purified",
+        "count": 2
+      },
+      {
+        "item": "stone_dust",
         "count": 1
       }
     ],
@@ -4708,6 +5544,26 @@
     "unlocked_by": "tech_arc_metallurgy"
   },
   {
+    "id": "cut_titanium_plate",
+    "machine": "cutter",
+    "tier": "ARC",
+    "duration_ticks": 80,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "titanium_ingot",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "titanium_plate",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_arc_metallurgy"
+  },
+  {
     "id": "form_titanium_gear",
     "machine": "assembler",
     "tier": "ARC",
@@ -5012,6 +5868,26 @@
     "unlocked_by": "tech_arc_metallurgy"
   },
   {
+    "id": "cut_platinum_plate",
+    "machine": "cutter",
+    "tier": "ARC",
+    "duration_ticks": 80,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "platinum_ingot",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "platinum_plate",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_arc_metallurgy"
+  },
+  {
     "id": "smelt_palladium_dust",
     "machine": "furnace",
     "tier": "ARC",
@@ -5067,6 +5943,26 @@
       {
         "item": "palladium_plate",
         "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_metallurgy"
+  },
+  {
+    "id": "cut_palladium_plate",
+    "machine": "cutter",
+    "tier": "ARC",
+    "duration_ticks": 80,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "palladium_ingot",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "palladium_plate",
+        "count": 2
       }
     ],
     "unlocked_by": "tech_arc_metallurgy"
@@ -5548,6 +6444,26 @@
     "unlocked_by": "tech_pls_metallurgy"
   },
   {
+    "id": "cut_tungsten_plate",
+    "machine": "cutter",
+    "tier": "PLS",
+    "duration_ticks": 80,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "tungsten_ingot",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "tungsten_plate",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_pls_metallurgy"
+  },
+  {
     "id": "smelt_tungsten_steel_dust",
     "machine": "furnace",
     "tier": "PLS",
@@ -5612,6 +6528,30 @@
     "unlocked_by": "tech_pls_metallurgy"
   },
   {
+    "id": "mix_tungsten_steel",
+    "machine": "mixer",
+    "tier": "VLT",
+    "duration_ticks": 900,
+    "power_draw": 32,
+    "inputs": [
+      {
+        "item": "tungsten_dust",
+        "count": 1
+      },
+      {
+        "item": "steel_dust",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "tungsten_steel_dust",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_vlt_metallurgy"
+  },
+  {
     "id": "form_tungsten_steel_plate",
     "machine": "bender",
     "tier": "PLS",
@@ -5667,6 +6607,26 @@
       {
         "item": "tungsten_steel_foil",
         "count": 4
+      }
+    ],
+    "unlocked_by": "tech_pls_metallurgy"
+  },
+  {
+    "id": "cut_tungsten_steel_plate",
+    "machine": "cutter",
+    "tier": "PLS",
+    "duration_ticks": 80,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "tungsten_steel_ingot",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "tungsten_steel_plate",
+        "count": 2
       }
     ],
     "unlocked_by": "tech_pls_metallurgy"
@@ -6192,6 +7152,26 @@
     "unlocked_by": "tech_pls_metallurgy"
   },
   {
+    "id": "cut_niobium_plate",
+    "machine": "cutter",
+    "tier": "PLS",
+    "duration_ticks": 80,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "niobium_ingot",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "niobium_plate",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_pls_metallurgy"
+  },
+  {
     "id": "smelt_iridium_dust",
     "machine": "furnace",
     "tier": "FUS",
@@ -6332,6 +7312,26 @@
     "unlocked_by": "tech_fus_metallurgy"
   },
   {
+    "id": "cut_iridium_plate",
+    "machine": "cutter",
+    "tier": "FUS",
+    "duration_ticks": 80,
+    "power_draw": 2048,
+    "inputs": [
+      {
+        "item": "iridium_ingot",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "iridium_plate",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_fus_metallurgy"
+  },
+  {
     "id": "smelt_osmium_dust",
     "machine": "furnace",
     "tier": "FUS",
@@ -6406,6 +7406,26 @@
     "outputs": [
       {
         "item": "osmium_wire",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_fus_metallurgy"
+  },
+  {
+    "id": "cut_osmium_plate",
+    "machine": "cutter",
+    "tier": "FUS",
+    "duration_ticks": 80,
+    "power_draw": 2048,
+    "inputs": [
+      {
+        "item": "osmium_ingot",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "osmium_plate",
         "count": 2
       }
     ],
@@ -6624,6 +7644,26 @@
     "unlocked_by": "tech_qnt_metallurgy"
   },
   {
+    "id": "cut_xenite_plate",
+    "machine": "cutter",
+    "tier": "QNT",
+    "duration_ticks": 80,
+    "power_draw": 8192,
+    "inputs": [
+      {
+        "item": "xenite_ingot",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "xenite_plate",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_qnt_metallurgy"
+  },
+  {
     "id": "macerate_collapsium_ingot",
     "machine": "macerator",
     "tier": "QNT",
@@ -6719,6 +7759,26 @@
       {
         "item": "collapsium_fine_wire",
         "count": 4
+      }
+    ],
+    "unlocked_by": "tech_qnt_metallurgy"
+  },
+  {
+    "id": "cut_collapsium_plate",
+    "machine": "cutter",
+    "tier": "QNT",
+    "duration_ticks": 80,
+    "power_draw": 8192,
+    "inputs": [
+      {
+        "item": "collapsium_ingot",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "collapsium_plate",
+        "count": 2
       }
     ],
     "unlocked_by": "tech_qnt_metallurgy"
@@ -6864,6 +7924,26 @@
     "unlocked_by": "tech_pls_metallurgy"
   },
   {
+    "id": "spin_pet_plate",
+    "machine": "spinneret",
+    "tier": "PLS",
+    "duration_ticks": 100,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "pet_ingot",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "pet_plate",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_pls_metallurgy"
+  },
+  {
     "id": "form_abs_plate",
     "machine": "bender",
     "tier": "PLS",
@@ -6879,6 +7959,26 @@
       {
         "item": "abs_plate",
         "count": 1
+      }
+    ],
+    "unlocked_by": "tech_pls_metallurgy"
+  },
+  {
+    "id": "spin_abs_plate",
+    "machine": "spinneret",
+    "tier": "PLS",
+    "duration_ticks": 100,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "abs_ingot",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "abs_plate",
+        "count": 2
       }
     ],
     "unlocked_by": "tech_pls_metallurgy"
@@ -6904,6 +8004,26 @@
     "unlocked_by": "tech_pls_metallurgy"
   },
   {
+    "id": "spin_nylon_plate",
+    "machine": "spinneret",
+    "tier": "PLS",
+    "duration_ticks": 100,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "nylon_ingot",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "nylon_plate",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_pls_metallurgy"
+  },
+  {
     "id": "form_polycarbonate_plate",
     "machine": "bender",
     "tier": "PLS",
@@ -6919,6 +8039,26 @@
       {
         "item": "polycarbonate_plate",
         "count": 1
+      }
+    ],
+    "unlocked_by": "tech_pls_metallurgy"
+  },
+  {
+    "id": "spin_polycarbonate_plate",
+    "machine": "spinneret",
+    "tier": "PLS",
+    "duration_ticks": 100,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "polycarbonate_ingot",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "polycarbonate_plate",
+        "count": 2
       }
     ],
     "unlocked_by": "tech_pls_metallurgy"
@@ -6944,6 +8084,26 @@
     "unlocked_by": "tech_pls_metallurgy"
   },
   {
+    "id": "spin_ptfe_plate",
+    "machine": "spinneret",
+    "tier": "PLS",
+    "duration_ticks": 100,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "ptfe_ingot",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "ptfe_plate",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_pls_metallurgy"
+  },
+  {
     "id": "form_epoxy_plate",
     "machine": "bender",
     "tier": "FUS",
@@ -6959,6 +8119,26 @@
       {
         "item": "epoxy_plate",
         "count": 1
+      }
+    ],
+    "unlocked_by": "tech_fus_metallurgy"
+  },
+  {
+    "id": "spin_epoxy_plate",
+    "machine": "spinneret",
+    "tier": "FUS",
+    "duration_ticks": 100,
+    "power_draw": 2048,
+    "inputs": [
+      {
+        "item": "epoxy_ingot",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "epoxy_plate",
+        "count": 2
       }
     ],
     "unlocked_by": "tech_fus_metallurgy"
@@ -6984,6 +8164,26 @@
     "unlocked_by": "tech_fus_metallurgy"
   },
   {
+    "id": "spin_polyurethane_plate",
+    "machine": "spinneret",
+    "tier": "FUS",
+    "duration_ticks": 100,
+    "power_draw": 2048,
+    "inputs": [
+      {
+        "item": "polyurethane_ingot",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "polyurethane_plate",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_fus_metallurgy"
+  },
+  {
     "id": "form_silicone_plate",
     "machine": "bender",
     "tier": "FUS",
@@ -6999,6 +8199,26 @@
       {
         "item": "silicone_plate",
         "count": 1
+      }
+    ],
+    "unlocked_by": "tech_fus_metallurgy"
+  },
+  {
+    "id": "spin_silicone_plate",
+    "machine": "spinneret",
+    "tier": "FUS",
+    "duration_ticks": 100,
+    "power_draw": 2048,
+    "inputs": [
+      {
+        "item": "silicone_ingot",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "silicone_plate",
+        "count": 2
       }
     ],
     "unlocked_by": "tech_fus_metallurgy"
@@ -7024,6 +8244,26 @@
     "unlocked_by": "tech_qnt_metallurgy"
   },
   {
+    "id": "spin_aramid_plate",
+    "machine": "spinneret",
+    "tier": "QNT",
+    "duration_ticks": 100,
+    "power_draw": 8192,
+    "inputs": [
+      {
+        "item": "aramid_ingot",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "aramid_plate",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_qnt_metallurgy"
+  },
+  {
     "id": "form_peek_plate",
     "machine": "bender",
     "tier": "FUS",
@@ -7042,6 +8282,26 @@
       }
     ],
     "unlocked_by": "tech_fus_metallurgy"
+  },
+  {
+    "id": "spin_peek_plate",
+    "machine": "spinneret",
+    "tier": "QNT",
+    "duration_ticks": 100,
+    "power_draw": 8192,
+    "inputs": [
+      {
+        "item": "peek_ingot",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "peek_plate",
+        "count": 2
+      }
+    ],
+    "unlocked_by": "tech_qnt_metallurgy"
   },
   {
     "id": "comp_stm_cable",
@@ -11990,6 +13250,114 @@
       }
     ],
     "unlocked_by": "tech_arc_fabrication"
+  },
+  {
+    "id": "build_fus_cutter",
+    "machine": "assembler",
+    "tier": "PLS",
+    "duration_ticks": 400,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "fus_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "fus_circuit",
+        "count": 2
+      },
+      {
+        "item": "fus_cable",
+        "count": 4
+      },
+      {
+        "item": "fus_motor",
+        "count": 1
+      },
+      {
+        "item": "fus_conveyor",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "fus_cutter",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_pls_fabrication"
+  },
+  {
+    "id": "build_qnt_cutter",
+    "machine": "assembler",
+    "tier": "FUS",
+    "duration_ticks": 400,
+    "power_draw": 2048,
+    "inputs": [
+      {
+        "item": "qnt_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "qnt_circuit",
+        "count": 2
+      },
+      {
+        "item": "qnt_cable",
+        "count": 4
+      },
+      {
+        "item": "qnt_motor",
+        "count": 1
+      },
+      {
+        "item": "qnt_conveyor",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "qnt_cutter",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_fus_fabrication"
+  },
+  {
+    "id": "build_sng_cutter",
+    "machine": "assembler",
+    "tier": "QNT",
+    "duration_ticks": 400,
+    "power_draw": 8192,
+    "inputs": [
+      {
+        "item": "sng_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "sng_circuit",
+        "count": 2
+      },
+      {
+        "item": "sng_cable",
+        "count": 4
+      },
+      {
+        "item": "sng_motor",
+        "count": 1
+      },
+      {
+        "item": "sng_conveyor",
+        "count": 1
+      }
+    ],
+    "outputs": [
+      {
+        "item": "sng_cutter",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_qnt_fabrication"
   },
   {
     "id": "build_arc_centrifuge",
@@ -17620,8 +18988,8 @@
     "unlocked_by": "tech_qnt_chemistry"
   },
   {
-    "id": "spin_aramid",
-    "machine": "spinneret",
+    "id": "polymerise_aramid",
+    "machine": "polymerizer",
     "tier": "QNT",
     "duration_ticks": 520,
     "power_draw": 16384,
@@ -17791,6 +19159,26 @@
       {
         "item": "fluorine",
         "count": 2
+      }
+    ],
+    "unlocked_by": "tech_pls_chemistry"
+  },
+  {
+    "id": "cryo_deuterium",
+    "machine": "vacuum_freezer",
+    "tier": "PLS",
+    "duration_ticks": 320,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "hydrogen",
+        "count": 12
+      }
+    ],
+    "outputs": [
+      {
+        "item": "deuterium",
+        "count": 1
       }
     ],
     "unlocked_by": "tech_pls_chemistry"

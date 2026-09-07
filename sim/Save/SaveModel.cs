@@ -27,9 +27,11 @@ public sealed class SaveFile
     /// an older file has no poles, so every powered machine would go dark.
     /// 4 replaced declared fluid networks with placed pipes, tanks and pumps.
     /// 5 added drones, haul tasks and controller programs.
+    /// 7 added placed belt and inserter tiles. Segments are compiled from them,
+    /// so an older save has belts that exist and cannot be seen or extended.
     /// 6 added accumulators; an older file has none, so a factory that was
     /// riding out its nights on stored power would reload with no buffer.
-    public const int CurrentVersion = 6;
+    public const int CurrentVersion = 7;
 
     public int Version { get; set; } = CurrentVersion;
     public int Seed { get; set; }
@@ -231,10 +233,34 @@ public sealed class DepletionSave
 
 public sealed class BeltNetworkSave
 {
+    /// The belts the player placed. Segments below are compiled from these, so
+    /// when this list is non-empty it is the ground truth and the segments are
+    /// only there to carry what is riding on them.
+    public List<BeltTileSave> Tiles { get; set; } = new();
+
+    public List<InserterTileSave> InserterTiles { get; set; } = new();
+
     public List<BeltSegmentSave> Segments { get; set; } = new();
     public List<EndpointSave> LaneOutputs { get; set; } = new();
     public List<SplitterSave> Splitters { get; set; } = new();
     public List<InserterSave> Inserters { get; set; } = new();
+}
+
+public sealed class BeltTileSave
+{
+    public int X { get; set; }
+    public int Y { get; set; }
+    public int Facing { get; set; }
+    public int Speed { get; set; }
+}
+
+public sealed class InserterTileSave
+{
+    public int X { get; set; }
+    public int Y { get; set; }
+    public int Facing { get; set; }
+    public int SwingTicks { get; set; }
+    public int StackSize { get; set; }
 }
 
 public sealed class BeltSegmentSave

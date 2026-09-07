@@ -97,6 +97,36 @@ public static class DemoWorld
                 world.TryPlaceAccumulator(new Accumulator(capacity: 100_000, ratePerTick: 200),
                                           new MachinePlacement(x + 3, y + 1, 1, 7, 1));
 
+        // A belt line with inserters at both ends, so the placeholder factory
+        // exercises the belt compiler and the renderer has items to draw. It
+        // runs along y=-4, clear of the machine grid, and is fed by hand from
+        // the machine at the origin.
+        var beltY = -4;
+        var beltLength = System.Math.Min(48, side * MaxFootprint + 1);
+        for (var x = 0; x < beltLength; x++)
+            world.BeltMap.PlaceBelt(x, beltY, Direction.East, BeltUnits.SpeedFast);
+
+        // A machine off the end of the line with an inserter feeding it, so the
+        // demo shows the whole chain -- belt, arm, machine -- rather than a
+        // belt that goes nowhere.
+        world.TryPlaceMachine(smelt, new MachinePlacement(0, beltY - 2, 1, 1, 1));
+        world.BeltMap.PlaceInserter(0, beltY - 1, Direction.North);
+        world.SyncBelts();
+
+        // Something to carry. Fed straight onto the line rather than through a
+        // machine, because the demo exists to measure drawing and ticking.
+        // Every segment, not just the one under the first tile: the inserter
+        // breaks the run where it reads it, so the line is more than one
+        // segment and filling only the first loads eight items onto a
+        // forty-eight tile belt.
+        for (var segment = 0; segment < world.Belts.Segments.Count; segment++)
+            for (var lane = 0; lane < BeltSegment.LaneCount; lane++)
+            {
+                var line = world.Belts.Segments[segment].LaneAt(lane);
+                for (var i = 0; i < line.Capacity; i++)
+                    if (!line.TryPack(ore)) break;
+            }
+
         // A pipe run with a tank and a pump on it, so the placeholder factory
         // exercises the plumbing as well as the grid.
         for (var x = 0; x <= side * MaxFootprint; x++)

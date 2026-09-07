@@ -133,20 +133,22 @@ public class BuildTests
         Assert.Equal(BuildResult.NotBuildable, world.TryBuild(Buildables, stone, x, y));
     }
 
-    /// Belts are in the data and craftable, but nothing routes them yet. The
-    /// player is told that, rather than the button quietly doing nothing.
+    /// A splitter straddles two tiles and an underground belt is a *pair* with
+    /// a span between them. Both are their own placement gesture, so neither is
+    /// placeable yet -- and the player is told that rather than the button
+    /// quietly doing nothing.
     [Fact]
-    public void ABelt_ReportsThatNothingPlacesItYet()
+    public void ASplitter_ReportsThatNothingPlacesItYet()
     {
         var world = NewWorld();
-        var belt = Get("stm_transport_belt");
+        var splitter = Get("vlt_splitter");
         var (x, y) = BareTile(world);
 
-        Give(world, "stm_transport_belt", 5);
-        Assert.Equal(BuildKind.NotPlaceable, belt.Kind);
+        Give(world, "vlt_splitter", 5);
+        Assert.Equal(BuildKind.NotPlaceable, splitter.Kind);
         Assert.Equal(BuildResult.NotPlaceableYet,
-                     world.TryBuild(Buildables, belt.Item, x, y));
-        Assert.Equal(5, world.PlayerInventory.Count(belt.Item));
+                     world.TryBuild(Buildables, splitter.Item, x, y));
+        Assert.Equal(5, world.PlayerInventory.Count(splitter.Item));
     }
 
     [Fact]
@@ -374,61 +376,30 @@ public class BuildTests
         Assert.True(missing.Count == 0,
                     "machine items with no buildable: " + string.Join(", ", missing));
     }
-
-    /// Nothing offered to the player can be a machine that could never run.
+    /// Every placeable machine can run something.
     ///
-    /// This is why `Offerable` exists rather than the UI listing `All`: the
-    /// data has machines with no recipes at all, and a build menu that hands
-    /// you one is a trap.
+    /// This used to be impossible to assert. The sifter, mixer, cutter and
+    /// vacuum freezer were in the item list and the tech tree with nothing in
+    /// recipes.json naming them, and the spinneret was offered two tiers below
+    /// its only recipe; `Offerable` existed to hide them from the build menu.
+    /// They have jobs now, so the filter should exclude nothing -- and if a
+    /// machine is ever added without recipes again, this is what says so.
     [Fact]
-    public void NothingOfferedIsAMachineThatCouldNeverRun()
+    public void EveryPlaceableMachineHasSomethingItCanMake()
     {
-        var dead = Buildables.Offerable
+        var dead = Buildables.All
             .Where(b => b.Kind == BuildKind.Machine)
             .Where(b => Buildables.RecipesFor(b).Count == 0)
             .Select(b => b.ItemId)
             .ToList();
 
         Assert.True(dead.Count == 0,
-                    "offered machines with no recipe: " + string.Join(", ", dead));
-        Assert.NotEmpty(Buildables.Offerable);
+                    "machines that can be built and can never run: " + string.Join(", ", dead));
+
+        Assert.Equal(Buildables.All.Count(b => b.Kind == BuildKind.Machine),
+                     Buildables.Offerable.Count(b => b.Kind == BuildKind.Machine));
     }
 
-    /// And that filter has to be doing real work. If every buildable were
-    /// offerable the test above would pass while proving nothing, so this
-    /// pins the gap it is actually covering: machines the data never gave a
-    /// recipe to. If someone later authors those recipes, this fails and
-    /// should simply be deleted.
-    [Fact]
-    public void TheOfferableFilterExcludesTheMachinesWithNoRecipes()
-    {
-        var excluded = Buildables.All
-            .Where(b => b.Kind == BuildKind.Machine)
-            .Where(b => !Buildables.Offerable.Contains(b))
-            .Select(b => b.MachineId)
-            .Distinct()
-            .OrderBy(id => id)
-            .ToList();
-
-        Assert.Equal(new[] { "cutter", "mixer", "sifter", "spinneret", "vacuum_freezer" },
-                     excluded);
-    }
-
-    /// Building one anyway is refused rather than producing a dead machine:
-    /// there is no recipe to pass, so it cannot get past the recipe check.
-    [Fact]
-    public void AMachineWithNoRecipesCannotBeBuiltAtAll()
-    {
-        var world = NewWorld();
-        var sifter = Get("stm_sifter");
-        var (x, y) = BareTile(world);
-
-        Give(world, "stm_sifter");
-        Assert.Empty(Buildables.RecipesFor(sifter));
-        Assert.Equal(BuildResult.NeedsRecipe,
-                     world.TryBuild(Buildables, sifter.Item, x, y));
-        Assert.Equal(1, world.PlayerInventory.Count(sifter.Item));
-    }
 
     private static (int X, int Y) FindOre(World world)
     {

@@ -2045,7 +2045,10 @@
       "tiers": [
         "VLT",
         "ARC",
-        "PLS"
+        "PLS",
+        "FUS",
+        "QNT",
+        "SNG"
       ],
       "parts": [
         {
@@ -4185,8 +4188,8 @@
       ]
     },
     {
-      "id": "spin_aramid",
-      "machine": "spinneret",
+      "id": "polymerise_aramid",
+      "machine": "polymerizer",
       "tier": "QNT",
       "ticks": 520,
       "tech": "chemistry",
@@ -4353,6 +4356,25 @@
         {
           "item": "fluorine",
           "count": 2
+        }
+      ]
+    },
+    {
+      "id": "cryo_deuterium",
+      "machine": "vacuum_freezer",
+      "tier": "PLS",
+      "ticks": 320,
+      "tech": "chemistry",
+      "inputs": [
+        {
+          "item": "hydrogen",
+          "count": 12
+        }
+      ],
+      "outputs": [
+        {
+          "item": "deuterium",
+          "count": 1
         }
       ]
     },

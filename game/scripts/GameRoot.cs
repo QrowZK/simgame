@@ -27,6 +27,7 @@ public sealed partial class GameRoot : Node3D
     private TerrainRenderer _terrain = null!;
     private PoleRenderer _poles = null!;
     private DroneRenderer _drones = null!;
+    private BeltRenderer _belts = null!;
     private ScriptEditor _editor = null!;
     private CameraRig _rig = null!;
     private Label _hud = null!;
@@ -37,6 +38,10 @@ public sealed partial class GameRoot : Node3D
     private BuildCatalogue _buildables = null!;
     private Buildable? _holding;
     private Recipe? _holdingRecipe;
+
+    /// Which way the next belt or inserter will face. Held across placements,
+    /// because laying a run means placing the same direction many times.
+    private Direction _facing = Direction.East;
     private double _accumulator;
     private int _screenshotCountdown = -1;
     private string _toast = "";
@@ -70,6 +75,8 @@ public sealed partial class GameRoot : Node3D
         _build = BuildBuildMenu();
         _ghost = new BuildGhost { Name = "BuildGhost" };
         AddChild(_ghost);
+        _belts = new BeltRenderer { Name = "BeltRenderer" };
+        AddChild(_belts);
         _pause = BuildPauseMenu();
         _editor = BuildScriptEditor();
 
@@ -99,11 +106,13 @@ public sealed partial class GameRoot : Node3D
         _poles.Sync(_world);
         _poles.SyncFluids(_world);
         _drones.Sync(_world);
+        _belts.Sync(_world, _renderer.TileSize);
 
         if (AllArgs().Contains("--smoke"))
             CallDeferred(nameof(RunSmokeTest));
 
-        if (AllArgs().Contains("--screenshot") || AllArgs().Contains("--build-shot"))
+        if (AllArgs().Contains("--screenshot") || AllArgs().Contains("--build-shot")
+            || AllArgs().Contains("--belt-shot"))
         {
             _screenshotCountdown = 12;      // let a few frames draw first
 
@@ -127,6 +136,7 @@ public sealed partial class GameRoot : Node3D
         _poles.Sync(_world);
         _poles.SyncFluids(_world);
         _drones.Sync(_world);
+        _belts.Sync(_world, _renderer.TileSize);
             return;
         }
 
@@ -148,6 +158,7 @@ public sealed partial class GameRoot : Node3D
         _poles.Sync(_world);
         _poles.SyncFluids(_world);
         _drones.Sync(_world);
+        _belts.Sync(_world, _renderer.TileSize);
 
         // Open the inspection panel just before the capture, so a screenshot
         // shows the GUI rather than only proving the world draws. It has to
@@ -155,6 +166,7 @@ public sealed partial class GameRoot : Node3D
         if (_screenshotCountdown == 2)
         {
             if (AllArgs().Contains("--build-shot")) OpenBuildForCapture();
+            else if (AllArgs().Contains("--belt-shot")) FrameTheBelts();
             else ShowAnyRunningMachine();
         }
 
@@ -199,7 +211,7 @@ public sealed partial class GameRoot : Node3D
                         $"batches {_renderer.BatchCount}   fps {Engine.GetFramesPerSecond():0}" +
                         power + stored + "\n" +
                         "WASD pan   Q/E rotate   wheel zoom   click a machine to inspect   " +
-                        "B build   F5 save   F9 load   F1 script   Esc menu" +
+                        "B build   R rotate   F5 save   F9 load   F1 script   Esc menu" +
                         (_toastFrames > 0 ? "\n" + _toast : "");
         }
     }
@@ -321,6 +333,11 @@ public sealed partial class GameRoot : Node3D
         StopBuilding();
         GD.Print($"build closed    menu={_build.IsShowing} ghost={_ghost.Visible}");
 
+        GD.Print($"belts           tiles={_world.BeltMap.Belts.Count} " +
+                 $"segments={_world.Belts.Segments.Count} " +
+                 $"inserters={_world.BeltMap.Inserters.Count} " +
+                 $"items drawn={_belts.DrawnItems}");
+
         GD.Print($"accumulators    {_world.Power.Accumulators.Count} " +
                  $"stored={_world.StoredEnergy}/{_world.StorageCapacity}");
 
@@ -395,6 +412,15 @@ public sealed partial class GameRoot : Node3D
             else if (_panel.IsShowing) _panel.Close();
             else if (_pause.Visible) _pause.Close();
             else _pause.Open();
+            return;
+        }
+
+        // R turns what you are holding. Only while building: R is a scarce key
+        // and rotating nothing would be a silent no-op.
+        if (_build.IsShowing && @event is InputEventKey { Pressed: true, Keycode: Key.R })
+        {
+            _facing = Directions.Rotate(_facing);
+            Say($"Facing {_facing}.");
             return;
         }
 
@@ -531,7 +557,9 @@ public sealed partial class GameRoot : Node3D
         }
 
         var placement = _holding.PlacementAt(tileX, tileY);
-        var allowed = _world.CanPlace(placement) && !_world.CoversFluidNode(placement)
+        var allowed = _world.CanPlace(placement)
+                      && !_world.CoversFluidNode(placement)
+                      && !_world.CoversBeltTile(placement)
                       && (_holding.Kind != BuildKind.Miner
                           || _world.Ground.TryResourceAt(tileX, tileY, out _, out _));
 
@@ -565,7 +593,8 @@ public sealed partial class GameRoot : Node3D
             return;
         }
 
-        var result = _world.TryBuild(_buildables, _holding.Item, tileX, tileY, _holdingRecipe);
+        var result = _world.TryBuild(_buildables, _holding.Item, tileX, tileY,
+                                     _holdingRecipe, _facing);
 
         Say(result switch
         {
@@ -608,6 +637,19 @@ public sealed partial class GameRoot : Node3D
             _ghost.Show(_holding, d, -4, true, _renderer.TileSize);
             return;
         }
+    }
+
+    /// Points the camera at the belt line and closes the panel, so a capture
+    /// shows the belts rather than a corner of them behind a GUI.
+    private void FrameTheBelts()
+    {
+        _panel.Close();
+        if (_world.BeltMap.Belts.Count == 0) return;
+
+        var belt = _world.BeltMap.Belts[_world.BeltMap.Belts.Count / 2];
+        _rig.Position = new Vector3((belt.X + 0.5f) * _renderer.TileSize, 0f,
+                                    (belt.Y + 0.5f) * _renderer.TileSize);
+        _rig.ZoomLevel = 16f;
     }
 
     private void Say(string message)
