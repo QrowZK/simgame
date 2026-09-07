@@ -15,7 +15,8 @@ progression). Phase 0 (sim core) and Phase 1 (Godot render layer) complete.
 
 ## Building and testing
 
-Requires .NET 8 SDK.
+Requires .NET 8 SDK. In a container where the toolchain is not on `PATH`, run
+`. tools/env.sh` first.
 
 ```
 dotnet build      # must be zero warnings
@@ -44,14 +45,31 @@ Requires Godot 4.3 (.NET/Mono build).
 dotnet build game/Game.csproj
 godot --path game                              # play
 godot --path game --headless -- --smoke        # headless verification
-godot --path game -- --machines=100000         # stress the renderer
+godot --path game --headless -- --machines=100000   # stress the renderer
 ```
 
-Controls: WASD pan, Q/E rotate yaw, mouse wheel zoom.
+Controls: WASD pan, Q/E rotate yaw, mouse wheel zoom, B build, R rotate,
+F5 save, F9 load, F1 script editor, Esc menu.
 
 ```
-godot --path game --headless -- --screenshot     # save a frame (needs a display or xvfb-run)
+xvfb-run -a godot --path game --rendering-driver opengl3 -- --screenshot
 ```
+
+Headless flags, all of which live in `game/scripts/Boot.cs` and
+`game/scripts/GameRoot.cs`:
+
+| Flag | What it does |
+|---|---|
+| `--smoke` | tick, render and report counts, timings and invariants |
+| `--session-test` | play every loop end to end: save, build, belts, power, fluids |
+| `--screenshot` | capture the world with a machine panel open |
+| `--belt-shot` | capture framed on the belt line |
+| `--build-shot` | capture with build mode open and a ghost placed |
+| `--menu-shot`, `--start-shot`, `--editor-shot` | title screen, a new game, the script editor |
+| `--machines=N`, `--seed=N` | size and seed the placeholder factory |
+
+Godot ignores an unrecognised flag silently, so a capture that looks like the
+default usually means the flag name is wrong.
 
 ## Art
 
