@@ -108,6 +108,17 @@ public class SaveGameTests
         world.PlayerInventory.Add(ore, 250);
         world.PlayerInventory.Add(plate, 40);
 
+        // Drones mid-haul and a controller that has remembered something, so
+        // the save has to carry both the fleet and the program's state.
+        world.Logistics.AddDrone(new Drone(3, 4, capacity: 40, speed: 25));
+        world.Logistics.AddDrone(new Drone(9, 1, capacity: 40, speed: 25));
+        world.Logistics.AddTask(new HaulTask(ore, 60, 0, 0, 10, 0));
+        world.AddController(@"
+            local n = tonumber(state.get('runs')) or 0
+            state.set('runs', tostring(n + 1))
+            while true do world.sleep(4) end
+        ");
+
         // A miner mid-cycle on a patch that has already been dug into: both the
         // machine and the hole in the ground are state a save has to carry.
         var patch = gen.PatchesInRegion(0, 0).First();
@@ -155,7 +166,15 @@ public class SaveGameTests
     /// Every piece of mutable state in the world, as a string. This is the
     /// assertion: if the save drops a field, two worlds that should be identical
     /// will not be.
-    private static string Fingerprint(World world)
+    private static string Fingerprint(World world) => Fingerprint(world, true);
+
+    /// `includeControllerState` exists for one honest reason. A controller's
+    /// program restarts from the top on load (ADR 0013), so after both copies
+    /// run on, the reloaded one has executed its opening lines a second time
+    /// and its `state` legitimately differs. Everything else in the world still
+    /// has to match exactly. The restart itself is asserted separately, below,
+    /// so excluding it here hides nothing.
+    private static string Fingerprint(World world, bool includeControllerState)
     {
         var sb = new StringBuilder();
         sb.Append("seed=").Append(world.Seed).Append(" tick=").Append(world.TickCount).Append('\n');
@@ -227,6 +246,49 @@ public class SaveGameTests
         }
 
         sb.Append("networks ").Append(world.Power.NetworkCount).Append('\n');
+
+        for (var i = 0; i < world.Logistics.Drones.Count; i++)
+        {
+            var drone = world.Logistics.Drones[i];
+            sb.Append("drone ").Append(i)
+              .Append(' ').Append(drone.X).Append(',').Append(drone.Y)
+              .Append(" cap=").Append(drone.Capacity)
+              .Append(" speed=").Append(drone.Speed)
+              .Append(" cargo=").Append(drone.CargoCount)
+              .Append(' ').Append(world.Items.GetName(drone.Cargo))
+              .Append(" task=").Append(drone.Task)
+              .Append(" progress=").Append(drone.Progress)
+              .Append(" waiting=").Append(drone.Waiting)
+              .Append('\n');
+        }
+
+        for (var i = 0; i < world.Logistics.Tasks.Count; i++)
+        {
+            var task = world.Logistics.Tasks[i];
+            sb.Append("task ").Append(i)
+              .Append(' ').Append(world.Items.GetName(task.Item))
+              .Append(' ').Append(task.Count)
+              .Append(" from ").Append(task.FromX).Append(',').Append(task.FromY)
+              .Append(" to ").Append(task.ToX).Append(',').Append(task.ToY)
+              .Append(' ').Append(task.State)
+              .Append(" drone=").Append(task.Drone)
+              .Append(" delivered=").Append(task.Delivered)
+              .Append('\n');
+        }
+
+        for (var i = 0; i < world.Controllers.Count; i++)
+        {
+            var controller = world.Controllers[i];
+            sb.Append("controller ").Append(i)
+              .Append(" chars=").Append(controller.Source.Length)
+              .Append(" error=").Append(controller.Error ?? "none");
+
+            if (includeControllerState)
+                foreach (var (key, value) in controller.State.OrderBy(kv => kv.Key, StringComparer.Ordinal))
+                    sb.Append(' ').Append(key).Append('=').Append(value);
+
+            sb.Append('\n');
+        }
 
         for (var s = 0; s < world.Belts.Segments.Count; s++)
         {
@@ -350,6 +412,12 @@ public class SaveGameTests
         Assert.True(world.Miners[0].Buffered > 0 || world.Miners[0].RawTicksRemaining > 0,
                     "the miner is doing nothing, so its state is not being covered");
 
+        Assert.NotEmpty(world.Logistics.Drones);
+        Assert.NotEmpty(world.Logistics.Tasks);
+        Assert.NotEmpty(world.Controllers);
+        Assert.Contains(world.Controllers, c => c.State.Count > 0);
+        Assert.Contains(world.Logistics.Drones, d => d.Task >= 0);
+
         Assert.NotEmpty(world.Fluids.Nodes);
         Assert.NotEmpty(world.Extractors);
         Assert.True(world.Fluids.TotalFluid() > 0, "no fluid stored, so pipe contents are uncovered");
@@ -404,12 +472,45 @@ public class SaveGameTests
         original.Tick(10_000);
         loaded.Tick(10_000);
 
-        Assert.Equal(Fingerprint(original), Fingerprint(loaded));
+        Assert.Equal(Fingerprint(original, includeControllerState: false),
+                     Fingerprint(loaded, includeControllerState: false));
 
         // Sanity: the run actually did something, rather than two idle worlds
         // agreeing about nothing.
         Assert.Equal(startedAt + 10_000, original.TickCount);
         Assert.Contains("iron_plate", Fingerprint(original));
+    }
+
+    [Fact]
+    public void AControllersMemorySurvives_AndItsProgramRestartsFromTheTop()
+    {
+        // The one thing that does not round-trip identically, made explicit.
+        //
+        // MoonSharp cannot serialise a suspended coroutine, so a program picks
+        // up from its first line rather than where it was parked. That is why
+        // `state` exists, and why a program that keeps progress in a local
+        // instead will redo work. Both halves are asserted here so neither can
+        // change silently.
+        var original = BuildBusyWorld();
+        original.Tick(61);
+
+        var runsBefore = original.Controllers[0].State["runs"];
+        Assert.Equal("1", runsBefore);
+
+        var loaded = SaveGame.Restore(SaveGame.FromJson(SaveGame.ToJson(SaveGame.Capture(original))),
+                                      Recipes(original), GenFor(original));
+
+        // Memory survives the trip untouched...
+        Assert.Equal("1", loaded.Controllers[0].State["runs"]);
+
+        // ...and the program then starts again from its first line, which runs
+        // the opening increment a second time.
+        loaded.Tick(1);
+        Assert.Equal("2", loaded.Controllers[0].State["runs"]);
+
+        // The original, still parked in its loop, does not.
+        original.Tick(1);
+        Assert.Equal("1", original.Controllers[0].State["runs"]);
     }
 
     [Fact]

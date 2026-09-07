@@ -26,7 +26,8 @@ public sealed class SaveFile
     /// save that silently lost this state would look loadable and be wrong --
     /// an older file has no poles, so every powered machine would go dark.
     /// 4 replaced declared fluid networks with placed pipes, tanks and pumps.
-    public const int CurrentVersion = 4;
+    /// 5 added drones, haul tasks and controller programs.
+    public const int CurrentVersion = 5;
 
     public int Version { get; set; } = CurrentVersion;
     public int Seed { get; set; }
@@ -49,6 +50,9 @@ public sealed class SaveFile
     public List<GeneratorSave> Generators { get; set; } = new();
     public List<FluidNodeSave> FluidNodes { get; set; } = new();
     public List<ExtractorSave> Extractors { get; set; } = new();
+    public List<DroneSave> Drones { get; set; } = new();
+    public List<HaulTaskSave> Tasks { get; set; } = new();
+    public List<ControllerSave> Controllers { get; set; } = new();
     public BeltNetworkSave Belts { get; set; } = new();
     public List<FluidNetworkSave> Fluids { get; set; } = new();
 }
@@ -154,6 +158,49 @@ public sealed class ExtractorSave
     public int Buffered { get; set; }
     public int Energy { get; set; }
     public MachineState State { get; set; }
+}
+
+public sealed class DroneSave
+{
+    public int X { get; set; }
+    public int Y { get; set; }
+    public int Capacity { get; set; }
+    public int Speed { get; set; }
+    public int Cargo { get; set; }
+    public int CargoCount { get; set; }
+    public int Task { get; set; } = -1;
+    public int Progress { get; set; }
+    public int Waiting { get; set; }
+}
+
+public sealed class HaulTaskSave
+{
+    public int Item { get; set; }
+    public int Count { get; set; }
+    public int FromX { get; set; }
+    public int FromY { get; set; }
+    public int ToX { get; set; }
+    public int ToY { get; set; }
+    public HaulState State { get; set; }
+    public int Drone { get; set; } = -1;
+    public int Delivered { get; set; }
+}
+
+/// A controller's program and what it chose to remember.
+///
+/// The interpreter's own stack is deliberately absent: MoonSharp cannot
+/// serialise a suspended coroutine, so the program restarts from the top on
+/// load and `State` is how it carries anything forward. See ADR 0013.
+public sealed class ControllerSave
+{
+    public string Source { get; set; } = "";
+    public List<StateEntry> State { get; set; } = new();
+}
+
+public sealed class StateEntry
+{
+    public string Key { get; set; } = "";
+    public string Value { get; set; } = "";
 }
 
 public sealed class DepletionSave

@@ -49,6 +49,24 @@ public sealed class World
     /// downstream has to null-check the map.
     public Ground Ground { get; }
 
+    /// Drones and the jobs they are doing.
+    public LogisticsSystem Logistics { get; } = new();
+
+    private readonly List<Controller> _controllers = new();
+
+    public IReadOnlyList<Controller> Controllers => _controllers;
+
+    /// Adds a player program. Compiling here rather than on first tick means a
+    /// syntax error is reported when the program is installed, which is when
+    /// the player is looking at it.
+    public Controller AddController(string source)
+    {
+        var controller = new Controller(source);
+        controller.Compile(this);
+        _controllers.Add(controller);
+        return controller;
+    }
+
     /// Poles, generators and networks. Power is a world-level concern because a
     /// network spans machines that know nothing about each other.
     public PowerGrid Power { get; } = new();
@@ -575,6 +593,13 @@ public sealed class World
         // Then transport. Fixed order, so the tick is reproducible.
         DrainFluidOutputs();
         Belts.Tick(_machines, _miners);
+        // Controllers run last, on a world that has finished moving for this
+        // tick. A program reading a machine's output sees a settled number
+        // rather than one that depends on where in the tick it happened to ask.
+        for (var i = 0; i < _controllers.Count; i++)
+            _controllers[i].Tick();
+
+        Logistics.Tick(this);
 
         TickCount++;
     }

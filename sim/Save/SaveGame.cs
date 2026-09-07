@@ -122,6 +122,44 @@ public static class SaveGame
             });
         }
 
+        foreach (var drone in world.Logistics.Drones)
+            save.Drones.Add(new DroneSave
+            {
+                X = drone.X,
+                Y = drone.Y,
+                Capacity = drone.Capacity,
+                Speed = drone.Speed,
+                Cargo = drone.Cargo.Value,
+                CargoCount = drone.CargoCount,
+                Task = drone.Task,
+                Progress = drone.Progress,
+                Waiting = drone.Waiting,
+            });
+
+        foreach (var task in world.Logistics.Tasks)
+            save.Tasks.Add(new HaulTaskSave
+            {
+                Item = task.Item.Value,
+                Count = task.Count,
+                FromX = task.FromX,
+                FromY = task.FromY,
+                ToX = task.ToX,
+                ToY = task.ToY,
+                State = task.State,
+                Drone = task.Drone,
+                Delivered = task.Delivered,
+            });
+
+        foreach (var controller in world.Controllers)
+            save.Controllers.Add(new ControllerSave
+            {
+                Source = controller.Source,
+                State = controller.State
+                    .OrderBy(kv => kv.Key, StringComparer.Ordinal)
+                    .Select(kv => new StateEntry { Key = kv.Key, Value = kv.Value })
+                    .ToList(),
+            });
+
         foreach (var node in world.Fluids.Nodes)
             save.FluidNodes.Add(new FluidNodeSave
             {
@@ -288,6 +326,31 @@ public static class SaveGame
                                                placement.Area, entry.CycleTicks, entry.PowerDraw);
             extractor.Restore(entry.State, entry.TicksRemaining, entry.Buffered, entry.Energy);
             world.AddSavedExtractor(extractor, placement);
+        }
+
+        // Tasks before drones, because a drone's Task index points into this
+        // list and a drone restored first would point at nothing.
+        foreach (var entry in save.Tasks)
+        {
+            var task = new HaulTask(Item(entry.Item, save), entry.Count,
+                                    entry.FromX, entry.FromY, entry.ToX, entry.ToY);
+            task.Restore(entry.State, entry.Drone, entry.Delivered);
+            world.Logistics.AddTask(task);
+        }
+
+        foreach (var entry in save.Drones)
+        {
+            var drone = new Drone(entry.X, entry.Y, entry.Capacity, entry.Speed);
+            drone.Restore(entry.X, entry.Y, Item(entry.Cargo, save), entry.CargoCount,
+                          entry.Task, entry.Progress, entry.Waiting);
+            world.Logistics.AddDrone(drone);
+        }
+
+        foreach (var entry in save.Controllers)
+        {
+            var controller = world.AddController(entry.Source);
+            controller.RestoreState(entry.State.Select(
+                e => new KeyValuePair<string, string>(e.Key, e.Value)));
         }
 
         RestoreBelts(world.Belts, save.Belts, save);
