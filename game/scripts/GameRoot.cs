@@ -26,6 +26,8 @@ public sealed partial class GameRoot : Node3D
     private MachineRenderer _renderer = null!;
     private TerrainRenderer _terrain = null!;
     private PoleRenderer _poles = null!;
+    private DroneRenderer _drones = null!;
+    private ScriptEditor _editor = null!;
     private CameraRig _rig = null!;
     private Label _hud = null!;
     private MachinePanel _panel = null!;
@@ -53,10 +55,14 @@ public sealed partial class GameRoot : Node3D
         _poles = new PoleRenderer { Name = "PoleRenderer" };
         AddChild(_poles);
 
+        _drones = new DroneRenderer { Name = "DroneRenderer" };
+        AddChild(_drones);
+
         AddChild(BuildLighting());
         _hud = BuildHud();
         _panel = BuildPanel();
         _pause = BuildPauseMenu();
+        _editor = BuildScriptEditor();
 
         // Frame whatever there is to look at. A new game has no factory, so the
         // camera sits on the landing site at a zoom where the ground around it
@@ -83,6 +89,7 @@ public sealed partial class GameRoot : Node3D
         _terrain.Sync(_world, _rig.Position);
         _poles.Sync(_world);
         _poles.SyncFluids(_world);
+        _drones.Sync(_world);
 
         if (AllArgs().Contains("--smoke"))
             CallDeferred(nameof(RunSmokeTest));
@@ -90,6 +97,12 @@ public sealed partial class GameRoot : Node3D
         if (AllArgs().Contains("--screenshot"))
         {
             _screenshotCountdown = 12;      // let a few frames draw first
+
+            // Capturing the editor rather than the world, when asked. Its
+            // layout is the part most likely to be wrong in a way that reading
+            // the scene file will not show.
+            if (AllArgs().Contains("--editor-shot"))
+                CallDeferred(nameof(OpenEditor));
         }
     }
 
@@ -104,6 +117,7 @@ public sealed partial class GameRoot : Node3D
             _terrain.Sync(_world, _rig.Position);
         _poles.Sync(_world);
         _poles.SyncFluids(_world);
+        _drones.Sync(_world);
             return;
         }
 
@@ -124,6 +138,7 @@ public sealed partial class GameRoot : Node3D
         _terrain.Sync(_world, _rig.Position);
         _poles.Sync(_world);
         _poles.SyncFluids(_world);
+        _drones.Sync(_world);
 
         // Open the inspection panel just before the capture, so a screenshot
         // shows the GUI rather than only proving the world draws. It has to
@@ -161,7 +176,7 @@ public sealed partial class GameRoot : Node3D
                         $"batches {_renderer.BatchCount}   fps {Engine.GetFramesPerSecond():0}" +
                         power + "\n" +
                         "WASD pan   Q/E rotate   wheel zoom   click a machine to inspect   " +
-                        "F5 save   F9 load   Esc menu" +
+                        "F5 save   F9 load   F1 script   Esc menu" +
                         (_toastFrames > 0 ? "\n" + _toast : "");
         }
     }
@@ -247,6 +262,23 @@ public sealed partial class GameRoot : Node3D
                         pickOk = false;
         }
 
+        var droneInstances = 0;
+        foreach (var child in _drones.GetChildren())
+            if (child is MultiMeshInstance3D { Multimesh: not null } dmm)
+                droneInstances += dmm.Multimesh.InstanceCount;
+
+        GD.Print($"drones          {_world.Logistics.Drones.Count} " +
+                 $"instances={droneInstances} idle={_world.Logistics.IdleDrones} " +
+                 $"tasks={_world.Logistics.Tasks.Count}");
+        if (_world.Logistics.Drones.Count > 0)
+        {
+            var d = _world.Logistics.Drones[0];
+            GD.Print($"drone 0         at {d.X},{d.Y} cargo={d.CargoCount} task={d.Task}");
+        }
+
+        GD.Print($"controllers     {_world.Controllers.Count} " +
+                 $"error={(_world.Controllers.Count > 0 ? _world.Controllers[0].Error ?? "none" : "n/a")}");
+
         GD.Print($"picking         largest={largest}x{largest} " +
                  $"all tiles resolve to one machine: {pickOk}");
         GD.Print($"panel           showing={_panel.IsShowing}");
@@ -290,6 +322,22 @@ public sealed partial class GameRoot : Node3D
     /// answers the same machine from any of its nine tiles.
     public override void _UnhandledInput(InputEvent @event)
     {
+        if (@event is InputEventKey { Pressed: true, Keycode: Key.F1 })
+        {
+            if (_editor.IsOpen) CloseEditor();
+            else OpenEditor();
+            return;
+        }
+
+        // While the editor has the keyboard, nothing else may claim a keystroke
+        // -- F5 in the middle of a line would quick-save instead of typing.
+        if (_editor.IsOpen)
+        {
+            if (@event is InputEventKey { Pressed: true, Keycode: Key.Escape })
+                CloseEditor();
+            return;
+        }
+
         if (@event is InputEventKey { Pressed: true, Keycode: Key.Escape })
         {
             // Escape backs out one level at a time: the inspection panel first,
@@ -401,6 +449,34 @@ public sealed partial class GameRoot : Node3D
         layer.AddChild(menu);
         AddChild(layer);
         return menu;
+    }
+
+    private ScriptEditor BuildScriptEditor()
+    {
+        var layer = new CanvasLayer { Name = "EditorLayer" };
+        var root = GD.Load<PackedScene>("res://scenes/script_editor.tscn").Instantiate<Control>();
+        var editor = root.GetNode<ScriptEditor>("Card");
+        editor.Closed += CloseEditor;
+        layer.AddChild(root);
+        AddChild(layer);
+        return editor;
+    }
+
+    private void OpenEditor()
+    {
+        _panel.Close();
+        _editor.Open(_world);
+
+        // The camera reads the keyboard directly, so it has to be told to stop
+        // while there is somewhere to type. Otherwise writing "was" pans the
+        // map out from under the player.
+        _rig.InputEnabled = false;
+    }
+
+    private void CloseEditor()
+    {
+        _editor.Close();
+        _rig.InputEnabled = true;
     }
 
     private MachinePanel BuildPanel()

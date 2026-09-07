@@ -202,6 +202,16 @@ public sealed class Controller
         script.Globals["world"] = world_;
     }
 
+    /// Swaps in new source and starts it from the top.
+    ///
+    /// `state` survives deliberately: a player fixing a typo in a program that
+    /// has been running for an hour should not lose what it had remembered.
+    public void Replace(string source, World world)
+    {
+        Source = source;
+        Compile(world);
+    }
+
     internal void RestoreState(IEnumerable<KeyValuePair<string, string>> values)
     {
         State.Clear();

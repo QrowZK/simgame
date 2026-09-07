@@ -97,6 +97,21 @@ public static class DemoWorld
         world.Fluids.AddTank(-2, -2);
         world.Fluids.AddPump(-1, -2);
 
+        // A drone fleet and a controller commanding it, so the renderer and the
+        // script editor both have something real to show.
+        for (var i = 0; i < System.Math.Max(4, machineCount / 40); i++)
+            world.Logistics.AddDrone(new Drone(4 + i * 5, 4 + i * 3, capacity: 40, speed: 25));
+
+        world.AddController(@"
+-- Keep the far machines fed from the near ones.
+while true do
+  if queue.pending() < 4 then
+    queue.haul('chalcopyrite', 20, 0, 0, 21, 21)
+  end
+  world.sleep(20)
+end
+");
+
         // Something in the player's hands, so the panel's load button has
         // work to do on the starved machines.
         world.PlayerInventory.Add(ore, 500);

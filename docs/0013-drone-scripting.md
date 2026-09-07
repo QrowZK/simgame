@@ -105,6 +105,28 @@ directly: memory survives the trip untouched, and the program then starts again
 from its first line. Both halves are tested, so neither can change without
 saying so.
 
+## The game layer
+
+Drones get their own renderer rather than sharing the machines'. They are the
+one thing on the map that moves every tick, so their instance buffer is rebuilt
+every frame where the machines' is rebuilt only when something is built; mixing
+them would mean paying the moving cost for the static majority. An idle drone
+flies lower and greyer than a working one, and a cargo cube appears above it
+only when it is carrying something, so "is my fleet shifting anything" is
+answerable from across the factory.
+
+The script editor (F1) compiles on Apply, so a syntax error appears under the
+box while the player is still looking at the code. It shows the controller's
+`print` output, which is the only way to debug a program that runs inside the
+tick.
+
+Writing an editor exposed a bug in the camera: `CameraRig` polls the keyboard
+directly rather than consuming input events, which is right for smooth panning
+and wrong the moment there is somewhere to type -- writing "was" would have
+panned the map out from under the player. The camera now has an input gate, and
+while the editor is open no other key binding may claim a keystroke either, so
+F5 mid-line types rather than quick-saves.
+
 ## Verification
 
 Twenty-two tests across drones, controllers and saves. The properties held to are:

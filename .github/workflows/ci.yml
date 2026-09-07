@@ -91,6 +91,10 @@ jobs:
           # Clicking a large machine must resolve to that one machine from any
           # of its tiles -- the whole inspection GUI hangs off this.
           grep -q "all tiles resolve to one machine: True" smoke.log
+          # Drones have to actually reach the renderer, and the controller has
+          # to compile. A fleet that exists only in the sim is not rendered.
+          grep -qE "drones          [0-9]+ instances=[1-9]" smoke.log
+          grep -q "controllers     1 error=none" smoke.log
 
       # The save loop as a player takes it: new game, save to disk, list it,
       # load it back, and stay identical after running on. The unit tests stop

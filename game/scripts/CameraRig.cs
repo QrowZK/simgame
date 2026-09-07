@@ -29,8 +29,19 @@ public sealed partial class CameraRig : Node3D
         Apply();
     }
 
+    /// Set false while a text field has the player's keystrokes.
+    ///
+    /// The camera polls the keyboard directly rather than consuming input
+    /// events, which is right for smooth panning and wrong the moment there is
+    /// somewhere to type: without this, writing "was" in the script editor pans
+    /// the camera across the map.
+    public bool InputEnabled { get; set; } = true;
+
     public override void _Process(double delta)
     {
+        if (!InputEnabled)
+            return;
+
         var dt = (float)delta;
         var moved = false;
 
@@ -59,6 +70,9 @@ public sealed partial class CameraRig : Node3D
 
     public override void _UnhandledInput(InputEvent @event)
     {
+        if (!InputEnabled)
+            return;
+
         if (@event is not InputEventMouseButton { Pressed: true } button)
             return;
 
