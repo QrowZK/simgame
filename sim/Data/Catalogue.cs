@@ -18,10 +18,15 @@ public sealed class Catalogue
 
     private readonly Dictionary<string, Recipe> _recipes = new();
 
-    /// Ore items in the order they appear in the data, with the tier that gates
-    /// them. Worldgen deals patches from this, so a new raw material added to
-    /// the data appears in the world without any further wiring.
+    /// Everything worldgen has to bury somewhere: raw ores, and raw fluids that
+    /// come out of the ground rather than out of the air. Adding a raw material
+    /// to the data puts it in the world with no further wiring.
     public IReadOnlyList<ItemDef> RawSolids { get; }
+
+    /// Raw fluids with no patch behind them -- water and air. A pump standing in
+    /// a lake is not consuming a deposit, so these are excluded from worldgen
+    /// and drawn from the terrain instead.
+    public static readonly HashSet<string> AmbientFluids = new() { "water", "air" };
 
     public Catalogue(GameData data)
     {
@@ -30,19 +35,25 @@ public sealed class Catalogue
         foreach (var item in data.Items)
             Items.Register(item.Id);
 
+        var fluids = data.Items.Where(i => i.Form == "fluid").Select(i => i.Id).ToHashSet();
+
         foreach (var def in data.Recipes)
         {
             // A recipe whose items are not all registered would be a data bug,
             // not a runtime condition -- Register above covers every item, so
             // an unknown id here means the files disagree with each other.
-            var inputs = def.Inputs.Select(i => new RecipeInput(Id(i.Item, def.Id), i.Count)).ToArray();
-            var outputs = def.Outputs.Select(o => new RecipeOutput(Id(o.Item, def.Id), o.Count)).ToArray();
+            var inputs = def.Inputs
+                .Select(i => new RecipeInput(Id(i.Item, def.Id), i.Count, fluids.Contains(i.Item)))
+                .ToArray();
+            var outputs = def.Outputs
+                .Select(o => new RecipeOutput(Id(o.Item, def.Id), o.Count, fluids.Contains(o.Item)))
+                .ToArray();
             _recipes[def.Id] = new Recipe(def.Id, Math.Max(1, def.DurationTicks), inputs, outputs,
                                           def.PowerDraw);
         }
 
         RawSolids = data.Items
-            .Where(i => i.Raw && i.Form == "solid" && i.Category != "machine")
+            .Where(i => i.Raw && i.Category != "machine" && !AmbientFluids.Contains(i.Id))
             .ToList();
     }
 

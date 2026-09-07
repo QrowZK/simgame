@@ -86,9 +86,24 @@ public class SaveGameTests
         world.Belts.AddInserter(Endpoint.Belt(belt, 1), Endpoint.Machine(2),
                                 swingTicks: 20, stackSize: 2);
 
-        var pipes = world.Fluids.AddNetwork(tiles: 12, throughputPerTick: FluidNetwork.ThroughputLarge);
+        // A real run of pipe with a tank and a pump on it, so the save has to
+        // carry the layout as well as what is in it.
+        for (var x = 0; x < 10; x++)
+            world.Fluids.AddPipe(200 + x, 200, FluidNetwork.ThroughputLarge);
+        world.Fluids.AddTank(210, 200);
+        world.Fluids.AddPump(211, 200);
+
+        var pipes = world.Fluids.NetworkAt(200, 200);
         world.Fluids.Network(pipes).BeginTick();
         world.Fluids.Network(pipes).TryInsert(water, 300);
+
+        // A pump mid-cycle, plumbed into its own short run. Ambient rather than
+        // on a patch, so it keeps running for the length of the test instead of
+        // reporting itself depleted the moment it is placed on bare ground.
+        world.Fluids.AddPipe(300, 300, FluidNetwork.ThroughputLarge);
+        var pump = new FluidExtractor(water, ambient: true, parallelism: 1, cycleTicks: 25);
+        pump.Restore(MachineState.Working, 9, 40, 0);
+        world.AddSavedExtractor(pump, new MachinePlacement(300, 301, 3, 5, 1));
 
         world.PlayerInventory.Add(ore, 250);
         world.PlayerInventory.Add(plate, 40);
@@ -257,6 +272,33 @@ public class SaveGameTests
               .Append(" cooldown=").Append(inserter.Cooldown).Append('\n');
         }
 
+        for (var i = 0; i < world.Fluids.Nodes.Count; i++)
+        {
+            var node = world.Fluids.Nodes[i];
+            sb.Append("node ").Append(i).Append(' ').Append(node.Kind)
+              .Append(' ').Append(node.X).Append(',').Append(node.Y)
+              .Append(" cap=").Append(node.Capacity)
+              .Append(" rate=").Append(node.Throughput).Append('\n');
+        }
+
+        for (var i = 0; i < world.Extractors.Count; i++)
+        {
+            var extractor = world.Extractors[i];
+            var placement = world.ExtractorPlacements[i];
+            sb.Append("extractor ").Append(i)
+              .Append(' ').Append(world.Items.GetName(extractor.Fluid))
+              .Append(" ambient=").Append(extractor.Ambient)
+              .Append(" at ").Append(placement.X).Append(',').Append(placement.Y)
+              .Append(" size=").Append(placement.Size)
+              .Append(" cycle=").Append(extractor.CycleTicks)
+              .Append(" draw=").Append(extractor.PowerDraw)
+              .Append(" state=").Append(extractor.State)
+              .Append(" ticks=").Append(extractor.RawTicksRemaining)
+              .Append(" buffered=").Append(extractor.Buffered)
+              .Append(" energy=").Append(extractor.Energy)
+              .Append('\n');
+        }
+
         for (var i = 0; i < world.Fluids.Networks.Count; i++)
         {
             var network = world.Fluids.Networks[i];
@@ -307,6 +349,12 @@ public class SaveGameTests
         Assert.NotEmpty(world.Ground.Depletion);
         Assert.True(world.Miners[0].Buffered > 0 || world.Miners[0].RawTicksRemaining > 0,
                     "the miner is doing nothing, so its state is not being covered");
+
+        Assert.NotEmpty(world.Fluids.Nodes);
+        Assert.NotEmpty(world.Extractors);
+        Assert.True(world.Fluids.TotalFluid() > 0, "no fluid stored, so pipe contents are uncovered");
+        Assert.True(world.Extractors[0].Buffered > 0 || world.Extractors[0].RawTicksRemaining > 0,
+                    "the derrick is idle, so its state is not being covered");
 
         Assert.NotEmpty(world.Power.Poles);
         Assert.NotEmpty(world.Power.Generators);

@@ -102,10 +102,13 @@ public sealed partial class MachinePanel : PanelContainer
 
         // A parallel machine's real per-cycle amounts, not the recipe card's.
         // Showing the card would make the panel lie about the machine it is on.
+        // Fluids are marked, because "why is this starved" has a different
+        // answer for a pipe than for a belt and the player needs to know which
+        // they are looking at.
         var consumes = string.Join(", ", machine.Recipe.Inputs.Select(
-            i => $"{machine.InputPerCycle(i.Item)} {ItemName(i.Item)}"));
+            i => $"{machine.InputPerCycle(i.Item)} {ItemName(i.Item)}{(i.IsFluid ? " (piped)" : "")}"));
         var makes = string.Join(", ", machine.Recipe.Outputs.Select(
-            o => $"{machine.OutputPerCycle(o.Item)} {ItemName(o.Item)}"));
+            o => $"{machine.OutputPerCycle(o.Item)} {ItemName(o.Item)}{(o.IsFluid ? " (piped)" : "")}"));
 
         _subtitle.Text = $"{consumes}  ->  {makes}   ({machine.Recipe.DurationTicks} ticks)";
 

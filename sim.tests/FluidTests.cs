@@ -63,8 +63,11 @@ public class FluidTests
     public void Conservation_FluidIsNeitherCreatedNorLost()
     {
         var world = new World(3);
-        var source = world.Fluids.AddNetwork(20, FluidNetwork.ThroughputLarge);
-        var sink = world.Fluids.AddNetwork(20, FluidNetwork.ThroughputLarge);
+        // Two runs of pipe with a gap between them, so they stay separate.
+        for (var x = 0; x < 20; x++) world.Fluids.AddPipe(x, 0, FluidNetwork.ThroughputLarge);
+        for (var x = 40; x < 60; x++) world.Fluids.AddPipe(x, 0, FluidNetwork.ThroughputLarge);
+        var source = world.Fluids.NetworkAt(0, 0);
+        var sink = world.Fluids.NetworkAt(40, 0);
 
         var injected = 0;
         var delivered = 0;

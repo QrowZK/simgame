@@ -136,6 +136,7 @@ public sealed partial class Boot : Node
         GD.Print($"ground fell     {after < before - dug}");
 
         RunPowerFlow(world, hit.X, hit.Y);
+        RunFluidFlow(world);
         GD.Print("--- start flow ok ---");
     }
 
@@ -180,6 +181,75 @@ public sealed partial class Boot : Node
         GD.Print($"produced        {machine.GetOutputCount(catalogue.Item("chalcopyrite_crushed"))}");
         GD.Print($"burning         {generator.IsBurning}");
         GD.Print("--- power ok ---");
+    }
+
+    /// The fluid loop end to end: find water, stand a pump in it, run pipe to a
+    /// machine that needs water, and check the machine runs on what the pump
+    /// pulled. Nothing here is hand-fed.
+    private void RunFluidFlow(Sim.World world)
+    {
+        GD.Print("--- fluids ---");
+
+        var catalogue = GameSession.Catalogue;
+        var water = catalogue.Item("water");
+
+        // Walk out from spawn until we hit open water.
+        var (wx, wy) = (0, 0);
+        var found = false;
+        for (var r = 1; r < 400 && !found; r++)
+            for (var a = -r; a <= r && !found; a++)
+                foreach (var (x, y) in new[] { (a, -r), (a, r), (-r, a), (r, a) })
+                    if (world.Ground.Gen.IsWater(x, y)) { (wx, wy) = (x, y); found = true; break; }
+
+        if (!found)
+        {
+            GD.Print("fluids          FAILED: no water within 400 tiles");
+            return;
+        }
+
+        GD.Print($"water found     {wx},{wy}");
+
+        // Pipe from the shore to a washer sitting a few tiles inland.
+        for (var i = 1; i <= 6; i++)
+            world.Fluids.AddPipe(wx + i, wy, Sim.FluidNetwork.ThroughputLarge);
+
+        var pump = world.TryPlaceExtractor(new Sim.MachinePlacement(wx, wy, 1, 7, 1), water,
+                                           cycleTicks: 10);
+        GD.Print($"pump built      {pump is not null} ambient={pump?.Ambient}");
+
+        var recipe = catalogue.Recipe("wash_chalcopyrite");
+        var washer = world.TryPlaceMachine(recipe,
+            new Sim.MachinePlacement(wx + 3, wy + 1, 1, 4, 1), outputCapacityPerItem: 500);
+
+        if (washer is null || pump is null)
+        {
+            GD.Print("fluids          FAILED: could not place the pump or the washer");
+            return;
+        }
+
+        washer.PushInput(catalogue.Item("chalcopyrite_crushed"), 500);
+
+        // The washer is an electric machine, so it needs a grid out here too --
+        // without one this proves the pipe delivered and nothing more.
+        world.Power.AddPole(new Sim.Pole(wx + 3, wy + 2, supplyRadius: 6, wireRadius: 9));
+        var generator = new Sim.Generator(catalogue.Item("coal_deposit"),
+                                          outputPerTick: 40, ticksPerFuel: 2000);
+        generator.AddFuel(20);
+        world.TryPlaceGenerator(generator, new Sim.MachinePlacement(wx + 5, wy + 2, 1, 6, 1));
+
+        world.Tick(600);
+
+        var network = world.Fluids.NetworkAt(wx + 1, wy);
+        var held = network >= 0 ? world.Fluids.Network(network).Amount : -1;
+        var rate = network >= 0 ? world.Fluids.Network(network).ThroughputPerTick : -1;
+
+        GD.Print($"networks        {world.Fluids.NetworkCount}");
+        GD.Print($"pipe rate       {rate}/tick");
+        GD.Print($"pipe holds      {held}");
+        GD.Print($"washer state    {washer.State}");
+        GD.Print($"washed          {washer.GetOutputCount(catalogue.Item("chalcopyrite_purified"))}");
+        GD.Print($"voided          {world.Fluids.VoidedByMixing}");
+        GD.Print("--- fluids ok ---");
     }
 
     private void ShowMenu()

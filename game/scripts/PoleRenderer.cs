@@ -16,9 +16,12 @@ public sealed partial class PoleRenderer : Node3D
 
     private MultiMeshInstance3D _posts = null!;
     private MultiMeshInstance3D _coverage = null!;
+    private MultiMeshInstance3D _pipes = null!;
     private float[] _postBuffer = System.Array.Empty<float>();
     private float[] _coverageBuffer = System.Array.Empty<float>();
+    private float[] _pipeBuffer = System.Array.Empty<float>();
     private int _built = -1;
+    private int _builtPipes = -1;
 
     public override void _Ready()
     {
@@ -35,6 +38,11 @@ public sealed partial class PoleRenderer : Node3D
             RadialSegments = 24,
         }, shadows: false);
         _coverage.Name = "Coverage";
+
+        // Pipes are drawn low and thin, so a run reads as plumbing on the
+        // ground rather than as a wall between machines.
+        _pipes = Pool(new BoxMesh { Size = new Vector3(0.44f, 0.30f, 0.44f) }, shadows: true);
+        _pipes.Name = "Pipes";
     }
 
     private MultiMeshInstance3D Pool(Mesh mesh, bool shadows)
@@ -94,6 +102,55 @@ public sealed partial class PoleRenderer : Node3D
 
         Upload(_posts, _postBuffer, poles.Count);
         Upload(_coverage, _coverageBuffer, poles.Count);
+    }
+
+    /// Pipe, tanks and pumps. Colour says what a node is and, for pipe, what it
+    /// is carrying -- an empty line and a full one should not look the same
+    /// when the question a player has is "is my oil getting there".
+    public void SyncFluids(World world)
+    {
+        var nodes = world.Fluids.Nodes;
+        if (nodes.Count == _builtPipes)
+            return;
+
+        _builtPipes = nodes.Count;
+
+        if (_pipeBuffer.Length != nodes.Count * FloatsPerInstance)
+            _pipeBuffer = new float[nodes.Count * FloatsPerInstance];
+
+        for (var i = 0; i < nodes.Count; i++)
+        {
+            var node = nodes[i];
+            var network = world.Fluids.NetworkAt(node.X, node.Y);
+            var carrying = network >= 0 && world.Fluids.Network(network).Amount > 0;
+
+            var colour = node.Kind switch
+            {
+                FluidNodeKind.Tank => new Color(0.62f, 0.66f, 0.70f, 1f),
+                FluidNodeKind.Pump => new Color(0.85f, 0.62f, 0.25f, 1f),
+                _ => carrying
+                    ? new Color(0.35f, 0.62f, 0.80f, 1f)
+                    : new Color(0.48f, 0.50f, 0.54f, 1f),
+            };
+
+            // Tanks stand taller and wider than pipe; pumps sit between.
+            var plan = node.Kind switch
+            {
+                FluidNodeKind.Tank => 1.7f,
+                FluidNodeKind.Pump => 1.2f,
+                _ => 1f,
+            };
+            var lift = node.Kind switch
+            {
+                FluidNodeKind.Tank => 3.2f,
+                FluidNodeKind.Pump => 1.8f,
+                _ => 1f,
+            };
+
+            Write(_pipeBuffer, i, node.X + 0.5f, 0.15f * lift, node.Y + 0.5f, plan, lift, colour);
+        }
+
+        Upload(_pipes, _pipeBuffer, nodes.Count);
     }
 
     private static void Write(float[] buffer, int index, float x, float y, float z,

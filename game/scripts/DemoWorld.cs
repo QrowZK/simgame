@@ -90,6 +90,13 @@ public static class DemoWorld
                 world.TryPlaceGenerator(generator, new MachinePlacement(x + 1, y + 1, 1, 6, 1));
             }
 
+        // A pipe run with a tank and a pump on it, so the placeholder factory
+        // exercises the plumbing as well as the grid.
+        for (var x = 0; x <= side * MaxFootprint; x++)
+            world.Fluids.AddPipe(x, -2, FluidNetwork.ThroughputLarge);
+        world.Fluids.AddTank(-2, -2);
+        world.Fluids.AddPump(-1, -2);
+
         // Something in the player's hands, so the panel's load button has
         // work to do on the starved machines.
         world.PlayerInventory.Add(ore, 500);

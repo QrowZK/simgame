@@ -25,7 +25,8 @@ public sealed class SaveFile
     /// the energy in flight. Bumped rather than defaulted each time, because a
     /// save that silently lost this state would look loadable and be wrong --
     /// an older file has no poles, so every powered machine would go dark.
-    public const int CurrentVersion = 3;
+    /// 4 replaced declared fluid networks with placed pipes, tanks and pumps.
+    public const int CurrentVersion = 4;
 
     public int Version { get; set; } = CurrentVersion;
     public int Seed { get; set; }
@@ -46,6 +47,8 @@ public sealed class SaveFile
     public List<DepletionSave> Depletion { get; set; } = new();
     public List<PoleSave> Poles { get; set; } = new();
     public List<GeneratorSave> Generators { get; set; } = new();
+    public List<FluidNodeSave> FluidNodes { get; set; } = new();
+    public List<ExtractorSave> Extractors { get; set; } = new();
     public BeltNetworkSave Belts { get; set; } = new();
     public List<FluidNetworkSave> Fluids { get; set; } = new();
 }
@@ -136,6 +139,23 @@ public sealed class GeneratorSave
     public int Size { get; set; } = 1;
 }
 
+public sealed class ExtractorSave
+{
+    public int Fluid { get; set; }
+    public bool Ambient { get; set; }
+    public int X { get; set; }
+    public int Y { get; set; }
+    public int Tier { get; set; }
+    public int Category { get; set; }
+    public int Size { get; set; } = 1;
+    public int CycleTicks { get; set; }
+    public int PowerDraw { get; set; }
+    public int TicksRemaining { get; set; }
+    public int Buffered { get; set; }
+    public int Energy { get; set; }
+    public MachineState State { get; set; }
+}
+
 public sealed class DepletionSave
 {
     public int X { get; set; }
@@ -195,10 +215,22 @@ public sealed class InserterSave
     public int Cooldown { get; set; }
 }
 
+/// One piece of pipe, tank or pump. Networks are not saved: they are a
+/// consequence of where these sit, and rebuilding them on load is what keeps the
+/// file from disagreeing with the layout it also stores.
+public sealed class FluidNodeSave
+{
+    public int X { get; set; }
+    public int Y { get; set; }
+    public FluidNodeKind Kind { get; set; }
+    public int Capacity { get; set; }
+    public int Throughput { get; set; }
+}
+
+/// What a network was holding. Indexed by the network's position in the
+/// rebuilt list, which is stable because components are numbered in node order.
 public sealed class FluidNetworkSave
 {
-    public int Capacity { get; set; }
-    public int ThroughputPerTick { get; set; }
     public int Fluid { get; set; }
     public int Amount { get; set; }
 }

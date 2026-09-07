@@ -82,6 +82,7 @@ public sealed partial class GameRoot : Node3D
         _renderer.Sync(_world);
         _terrain.Sync(_world, _rig.Position);
         _poles.Sync(_world);
+        _poles.SyncFluids(_world);
 
         if (AllArgs().Contains("--smoke"))
             CallDeferred(nameof(RunSmokeTest));
@@ -102,6 +103,7 @@ public sealed partial class GameRoot : Node3D
             _renderer.Sync(_world);
             _terrain.Sync(_world, _rig.Position);
         _poles.Sync(_world);
+        _poles.SyncFluids(_world);
             return;
         }
 
@@ -121,6 +123,7 @@ public sealed partial class GameRoot : Node3D
         _renderer.Sync(_world);
         _terrain.Sync(_world, _rig.Position);
         _poles.Sync(_world);
+        _poles.SyncFluids(_world);
 
         // Open the inspection panel just before the capture, so a screenshot
         // shows the GUI rather than only proving the world draws. It has to

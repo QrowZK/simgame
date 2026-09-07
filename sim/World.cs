@@ -7,6 +7,8 @@ public sealed class World
     private readonly List<Machine> _machines = new();
     private readonly List<Miner> _miners = new();
     private readonly List<MachinePlacement> _minerPlacements = new();
+    private readonly List<FluidExtractor> _extractors = new();
+    private readonly List<MachinePlacement> _extractorPlacements = new();
     private MachinePlacement[] _placements = new MachinePlacement[64];
     private MachineState[] _states = new MachineState[64];
     private bool[] _placed = new bool[64];
@@ -63,6 +65,14 @@ public sealed class World
     /// changes or something is placed, both of which are rare.
     private int[] _machineNetwork = Array.Empty<int>();
     private int[] _minerNetwork = Array.Empty<int>();
+
+    /// Which fluid network each machine is plumbed into. Cached for the same
+    /// reason as power: finding it means scanning the machine's border, which
+    /// is fine when something is built and ruinous every tick.
+    private int[] _machineFluidNetwork = Array.Empty<int>();
+    private int[] _extractorFluidNetwork = Array.Empty<int>();
+    private int _cachedFluidVersion = -1;
+    private int _cachedExtractors = -1;
     private int _cachedGridVersion = -1;
     private int _cachedMachines = -1;
     private int _cachedMiners = -1;
@@ -117,6 +127,110 @@ public sealed class World
     /// generator yet -- so one marker is enough to keep their tiles reserved.
     public const int GeneratorIndexBase = 1 << 25;
 
+    private void RefreshFluidCache()
+    {
+        if (_cachedFluidVersion == Fluids.Version &&
+            _machineFluidNetwork.Length >= _machines.Count &&
+            _extractorFluidNetwork.Length >= _extractors.Count &&
+            _cachedExtractors == _extractors.Count)
+            return;
+
+        _cachedExtractors = _extractors.Count;
+
+        _cachedFluidVersion = Fluids.Version;
+        if (_machineFluidNetwork.Length < _machines.Count)
+            Array.Resize(ref _machineFluidNetwork, Math.Max(64, _machines.Count));
+
+        for (var i = 0; i < _machines.Count; i++)
+            _machineFluidNetwork[i] = Fluids.NetworkAdjacentTo(_placements[i]);
+
+        if (_extractorFluidNetwork.Length < _extractors.Count)
+            Array.Resize(ref _extractorFluidNetwork, Math.Max(16, _extractors.Count));
+
+        for (var i = 0; i < _extractors.Count; i++)
+            _extractorFluidNetwork[i] = Fluids.NetworkAdjacentTo(_extractorPlacements[i]);
+    }
+
+    /// Runs the pumps and derricks, and empties them into whatever pipe they
+    /// are standing next to. An extractor plumbed to nothing fills its buffer
+    /// and stops, which is the same backpressure a miner with no belt gets.
+    private void TickExtractors()
+    {
+        RefreshFluidCache();
+
+        for (var i = 0; i < _extractors.Count; i++)
+        {
+            var placement = _extractorPlacements[i];
+            var extractor = _extractors[i];
+            extractor.Tick(Ground, placement.X, placement.Y);
+
+            var network = _extractorFluidNetwork[i];
+            if (network < 0 || extractor.Buffered <= 0) continue;
+
+            var moved = Fluids.Network(network).TryInsert(extractor.Fluid, extractor.Buffered);
+            if (moved > 0) extractor.Pull(moved);
+        }
+    }
+
+    /// Moves fluid between machines and the pipe they are standing next to.
+    ///
+    /// Machines keep fluids in the same buffers as solids, so nothing in the
+    /// machine itself knows a pipe exists -- the world fills the inputs before
+    /// the machines run and drains the outputs afterwards, exactly as it hands
+    /// out power. One transport concept per direction, not two.
+    private void FillFluidInputs()
+    {
+        RefreshFluidCache();
+
+        for (var i = 0; i < _machines.Count; i++)
+        {
+            var machine = _machines[i];
+            if (!machine.Recipe.UsesFluids) continue;
+
+            var network = _machineFluidNetwork[i];
+            if (network < 0) continue;
+
+            foreach (var input in machine.Recipe.Inputs)
+            {
+                if (!input.IsFluid) continue;
+
+                // Top up to one cycle's worth. Buffering more would let a
+                // machine hoard a scarce fluid its neighbours also need.
+                var want = machine.InputPerCycle(input.Item) - machine.GetInputCount(input.Item);
+                if (want <= 0) continue;
+
+                var got = Fluids.Network(network).TryExtract(input.Item, want);
+                if (got > 0) machine.PushInput(input.Item, got);
+            }
+        }
+    }
+
+    private void DrainFluidOutputs()
+    {
+        for (var i = 0; i < _machines.Count; i++)
+        {
+            var machine = _machines[i];
+            if (!machine.Recipe.UsesFluids) continue;
+
+            var network = _machineFluidNetwork[i];
+            if (network < 0) continue;
+
+            foreach (var output in machine.Recipe.Outputs)
+            {
+                if (!output.IsFluid) continue;
+
+                var held = machine.GetOutputCount(output.Item);
+                if (held <= 0) continue;
+
+                // Insert first, then take out of the machine only what the pipe
+                // actually accepted -- a full network has to back the machine up
+                // rather than swallow the difference.
+                var moved = Fluids.Network(network).TryInsert(output.Item, held);
+                if (moved > 0) machine.PullOutput(output.Item, moved);
+            }
+        }
+    }
+
     /// Distributes each network's generated energy across everything drawing on
     /// it.
     ///
@@ -169,6 +283,13 @@ public sealed class World
             if (network >= 0 && _miners[i].WantsPower) _demand[network] += _miners[i].PowerDraw;
         }
 
+        for (var i = 0; i < _extractors.Count; i++)
+        {
+            if (!_extractors[i].WantsPower) continue;
+            var network = Power.NetworkAt(_extractorPlacements[i].X, _extractorPlacements[i].Y);
+            if (network >= 0) _demand[network] += _extractors[i].PowerDraw;
+        }
+
         for (var i = 0; i < _machines.Count; i++)
         {
             var network = _machineNetwork[i];
@@ -181,6 +302,14 @@ public sealed class World
             var network = _minerNetwork[i];
             if (network >= 0 && _miners[i].WantsPower)
                 _miners[i].SupplyEnergy(Share(network, _miners[i].PowerDraw));
+        }
+
+        for (var i = 0; i < _extractors.Count; i++)
+        {
+            if (!_extractors[i].WantsPower) continue;
+            var network = Power.NetworkAt(_extractorPlacements[i].X, _extractorPlacements[i].Y);
+            if (network >= 0)
+                _extractors[i].SupplyEnergy(Share(network, _extractors[i].PowerDraw));
         }
     }
 
@@ -201,6 +330,63 @@ public sealed class World
 
     public IReadOnlyList<Miner> Miners => _miners;
     public IReadOnlyList<MachinePlacement> MinerPlacements => _minerPlacements;
+    public IReadOnlyList<FluidExtractor> Extractors => _extractors;
+    public IReadOnlyList<MachinePlacement> ExtractorPlacements => _extractorPlacements;
+
+    /// Builds a pump or derrick. On water it draws water forever; on a patch of
+    /// a raw fluid it draws that and depletes it. Anywhere else there is nothing
+    /// to pump, and refusing is better than a building that never runs.
+    public FluidExtractor? TryPlaceExtractor(in MachinePlacement placement, ItemId ambientWater,
+                                             int cycleTicks = FluidExtractor.DefaultCycleTicks,
+                                             int powerDraw = 0)
+    {
+        if (!CanPlace(placement))
+            return null;
+
+        FluidExtractor extractor;
+
+        if (Ground.TryResourceAt(placement.X, placement.Y, out var item, out _))
+            extractor = new FluidExtractor(item, ambient: false, placement.Area, cycleTicks, powerDraw);
+        else if (Ground.Gen.IsWater(placement.X, placement.Y))
+            extractor = new FluidExtractor(ambientWater, ambient: true, placement.Area, cycleTicks, powerDraw);
+        else
+            return null;
+
+        return AddSavedExtractor(extractor, placement);
+    }
+
+    /// Restores an extractor without the "must be on something" check, so a
+    /// derrick whose patch ran dry since the save still loads and reports
+    /// itself depleted rather than disappearing.
+    public FluidExtractor AddSavedExtractor(FluidExtractor extractor, in MachinePlacement placement)
+    {
+        var index = _extractors.Count;
+        _extractors.Add(extractor);
+        _extractorPlacements.Add(placement);
+
+        for (var dy = 0; dy < placement.Size; dy++)
+            for (var dx = 0; dx < placement.Size; dx++)
+                _occupancy[Key(placement.X + dx, placement.Y + dy)] = ExtractorIndexBase + index;
+
+        return extractor;
+    }
+
+    /// Occupancy marker range for extractors, above miners and generators.
+    public const int ExtractorIndexBase = 1 << 26;
+
+    public bool TryExtractorAt(int x, int y, out FluidExtractor extractor, out int index)
+    {
+        if (_occupancy.TryGetValue(Key(x, y), out var slot) && slot >= ExtractorIndexBase)
+        {
+            index = slot - ExtractorIndexBase;
+            extractor = _extractors[index];
+            return true;
+        }
+
+        extractor = null!;
+        index = -1;
+        return false;
+    }
 
     /// Builds a miner on the patch under a tile. Returns null when the footprint
     /// is taken or there is nothing to mine -- placing a miner on bare rock is a
@@ -236,7 +422,8 @@ public sealed class World
     /// The miner covering a tile, if any.
     public bool TryMinerAt(int x, int y, out Miner miner, out int index)
     {
-        if (_occupancy.TryGetValue(Key(x, y), out var slot) && slot >= MinerIndexBase)
+        if (_occupancy.TryGetValue(Key(x, y), out var slot) &&
+            slot >= MinerIndexBase && slot < GeneratorIndexBase)
         {
             index = slot - MinerIndexBase;
             miner = _miners[index];
@@ -364,6 +551,12 @@ public sealed class World
         // this tick's generation rather than last tick's.
         TickPower();
 
+        // Pipe budgets are refreshed before anything draws on them, so a
+        // machine's fluid intake this tick comes out of this tick's allowance.
+        Fluids.Tick();
+        TickExtractors();
+        FillFluidInputs();
+
         // Miners next: ore enters the world at the top of the tick, so the
         // transport phase below can already move what was just dug.
         for (var i = 0; i < _miners.Count; i++)
@@ -380,7 +573,7 @@ public sealed class World
         }
 
         // Then transport. Fixed order, so the tick is reproducible.
-        Fluids.Tick();
+        DrainFluidOutputs();
         Belts.Tick(_machines, _miners);
 
         TickCount++;

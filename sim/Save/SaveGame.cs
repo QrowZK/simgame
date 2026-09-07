@@ -100,11 +100,41 @@ public static class SaveGame
 
         save.Belts = CaptureBelts(world.Belts);
 
+        for (var i = 0; i < world.Extractors.Count; i++)
+        {
+            var extractor = world.Extractors[i];
+            var placement = world.ExtractorPlacements[i];
+            save.Extractors.Add(new ExtractorSave
+            {
+                Fluid = extractor.Fluid.Value,
+                Ambient = extractor.Ambient,
+                X = placement.X,
+                Y = placement.Y,
+                Tier = placement.Tier,
+                Category = placement.Category,
+                Size = placement.Size,
+                CycleTicks = extractor.CycleTicks,
+                PowerDraw = extractor.PowerDraw / Math.Max(1, placement.Area),
+                TicksRemaining = extractor.RawTicksRemaining,
+                Buffered = extractor.Buffered,
+                Energy = extractor.Energy,
+                State = extractor.State,
+            });
+        }
+
+        foreach (var node in world.Fluids.Nodes)
+            save.FluidNodes.Add(new FluidNodeSave
+            {
+                X = node.X,
+                Y = node.Y,
+                Kind = node.Kind,
+                Capacity = node.Capacity,
+                Throughput = node.Throughput,
+            });
+
         foreach (var network in world.Fluids.Networks)
             save.Fluids.Add(new FluidNetworkSave
             {
-                Capacity = network.Capacity,
-                ThroughputPerTick = network.ThroughputPerTick,
                 Fluid = network.Fluid.Value,
                 Amount = network.Amount,
             });
@@ -250,13 +280,34 @@ public static class SaveGame
                 entry.X, entry.Y, (byte)entry.Tier, (byte)entry.Category, (byte)entry.Size));
         }
 
+        foreach (var entry in save.Extractors)
+        {
+            var placement = new MachinePlacement(entry.X, entry.Y, (byte)entry.Tier,
+                                                 (byte)entry.Category, (byte)entry.Size);
+            var extractor = new FluidExtractor(Item(entry.Fluid, save), entry.Ambient,
+                                               placement.Area, entry.CycleTicks, entry.PowerDraw);
+            extractor.Restore(entry.State, entry.TicksRemaining, entry.Buffered, entry.Energy);
+            world.AddSavedExtractor(extractor, placement);
+        }
+
         RestoreBelts(world.Belts, save.Belts, save);
 
-        foreach (var entry in save.Fluids)
+        // Nodes first, in file order, so the rebuilt networks are numbered the
+        // same way they were when the file was written.
+        foreach (var node in save.FluidNodes)
+            switch (node.Kind)
+            {
+                case FluidNodeKind.Tank: world.Fluids.AddTank(node.X, node.Y, node.Capacity); break;
+                case FluidNodeKind.Pump: world.Fluids.AddPump(node.X, node.Y, node.Throughput); break;
+                default: world.Fluids.AddPipe(node.X, node.Y, node.Throughput); break;
+            }
+
+        for (var i = 0; i < save.Fluids.Count && i < world.Fluids.NetworkCount; i++)
         {
-            var id = world.Fluids.AddNetwork(1, entry.ThroughputPerTick);
-            world.Fluids.Network(id).Restore(entry.Capacity, entry.ThroughputPerTick,
-                                             Item(entry.Fluid, save), entry.Amount);
+            var network = world.Fluids.Network(i);
+            var entry = save.Fluids[i];
+            network.Restore(network.Capacity, network.ThroughputPerTick,
+                            Item(entry.Fluid, save), entry.Amount);
         }
 
         return world;

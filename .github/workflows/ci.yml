@@ -113,3 +113,8 @@ jobs:
           grep -q -- "--- power ok ---" session.log
           grep -q "unpowered       state=Unpowered" session.log
           grep -q "powered         state=Working" session.log
+          # Fluids: water pumped from a lake, piped inland, and consumed by a
+          # machine. The whole chain, with nothing hand-fed.
+          grep -q -- "--- fluids ok ---" session.log
+          grep -q "pump built      True" session.log
+          grep -q "washer state    Working" session.log
