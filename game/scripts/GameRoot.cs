@@ -35,6 +35,7 @@ public sealed partial class GameRoot : Node3D
     private PauseMenu _pause = null!;
     private BuildMenu _build = null!;
     private QuestPanel _quests = null!;
+    private SurveyPanel _survey = null!;
     /// Whether the win has already been announced. The world stays playable
     /// after the Seed goes -- there is no reason to take a factory away from
     /// someone -- so the banner must not re-fire every frame.
@@ -86,6 +87,7 @@ public sealed partial class GameRoot : Node3D
         AddChild(_belts);
         _pause = BuildPauseMenu();
         _quests = BuildQuestPanel();
+        _survey = BuildSurveyPanel();
         _editor = BuildScriptEditor();
 
         // A brand new game, and only a brand new game: the premise is shown at
@@ -125,7 +127,8 @@ public sealed partial class GameRoot : Node3D
             CallDeferred(nameof(RunSmokeTest));
 
         if (AllArgs().Contains("--screenshot") || AllArgs().Contains("--build-shot")
-            || AllArgs().Contains("--belt-shot") || AllArgs().Contains("--uplink-shot"))
+            || AllArgs().Contains("--belt-shot") || AllArgs().Contains("--uplink-shot")
+            || AllArgs().Contains("--survey-shot"))
         {
             _screenshotCountdown = 12;      // let a few frames draw first
 
@@ -188,6 +191,7 @@ public sealed partial class GameRoot : Node3D
             if (AllArgs().Contains("--build-shot")) OpenBuildForCapture();
             else if (AllArgs().Contains("--belt-shot")) FrameTheBelts();
             else if (AllArgs().Contains("--uplink-shot")) ShowTheUplink();
+            else if (AllArgs().Contains("--survey-shot")) ShowTheSurvey();
             else ShowAnyRunningMachine();
         }
 
@@ -242,7 +246,7 @@ public sealed partial class GameRoot : Node3D
                         $"batches {_renderer.BatchCount}   fps {Engine.GetFramesPerSecond():0}" +
                         power + stored + "\n" +
                         "WASD pan   Q/E rotate   wheel zoom   click a machine to inspect   " +
-                        "B build   T objectives   R rotate   F5 save   F9 load   F1 script   Esc menu" +
+                        "B build   P survey   T objectives   R rotate   F5 save   F9 load   F1 script   Esc menu" +
                         (_toastFrames > 0 ? "\n" + _toast : "");
         }
     }
@@ -488,6 +492,7 @@ public sealed partial class GameRoot : Node3D
             // would feel like the game ignored the panel.
             if (_build.IsShowing) StopBuilding();
             else if (_quests.IsShowing) _quests.Close();
+            else if (_survey.IsShowing) _survey.Close();
             else if (_panel.IsShowing) _panel.Close();
             else if (_pause.Visible) _pause.Close();
             else _pause.Open();
@@ -507,6 +512,18 @@ public sealed partial class GameRoot : Node3D
         {
             if (_quests.IsShowing) _quests.Close();
             else _quests.Open();
+            return;
+        }
+
+        // Surveyed from where the player is looking, not from the origin. The
+        // device is carried, so walking somewhere and asking again is the whole
+        // interaction -- a panel that always answered about spawn would be a
+        // map, and a map is the thing this game deliberately does not hand out.
+        if (@event is InputEventKey { Pressed: true, Keycode: Key.P })
+        {
+            if (_survey.IsShowing) _survey.Close();
+            else _survey.Open(Mathf.FloorToInt(_rig.Position.X / _renderer.TileSize),
+                              Mathf.FloorToInt(_rig.Position.Z / _renderer.TileSize));
             return;
         }
 
@@ -738,6 +755,15 @@ public sealed partial class GameRoot : Node3D
                                     GetViewport().GetVisibleRect().Size.Y * 0.22f));
     }
 
+    /// Capture path for the survey device: open it where a new game starts, so
+    /// the shot shows the list a player actually gets on their first minute --
+    /// including whether the top of it is marked usable (ADR 0026).
+    private void ShowTheSurvey()
+    {
+        _quests.Close();
+        _survey.Open(NewGame.SpawnX, NewGame.SpawnY);
+    }
+
     /// Capture path for the Uplink: put one down, give it something research
     /// wants and something it does not, and open the panel on it. Both halves
     /// matter -- the want list and the hopper of refused items are the two
@@ -905,6 +931,17 @@ public sealed partial class GameRoot : Node3D
         layer.AddChild(panel);
         AddChild(layer);
         panel.Bind(_world.Items, _world.PlayerInventory, _world, _buildables);
+        return panel;
+    }
+
+    private SurveyPanel BuildSurveyPanel()
+    {
+        var layer = new CanvasLayer { Name = "SurveyUi" };
+        var panel = GD.Load<PackedScene>("res://scenes/survey_panel.tscn")
+                      .Instantiate<SurveyPanel>();
+        panel.Bind(_world);
+        layer.AddChild(panel);
+        AddChild(layer);
         return panel;
     }
 

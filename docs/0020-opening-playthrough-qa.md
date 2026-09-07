@@ -183,6 +183,14 @@ Both pass on a seed where the player's first two hours are spent on halite.
 **Owner: `gameplay`** — the fix is a design call (mark usable hits in the
 prospector, widen the manual furnace, or bias early rings toward the five).
 
+**Closed by ADR 0026**, with two of those three: worldgen deals a guaranteed
+starter patch 12–40 tiles from spawn, derived from the recipe graph rather than
+listed, and the survey device — which had no UI at all until now — marks every
+hit with whether research can consume it. The shipped seed opens with sphalerite
+at 37 tiles, ranked first. `EveryStart_PutsSomethingSmeltableUnderTheProspector`
+pins it against the prospector's own radius, and CI greps the *rank* in the
+session log, not the existence of ore.
+
 **Regression:** `OpeningRouteTests.EveryStart_HasAnOreTheManualFurnaceCanSmeltWithinAWalk`
 — passes today, and pins the property the old test only gestured at: a
 *smeltable* ore within a 300-tile budget on all 20 seeds.

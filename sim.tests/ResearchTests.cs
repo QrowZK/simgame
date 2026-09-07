@@ -524,7 +524,7 @@ public class ResearchTests
     public void AVersion9Save_IsRefusedRatherThanLoadedWithNoResearch()
     {
         var save = SaveGame.Capture(NewWorld());
-        Assert.Equal(10, save.Version);
+        Assert.Equal(SaveFile.CurrentVersion, save.Version);
 
         save.Version = 9;
         Assert.Throws<SaveLoadException>(() => SaveGame.Restore(save, Data.Recipes));

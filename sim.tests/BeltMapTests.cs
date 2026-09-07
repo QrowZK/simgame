@@ -870,7 +870,7 @@ public class BeltMapTests
         Assert.Equal(5, carrying);
 
         var json = Sim.Save.SaveGame.ToJson(Sim.Save.SaveGame.Capture(world));
-        Assert.Contains("\"Version\": 10", json);
+        Assert.Contains($"\"Version\": {Sim.Save.SaveFile.CurrentVersion}", json);
 
         var loaded = Sim.Save.SaveGame.Restore(
             Sim.Save.SaveGame.FromJson(json),

@@ -188,6 +188,111 @@ public class OpeningRouteTests
         }
     }
 
+    /// F2's actual fix (ADR 0026): not "a smeltable ore exists somewhere within
+    /// a 300-tile budget", which was true on every seed while the opening was
+    /// still a lottery, but that the resource the survey device points at first
+    /// is one the player can use.
+    ///
+    /// Pinned against the device the player actually carries -- its default
+    /// radius, not the 400-tile radius the other tests use to prove existence.
+    /// A guarantee outside the prospector's range would be no guarantee at all.
+    [Fact]
+    public void EveryStart_PutsSomethingSmeltableUnderTheProspector()
+    {
+        var smeltable = Buildables.RecipesFor(Buildables.Find("man_furnace")!)
+            .SelectMany(r => r.Inputs)
+            .Select(i => Data.Items.GetName(i.Item))
+            .ToHashSet();
+
+        Assert.NotEmpty(smeltable);
+
+        for (var seed = 1; seed <= 20; seed++)
+        {
+            var world = NewGame.Create(seed, Data);
+
+            // The carried device, at its own radius.
+            var hits = new Prospector().Scan(world.Ground.Gen, NewGame.SpawnX, NewGame.SpawnY);
+            var index = hits.FindIndex(h => smeltable.Contains(world.Items.GetName(h.Item)));
+
+            Assert.True(index >= 0,
+                $"seed {seed}: the prospector sees nothing the manual furnace can smelt, so " +
+                "the opening is a walk in a direction the game never names");
+
+            var hit = hits[index];
+            Assert.True(hit.Distance <= WorldGen.StarterPatchRange,
+                $"seed {seed}: nearest smeltable ore is {hit.Distance} tiles away, past the " +
+                $"{WorldGen.StarterPatchRange}-tile guarantee");
+
+            // Not underfoot either: the opening is meant to be a short walk with
+            // the device, and a patch you spawn on skips it.
+            Assert.True(hit.Distance >= 12,
+                $"seed {seed}: smeltable ore {hit.Distance} tiles from spawn is close enough " +
+                "to skip the walk the prospector exists for");
+
+            Assert.True(world.Ground.RemainingAt(hit.X, hit.Y) > 0,
+                $"seed {seed}: the guaranteed patch holds nothing");
+        }
+    }
+
+    /// The other half of the fix (ADR 0026): the device says which hits the
+    /// player can act on. Marked, not filtered -- a bauxite field you cannot
+    /// smelt yet is still something to plan around.
+    [Fact]
+    public void TheProspector_MarksWhatResearchCanActuallyConsume()
+    {
+        var world = NewGame.Create(seed: 20260907, Data);
+        var usable = world.Research!.ConsumableNow(world.Items);
+
+        var hits = new Prospector(radius: 400).Scan(world.Ground.Gen, 0, 0, usable);
+
+        Assert.NotEmpty(hits);
+        Assert.Contains(hits, h => h.Usable);
+        Assert.Contains(hits, h => !h.Usable);
+
+        var smeltable = Buildables.RecipesFor(Buildables.Find("man_furnace")!)
+            .SelectMany(r => r.Inputs)
+            .Select(i => Data.Items.GetName(i.Item))
+            .ToHashSet();
+
+        // Every mark has to be right in both directions. A panel that marked
+        // everything usable would pass "contains a usable hit" and tell the
+        // player nothing.
+        foreach (var hit in hits)
+        {
+            var name = world.Items.GetName(hit.Item);
+            if (smeltable.Contains(name))
+                Assert.True(hit.Usable, $"{name} is smeltable at manual tier but is not marked");
+        }
+
+        Assert.All(hits.Where(h => h.Usable),
+                   h => Assert.Contains(world.Items.GetId(world.Items.GetName(h.Item)).Value,
+                                        usable));
+
+        // Unmarked without a research set at all: the flag says "researched",
+        // not "exists", so a caller that forgets to pass one must not get a
+        // list that claims everything is usable.
+        var unaware = new Prospector(radius: 400).Scan(world.Ground.Gen, 0, 0);
+        Assert.All(unaware, h => Assert.False(h.Usable));
+    }
+
+    /// What the survey device marks has to widen as research lands, or the mark
+    /// is a static list of five ores wearing a dynamic name.
+    [Fact]
+    public void WhatIsUsable_WidensWithResearch()
+    {
+        var world = NewGame.Create(seed: 20260907, Data);
+        var atStart = world.Research!.ConsumableNow(world.Items);
+
+        world.Research.UnlockAll();
+
+        var afterEverything = world.Research.ConsumableNow(world.Items);
+
+        Assert.True(afterEverything.Count > atStart.Count,
+            "unlocking every tech consumed no new kind of item, so the mark is not " +
+            "reading research at all");
+        Assert.All(atStart, id => Assert.Contains(id, afterEverything));
+    }
+
     /// Stone is the only thing that opens a manual machine, and the kit holds
     /// exactly two machines' worth. A third one is a walk, so a seed that
     /// buries stone out of reach strands a player who spent their kit.

@@ -23,6 +23,7 @@ public static class NewGame
     public static List<OreSpec> OreSpecs(Catalogue catalogue)
     {
         var tierIndex = catalogue.Data.Tiers.ToDictionary(t => t.Id, t => t.Index);
+        var starters = StarterOres(catalogue);
         var specs = new List<OreSpec>();
 
         foreach (var item in catalogue.RawSolids)
@@ -40,10 +41,50 @@ public static class NewGame
                                   // Oil is buried like an ore so the derrick has
                                   // something to stand on. Hands cannot pick it
                                   // up, and the deposit is what says so.
-                                  isFluid: item.Form == "fluid"));
+                                  isFluid: item.Form == "fluid",
+                                  // Worldgen guarantees one of these near spawn
+                                  // (ADR 0026), so the first thing the survey
+                                  // device points at is a thing you can use.
+                                  isStarter: starters.Contains(item.Id)));
         }
 
         return specs;
+    }
+
+
+    /// The raw solids a player can actually do something with on the first day.
+    ///
+    /// Derived, never listed: an ore qualifies when some recipe unlocked at tick
+    /// zero consumes it. That is the same question the player is asking -- "can
+    /// I turn this into anything yet" -- and it is answered from the recipe and
+    /// tech graph, so widening the manual furnace in `progression.json` widens
+    /// this with no code change.
+    ///
+    /// What the starter kit already grants is excluded. Stone qualifies on the
+    /// letter of the rule -- three manual recipes consume it -- but a guaranteed
+    /// patch of the one resource the player lands holding 24 of would satisfy
+    /// the guarantee while fixing nothing.
+    public static HashSet<string> StarterOres(Catalogue catalogue)
+    {
+        var granted = StarterKit.Select(k => k.Item).ToHashSet();
+        var raw = catalogue.RawSolids
+                           .Where(i => i.Form != "fluid")
+                           .Select(i => i.Id)
+                           .ToHashSet();
+
+        var research = new Research(catalogue);
+        var starters = new HashSet<string>();
+
+        foreach (var recipe in catalogue.Data.Recipes)
+        {
+            if (!research.IsUnlocked(recipe.Id)) continue;
+
+            foreach (var input in recipe.Inputs)
+                if (raw.Contains(input.Item) && !granted.Contains(input.Item))
+                    starters.Add(input.Item);
+        }
+
+        return starters;
     }
 
     /// What the player is carrying at minute zero.
