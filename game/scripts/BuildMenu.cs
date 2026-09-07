@@ -48,6 +48,16 @@ public sealed partial class BuildMenu : PanelContainer
         _recipes = GetNode<ItemList>("Margin/Rows/Columns/RecipeSide/Recipes");
         _hint = GetNode<Label>("Margin/Rows/Hint");
 
+        // Pin the icon to about the height of a line of text. Left to itself
+        // an ItemList grows its rows to the icon's natural size, which cost two
+        // rows off the bottom of the list and clipped the count off the end of
+        // every name -- an icon that hides "x3" has taken more than it gave.
+        // The column is widened to pay for the space the icon takes, rather
+        // than taking it out of the name.
+        _items.FixedIconSize = new Vector2I(18, 18);
+        _items.CustomMinimumSize = new Vector2(268f, _items.CustomMinimumSize.Y);
+        _recipes.FixedIconSize = new Vector2I(18, 18);
+
         _items.ItemSelected += OnItemSelected;
         _recipes.ItemSelected += OnRecipeSelected;
         GetNode<Button>("Margin/Rows/Buttons/Close").Pressed += () => Closed?.Invoke();
@@ -91,7 +101,14 @@ public sealed partial class BuildMenu : PanelContainer
                      .ThenBy(b => b.Name))
         {
             _shown.Add(buildable);
-            _items.AddItem($"{buildable.DisplayName}  x{_bag.Count(buildable.Item)}");
+
+            // The icon is the point of this list. Every entry here is a name
+            // and a number, and at eight tiers of near-identical wording --
+            // "VLT Assembler", "ARC Assembler" -- the name is the slowest way
+            // to tell two rows apart. The shape says what kind of thing it is
+            // and the pips say which tier, before the text is read at all.
+            _items.AddItem($"{buildable.DisplayName}  x{_bag.Count(buildable.Item)}",
+                           ItemIcons.For(_names.GetName(buildable.Item)));
         }
 
         if (_shown.Count == 0)
@@ -152,7 +169,13 @@ public sealed partial class BuildMenu : PanelContainer
         foreach (var recipe in _catalogue.RecipesFor(buildable))
         {
             _shownRecipes.Add(recipe);
-            _recipes.AddItem(Describe(recipe));
+
+            // The recipe list is read as "which one makes the thing I want",
+            // so it takes the icon of what comes out, not of the machine.
+            _recipes.AddItem(Describe(recipe),
+                             recipe.Outputs.Count > 0
+                                 ? ItemIcons.For(_names.GetName(recipe.Outputs[0].Item))
+                                 : null);
         }
     }
 

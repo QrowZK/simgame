@@ -649,10 +649,11 @@ public sealed class World
     /// never cost the player the machine. Every refusal is a distinct reason,
     /// because the UI has to say which one.
     ///
-    /// `recipe` is required for machines and ignored by everything else. A
-    /// machine has to know what it makes before it exists -- changing a placed
-    /// machine's recipe would mean evicting whatever is already inside it,
-    /// which is its own decision and is not made here.
+    /// `recipe` is required for machines and ignored by everything else: a
+    /// machine still has to know what it makes before it exists. It is no
+    /// longer stuck with it -- `TryChangeRecipe` retasks a placed one (ADR
+    /// 0021) -- but a build with no recipe is still a build with nothing
+    /// chosen, and is still refused.
     public BuildResult TryBuild(BuildCatalogue catalogue, ItemId item, int x, int y,
                                 Recipe? recipe = null, Direction facing = Direction.East)
     {
@@ -673,10 +674,12 @@ public sealed class World
         if (buildable.Kind == BuildKind.Machine && (recipe is null || !catalogue.CanRun(buildable, recipe)))
             return BuildResult.NeedsRecipe;
 
+        var tunnel = TunnelRefusal.None;
+
         var built = buildable.Kind switch
         {
             BuildKind.Machine =>
-                TryPlaceMachine(recipe!, placement) is not null,
+                TryPlaceMachine(recipe!, placement, sourceItem: item) is not null,
 
             BuildKind.Miner =>
                 TryPlaceMiner(placement, powerDraw: buildable.TierPower) is not null,
@@ -706,6 +709,11 @@ public sealed class World
             BuildKind.Inserter => BeltMap.PlaceInserter(
                 x, y, facing, buildable.InserterSwingTicks, buildable.InserterStackSize),
 
+            BuildKind.UndergroundBelt => BeltMap.PlaceUnderground(
+                x, y, facing, buildable.BeltSpeed, buildable.UndergroundReach, out tunnel),
+
+            BuildKind.Splitter => BeltMap.PlaceSplitter(x, y, facing),
+
             _ => false,
         };
 
@@ -716,6 +724,8 @@ public sealed class World
                 // a refusal here is the thing under the tile, not the tile.
                 BuildKind.Miner => BuildResult.NoResource,
                 BuildKind.Pump => BuildResult.NoFluid,
+                BuildKind.UndergroundBelt when tunnel == TunnelRefusal.TooFar
+                    => BuildResult.TooFarToTunnel,
                 _ => BuildResult.Blocked,
             };
 
@@ -818,6 +828,44 @@ public sealed class World
     /// clock, or the tick would stop being the sim's single source of time.
     public void RestoreTick(long tick) => TickCount = tick;
 
+    /// Retasks a placed machine: it stops making one thing and starts making
+    /// another, and everything it was holding goes back to the player.
+    ///
+    /// This is the reversal of ADR 0015's "recipes are chosen before placing,
+    /// not after". The bill that ADR named is paid here: the eviction rule
+    /// (`Machine.SetRecipe`, conservation), the check that the machine can
+    /// actually run what it is being asked for, and a save version.
+    ///
+    /// `evicted` is the number of units handed back, and it is the number the
+    /// UI reports. A retask that silently swallows a stack of ore is the kind
+    /// of thing that loses a save's worth of trust, so the count is part of
+    /// the result rather than something the caller has to work out.
+    public RecipeChangeResult TryChangeRecipe(BuildCatalogue catalogue, int index,
+                                              Recipe recipe, out int evicted)
+    {
+        evicted = 0;
+
+        if (index < 0 || index >= _machines.Count)
+            return RecipeChangeResult.NoMachine;
+
+        var machine = _machines[index];
+
+        // Re-picking what it already makes must cost nothing. A picker that
+        // dumps the machine when a player clicks the highlighted row is a trap.
+        if (ReferenceEquals(machine.Recipe, recipe))
+            return RecipeChangeResult.AlreadyRunning;
+
+        if (machine.SourceItem is not { } item || !catalogue.TryGet(item, out var buildable))
+            return RecipeChangeResult.UnknownMachine;
+
+        if (!catalogue.CanRun(buildable, recipe))
+            return RecipeChangeResult.CannotRun;
+
+        evicted = machine.SetRecipe(recipe, PlayerInventory);
+        _states[index] = machine.State;
+        return RecipeChangeResult.Ok;
+    }
+
     /// Adds a machine with no position. Used by tests and by headless analysis,
     /// where a machine's throughput is the question and its tile is not.
     public Machine AddMachine(Recipe recipe, int outputCapacityPerItem = 100)
@@ -827,12 +875,14 @@ public sealed class World
     /// Parallelism comes from the footprint, so callers never set the two
     /// independently and cannot get them out of step.
     public Machine? TryPlaceMachine(Recipe recipe, in MachinePlacement placement,
-                                    int outputCapacityPerItem = 100)
+                                    int outputCapacityPerItem = 100,
+                                    ItemId? sourceItem = null)
     {
         if (!CanPlace(placement))
             return null;
 
         var machine = AddMachine(recipe, placement, outputCapacityPerItem);
+        machine.SourceItem = sourceItem;
         var index = _machines.Count - 1;
         _placed[index] = true;
 

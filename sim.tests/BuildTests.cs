@@ -133,22 +133,64 @@ public class BuildTests
         Assert.Equal(BuildResult.NotBuildable, world.TryBuild(Buildables, stone, x, y));
     }
 
-    /// A splitter straddles two tiles and an underground belt is a *pair* with
-    /// a span between them. Both are their own placement gesture, so neither is
-    /// placeable yet -- and the player is told that rather than the button
-    /// quietly doing nothing.
+    /// A splitter is one tile with a facing, and costs the item like anything
+    /// else. ADR 0018.
     [Fact]
-    public void ASplitter_ReportsThatNothingPlacesItYet()
+    public void ASplitter_IsBuiltAndCostsTheItem()
     {
         var world = NewWorld();
         var splitter = Get("vlt_splitter");
         var (x, y) = BareTile(world);
 
         Give(world, "vlt_splitter", 5);
-        Assert.Equal(BuildKind.NotPlaceable, splitter.Kind);
-        Assert.Equal(BuildResult.NotPlaceableYet,
-                     world.TryBuild(Buildables, splitter.Item, x, y));
-        Assert.Equal(5, world.PlayerInventory.Count(splitter.Item));
+        Assert.Equal(BuildKind.Splitter, splitter.Kind);
+        Assert.Equal(BuildResult.Ok,
+                     world.TryBuild(Buildables, splitter.Item, x, y, facing: Direction.East));
+        Assert.Equal(4, world.PlayerInventory.Count(splitter.Item));
+
+        // And it is a thing on the map, so nothing else can go on top of it.
+        Assert.Equal(BuildResult.Blocked,
+                     world.TryBuild(Buildables, splitter.Item, x, y, facing: Direction.East));
+        Assert.Equal(4, world.PlayerInventory.Count(splitter.Item));
+    }
+
+    /// The distinct refusal an underground belt has of its own: an end placed
+    /// in line with an unpaired entrance, facing the same way, but beyond what
+    /// the tier can tunnel. A silent second entrance there would leave the
+    /// player with a broken line and no idea why.
+    [Fact]
+    public void AnUndergroundEndBeyondTheSpan_IsRefused_AndCostsNothing()
+    {
+        var world = NewWorld();
+        var under = Get("vlt_underground_belt");
+        var (x, y) = BareTile(world);
+
+        Give(world, "vlt_underground_belt", 4);
+        Assert.Equal(BuildKind.UndergroundBelt, under.Kind);
+        Assert.Equal(4, under.UndergroundReach);
+
+        // The upgrade is the span, so it has to actually move up the ladder.
+        Assert.Equal(6, Get("arc_underground_belt").UndergroundReach);
+        Assert.Equal(12, Get("qnt_underground_belt").UndergroundReach);
+
+        Assert.Equal(BuildResult.Ok,
+                     world.TryBuild(Buildables, under.Item, x, y, facing: Direction.East));
+
+        // One past the reach: refused, and the item stays in the bag.
+        Assert.Equal(BuildResult.TooFarToTunnel,
+                     world.TryBuild(Buildables, under.Item, x + 5, y, facing: Direction.East));
+        Assert.Equal(3, world.PlayerInventory.Count(under.Item));
+
+        // Exactly at the reach: the pair completes.
+        Assert.Equal(BuildResult.Ok,
+                     world.TryBuild(Buildables, under.Item, x + 4, y, facing: Direction.East));
+        Assert.Equal(2, world.PlayerInventory.Count(under.Item));
+
+        world.SyncBelts();
+        Assert.True(world.BeltMap.Undergrounds[0].IsEntrance);
+        Assert.False(world.BeltMap.Undergrounds[1].IsEntrance);
+        Assert.Equal(1, world.BeltMap.PartnerOf(0));
+        Assert.Equal(0, world.BeltMap.PartnerOf(1));
     }
 
     [Fact]

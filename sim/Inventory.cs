@@ -73,6 +73,15 @@ public static class HandOps
     /// world where you own nothing.
     public static int Mine(Ground ground, int x, int y, Inventory into, int amount)
     {
+        // Hands cannot scoop a liquid. Crude oil is buried like an ore -- the
+        // derrick has to stand on something -- and without this the first thing
+        // a new player walks to on some seeds is oil, digging it appears to
+        // work, and it is a dead end they cannot see the bottom of. The gate is
+        // the derrick, and it belongs here rather than in `Ground.Extract`,
+        // which the derrick itself goes through.
+        if (ground.TryPatchAt(x, y, out var patch) && patch.IsFluid)
+            return 0;
+
         var taken = ground.Extract(x, y, amount, out var item);
         if (taken > 0) into.Add(item, taken);
         return taken;

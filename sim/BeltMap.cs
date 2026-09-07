@@ -107,6 +107,105 @@ public readonly struct PlacedInserter
     }
 }
 
+/// One end of an underground belt: a single tile with a facing, and a role.
+///
+/// The role is decided when it is placed rather than derived at compile time.
+/// Deriving it needs a rule for "which of these two holes is the input", and
+/// every rule that reads the surrounding belts changes its mind when a
+/// neighbouring belt is rotated -- a tunnel that reverses itself because
+/// something two tiles away turned is not a system a player can reason about.
+/// Placement order is a rule the player can see themselves obeying.
+public readonly struct PlacedUnderground
+{
+    public readonly int X;
+    public readonly int Y;
+    public readonly Direction Facing;
+    public readonly int Speed;
+
+    /// How far this end can tunnel, in tiles. Carried per end rather than
+    /// looked up, because it is a property of the tier that was placed and a
+    /// save must not re-derive it from whatever the ladder says later.
+    public readonly int Reach;
+
+    /// Entrance takes items down; exit brings them back up.
+    public readonly bool IsEntrance;
+
+    public PlacedUnderground(int x, int y, Direction facing, int speed, int reach, bool isEntrance)
+    {
+        X = x;
+        Y = y;
+        Facing = facing;
+        Speed = speed;
+        Reach = reach;
+        IsEntrance = isEntrance;
+    }
+
+    public (int X, int Y) Ahead
+    {
+        get
+        {
+            var (dx, dy) = Directions.Delta(Facing);
+            return (X + dx, Y + dy);
+        }
+    }
+}
+
+/// A splitter: one tile, taking whatever is fed into it and alternating between
+/// two outputs.
+///
+/// One tile rather than Factorio's two. A machine's footprint here is square
+/// and its size is its throughput dial (ADR 0007); a 1x2 building would be the
+/// only non-square thing on the map and would need its own occupancy, ghost and
+/// rotation rules for no simulation benefit. See ADR 0018 for what that costs.
+public readonly struct PlacedSplitter
+{
+    public readonly int X;
+    public readonly int Y;
+    public readonly Direction Facing;
+
+    public PlacedSplitter(int x, int y, Direction facing)
+    {
+        X = x;
+        Y = y;
+        Facing = facing;
+    }
+
+    /// The two tiles it feeds: straight on, and to its right. Rotating reaches
+    /// every pair of adjacent directions, so "which side does the branch leave
+    /// by" is a real choice made by the facing rather than a fixed handedness.
+    public (int X, int Y) Straight
+    {
+        get
+        {
+            var (dx, dy) = Directions.Delta(Facing);
+            return (X + dx, Y + dy);
+        }
+    }
+
+    public (int X, int Y) Branch
+    {
+        get
+        {
+            var (dx, dy) = Directions.Delta(Directions.Rotate(Facing));
+            return (X + dx, Y + dy);
+        }
+    }
+}
+
+/// Why an underground belt could not be placed.
+public enum TunnelRefusal
+{
+    None,
+    Blocked,
+
+    /// There is an unpaired entrance behind it, aligned and facing the same
+    /// way, but further than this tier can tunnel. Refused rather than quietly
+    /// placed as a second entrance: a player who has just walked out from an
+    /// entrance is completing a tunnel, and silently giving them a broken line
+    /// plus a spare hole teaches them nothing about the span.
+    TooFar,
+}
+
 /// Belts and inserters as things on the map.
 ///
 /// `BeltNetwork` moves items beautifully and knows nothing about where anything
@@ -123,8 +222,22 @@ public sealed class BeltMap
 {
     private readonly List<PlacedBelt> _belts = new();
     private readonly List<PlacedInserter> _inserters = new();
+    private readonly List<PlacedUnderground> _undergrounds = new();
+    private readonly List<PlacedSplitter> _splitters = new();
     private readonly Dictionary<long, int> _beltAt = new();
     private readonly Dictionary<long, int> _inserterAt = new();
+    private readonly Dictionary<long, int> _undergroundAt = new();
+    private readonly Dictionary<long, int> _splitterAt = new();
+
+    /// Underground end index -> the end it is paired with, or -1. Rebuild
+    /// output, like the segment list.
+    private int[] _tunnelPartner = Array.Empty<int>();
+
+    /// Tunnel tiles -> segment and distance from its exit. Kept apart from
+    /// `_tileSegment` for two reasons: a buried tile can have a surface belt
+    /// laid straight over it, and both need to resolve to their own segment;
+    /// and an inserter must not be able to reach into a hole in the ground.
+    private readonly Dictionary<long, (int Segment, int DistanceFromExit)> _tunnelSegment = new();
 
     /// Belt tile -> the segment it compiled into, and how far its exit edge is
     /// from that segment's exit. Both are rebuild output.
@@ -143,6 +256,13 @@ public sealed class BeltMap
 
     public IReadOnlyList<PlacedBelt> Belts => _belts;
     public IReadOnlyList<PlacedInserter> Inserters => _inserters;
+    public IReadOnlyList<PlacedUnderground> Undergrounds => _undergrounds;
+    public IReadOnlyList<PlacedSplitter> Splitters => _splitters;
+
+    /// The end this one tunnels to, or -1 when it has none. Only meaningful
+    /// after a rebuild.
+    public int PartnerOf(int end)
+        => end >= 0 && end < _tunnelPartner.Length ? _tunnelPartner[end] : -1;
 
     /// The tiles a compiled segment runs across, entry first.
     public IReadOnlyList<PlacedBelt> TilesOfSegment(int segment)
@@ -167,7 +287,21 @@ public sealed class BeltMap
 
     public bool HasBeltAt(int x, int y) => _beltAt.ContainsKey(Key(x, y));
     public bool HasInserterAt(int x, int y) => _inserterAt.ContainsKey(Key(x, y));
-    public bool HasAnythingAt(int x, int y) => HasBeltAt(x, y) || HasInserterAt(x, y);
+    public bool HasUndergroundAt(int x, int y) => _undergroundAt.ContainsKey(Key(x, y));
+    public bool HasSplitterAt(int x, int y) => _splitterAt.ContainsKey(Key(x, y));
+
+    public bool HasAnythingAt(int x, int y)
+        => HasBeltAt(x, y) || HasInserterAt(x, y)
+           || HasUndergroundAt(x, y) || HasSplitterAt(x, y);
+
+    /// Whether a tunnel runs under a tile without surfacing on it. A machine,
+    /// a pipe or another belt may sit on such a tile -- passing under things is
+    /// the entire point -- so this is not part of `HasAnythingAt`. Rendering
+    /// asks it so that items in transit underground are not drawn on top of
+    /// whatever was built over them.
+    public bool IsBuried(int x, int y)
+        => !HasBeltAt(x, y) && _tunnelSegment.ContainsKey(Key(x, y))
+           && !HasUndergroundAt(x, y);
 
     public bool PlaceBelt(int x, int y, Direction facing, int speed = BeltUnits.SpeedBasic)
     {
@@ -175,6 +309,99 @@ public sealed class BeltMap
 
         _beltAt[Key(x, y)] = _belts.Count;
         _belts.Add(new PlacedBelt(x, y, facing, speed));
+        _dirty = true;
+        return true;
+    }
+
+    /// Places one end of an underground belt.
+    ///
+    /// The role is placement order: an end placed within reach *behind* an
+    /// unpaired entrance that faces the same way completes it as the exit, and
+    /// anything else is a new entrance. That is the gesture -- place, walk,
+    /// place -- and it needs no second key.
+    public bool PlaceUnderground(int x, int y, Direction facing, int speed, int reach,
+                                 out TunnelRefusal refusal)
+    {
+        refusal = TunnelRefusal.None;
+
+        if (HasAnythingAt(x, y))
+        {
+            refusal = TunnelRefusal.Blocked;
+            return false;
+        }
+
+        var (dx, dy) = Directions.Delta(facing);
+        var isEntrance = true;
+
+        // Look back along the line for the entrance this would complete. The
+        // search runs past `reach` so that overshooting can be reported as
+        // overshooting rather than silently becoming a second entrance.
+        for (var d = 1; d <= reach * 2; d++)
+        {
+            if (!_undergroundAt.TryGetValue(Key(x - dx * d, y - dy * d), out var index))
+                continue;
+
+            var candidate = _undergrounds[index];
+            if (candidate.Facing != facing || !candidate.IsEntrance) continue;
+            if (!IsUnpaired(index)) continue;
+
+            if (d > Math.Min(reach, candidate.Reach))
+            {
+                refusal = TunnelRefusal.TooFar;
+                return false;
+            }
+
+            isEntrance = false;
+            break;
+        }
+
+        _undergroundAt[Key(x, y)] = _undergrounds.Count;
+        _undergrounds.Add(new PlacedUnderground(x, y, facing, speed, reach, isEntrance));
+        _dirty = true;
+        return true;
+    }
+
+    /// Whether an end has no partner *as the map currently stands*. Placement
+    /// asks before the rebuild that would recompute pairing, so it pairs on the
+    /// same rule the compiler uses rather than on stale rebuild output.
+    private bool IsUnpaired(int end)
+    {
+        var entrance = _undergrounds[end];
+        if (!entrance.IsEntrance) return false;
+
+        var (dx, dy) = Directions.Delta(entrance.Facing);
+        for (var d = 1; d <= entrance.Reach; d++)
+        {
+            if (!_undergroundAt.TryGetValue(
+                    Key(entrance.X + dx * d, entrance.Y + dy * d), out var index))
+                continue;
+
+            var other = _undergrounds[index];
+            if (other.Facing == entrance.Facing && !other.IsEntrance) return false;
+        }
+
+        return true;
+    }
+
+    /// Puts an end back with the role it was saved with, bypassing the
+    /// order-based rule. Save surface only: see the comment on the save.
+    public bool RestoreUnderground(int x, int y, Direction facing, int speed, int reach,
+                                   bool isEntrance)
+    {
+        if (HasAnythingAt(x, y)) return false;
+
+        _undergroundAt[Key(x, y)] = _undergrounds.Count;
+        _undergrounds.Add(new PlacedUnderground(x, y, facing, speed, reach, isEntrance));
+        _dirty = true;
+        return true;
+    }
+
+    public bool PlaceSplitter(int x, int y, Direction facing)
+    {
+        if (HasAnythingAt(x, y)) return false;
+
+        _splitterAt[Key(x, y)] = _splitters.Count;
+        _splitters.Add(new PlacedSplitter(x, y, facing));
         _dirty = true;
         return true;
     }
@@ -193,7 +420,10 @@ public sealed class BeltMap
     /// The compiled segment carrying a tile, or -1. Rendering and inserter
     /// wiring both ask this; it is only meaningful after a rebuild.
     public int SegmentAt(int x, int y)
-        => _tileSegment.TryGetValue(Key(x, y), out var found) ? found.Segment : -1;
+    {
+        if (_tileSegment.TryGetValue(Key(x, y), out var found)) return found.Segment;
+        return _tunnelSegment.TryGetValue(Key(x, y), out var tunnel) ? tunnel.Segment : -1;
+    }
 
     public void MarkDirty() => _dirty = true;
 
@@ -221,7 +451,9 @@ public sealed class BeltMap
 
         network.ClearSegments();
         _tileSegment.Clear();
+        _tunnelSegment.Clear();
         _segmentTiles.Clear();
+        PairTunnels();
 
         // Where segments must break. An inserter's tiles are boundaries so that
         // it takes from and gives to the exact tile it faces: an item handed to
@@ -266,7 +498,7 @@ public sealed class BeltMap
                 var next = _belts[nextIndex];
                 if (next.Facing != cursor.Facing) break;          // a corner
                 if (next.Speed != cursor.Speed) break;            // a speed change
-                if (FeederCount(next) != 1) break;                // a merge point
+                if (FeederCount(next.X, next.Y) != 1) break;      // a merge point
                 if (givesTo.Contains(Key(nx, ny))) break;         // an inserter drops here
                 if (claimed.Contains(Key(nx, ny))) break;         // a loop
 
@@ -301,28 +533,72 @@ public sealed class BeltMap
             }
         }
 
-        // Now that every tile knows its segment, wire each run's exit onward.
+        // Tunnels next. Each end is its own segment: an entrance has to end a
+        // run anyway (what follows it is not on the surface), and an exit has
+        // to start one. The entrance's segment is as long as the span it
+        // covers -- entrance tile plus every buried tile -- so an item takes
+        // exactly as long to cross a tunnel as it would to cross the same
+        // number of surface tiles. A tunnel that skipped the travel would be a
+        // free speed-up rather than a way past an obstacle.
+        var endSegment = new int[_undergrounds.Count];
+
+        for (var i = 0; i < _undergrounds.Count; i++)
+        {
+            var end = _undergrounds[i];
+            var span = 1;
+
+            if (end.IsEntrance && _tunnelPartner[i] >= 0)
+            {
+                var exit = _undergrounds[_tunnelPartner[i]];
+                span = Math.Abs(exit.X - end.X) + Math.Abs(exit.Y - end.Y);
+            }
+
+            var segment = network.AddCompiledSegment(span, end.Speed);
+            endSegment[i] = segment;
+
+            var (dx, dy) = Directions.Delta(end.Facing);
+            var tiles = new List<PlacedBelt>(span);
+            for (var t = 0; t < span; t++)
+            {
+                var x = end.X + dx * t;
+                var y = end.Y + dy * t;
+                tiles.Add(new PlacedBelt(x, y, end.Facing, end.Speed));
+                _tunnelSegment[Key(x, y)] = (segment, (span - 1 - t) * BeltUnits.Tile);
+            }
+
+            _segmentTiles.Add(tiles);
+        }
+
+        // Splitters are placed things, not compiled ones, so they are reused
+        // across a rebuild rather than remade -- otherwise everything buffered
+        // in one would vanish the moment the player extended a belt beside it.
+        // Two per tile, one per lane: see WireSplitters.
+        while (network.Splitters.Count < _splitters.Count * BeltSegment.LaneCount)
+            network.AddSplitter(Endpoint.None, Endpoint.None);
+
+        // Now that every tile knows its segment, wire each exit onward.
         foreach (var run in runs)
         {
             var last = run[^1];
-            var segment = _tileSegment[Key(last.X, last.Y)].Segment;
-            var (nx, ny) = last.Ahead;
-
-            if (_beltAt.ContainsKey(Key(nx, ny)))
-            {
-                var into = _tileSegment[Key(nx, ny)].Segment;
-                if (into != segment) network.LinkBelts(segment, into);
-                continue;
-            }
-
-            // Belts do not feed machines directly -- that is an inserter's job,
-            // as in Factorio. A belt pointing at a machine simply backs up.
-            var target = resolve(nx, ny);
-            if (target.Kind == EndpointKind.Splitter)
-                for (var lane = 0; lane < BeltSegment.LaneCount; lane++)
-                    network.SetOutput(segment, lane, target);
+            WireOnward(network, resolve, _tileSegment[Key(last.X, last.Y)].Segment, last.Ahead);
         }
 
+        for (var i = 0; i < _undergrounds.Count; i++)
+        {
+            var end = _undergrounds[i];
+            var partner = _tunnelPartner[i];
+
+            // A paired entrance hands straight to its exit. An unpaired end --
+            // one whose partner was never placed -- is simply a one-tile belt
+            // that happens to look like a hole, which is the honest thing for
+            // it to be rather than a line that silently eats items.
+            if (end.IsEntrance && partner >= 0)
+                network.LinkBelts(endSegment[i], endSegment[partner]);
+            else
+                WireOnward(network, resolve, endSegment[i], end.Ahead);
+        }
+
+        WireSplitters(network, resolve);
         WireInserters(network, resolve);
         Restore(network, carried);
 
@@ -334,7 +610,7 @@ public sealed class BeltMap
     private bool StartsARun(in PlacedBelt belt, HashSet<long> takesFrom, HashSet<long> givesTo)
     {
         if (givesTo.Contains(Key(belt.X, belt.Y))) return true;
-        if (FeederCount(belt) != 1) return true;
+        if (FeederCount(belt.X, belt.Y) != 1) return true;
 
         var feeder = SoleFeeder(belt);
         if (feeder is null) return true;
@@ -346,25 +622,53 @@ public sealed class BeltMap
         return takesFrom.Contains(Key(feeder.Value.X, feeder.Value.Y));
     }
 
-    /// How many belts point into a tile. More than one is a merge, which has to
-    /// start its own segment so both feeders can hand on independently.
-    private int FeederCount(in PlacedBelt belt)
+    private static readonly Direction[] AllDirections =
+        { Direction.East, Direction.South, Direction.West, Direction.North };
+
+    /// How many things point into a tile. More than one is a merge, which has
+    /// to start its own segment so both feeders can hand on independently.
+    ///
+    /// A tunnel exit and a splitter feed a tile just as a belt does, and both
+    /// hand items to a segment's *entry*. Counting only belts here let a tile
+    /// fed by a belt AND a tunnel exit continue the belt's run, which put the
+    /// tunnel's items in at the far back of that run instead of at this tile.
+    private int FeederCount(int x, int y)
     {
         var count = 0;
-        foreach (var direction in new[] { Direction.East, Direction.South, Direction.West, Direction.North })
+        foreach (var direction in AllDirections)
         {
             var (dx, dy) = Directions.Delta(direction);
-            var (nx, ny) = (belt.X - dx, belt.Y - dy);
-            if (_beltAt.TryGetValue(Key(nx, ny), out var index) && _belts[index].Facing == direction)
-                count++;
+            if (Feeds(x - dx, y - dy, x, y, direction)) count++;
         }
 
         return count;
     }
 
+    /// Whether the thing on (fx,fy) hands items to (x,y). `direction` is the
+    /// way from the feeder to the fed tile.
+    private bool Feeds(int fx, int fy, int x, int y, Direction direction)
+    {
+        if (_beltAt.TryGetValue(Key(fx, fy), out var belt) && _belts[belt].Facing == direction)
+            return true;
+
+        if (_undergroundAt.TryGetValue(Key(fx, fy), out var end)
+            && !_undergrounds[end].IsEntrance && _undergrounds[end].Facing == direction)
+            return true;
+
+        if (_splitterAt.TryGetValue(Key(fx, fy), out var splitter))
+        {
+            var placed = _splitters[splitter];
+            if (placed.Straight == (x, y) || placed.Branch == (x, y)) return true;
+        }
+
+        return false;
+    }
+
+    /// The belt feeding a tile, when its one feeder is a belt. A tile fed by a
+    /// tunnel exit or a splitter has no belt feeder and therefore starts a run.
     private PlacedBelt? SoleFeeder(in PlacedBelt belt)
     {
-        foreach (var direction in new[] { Direction.East, Direction.South, Direction.West, Direction.North })
+        foreach (var direction in AllDirections)
         {
             var (dx, dy) = Directions.Delta(direction);
             var (nx, ny) = (belt.X - dx, belt.Y - dy);
@@ -373,6 +677,42 @@ public sealed class BeltMap
         }
 
         return null;
+    }
+
+    /// Pairs every entrance with the nearest unclaimed exit ahead of it that
+    /// faces the same way and is within both ends' reach.
+    ///
+    /// Nearest-first is what makes overlapping tunnels behave: an inner pair
+    /// claims its own exit before an outer entrance can reach past it, so a
+    /// tunnel never swallows another one's exit. Entrances are walked in
+    /// placement order, which is stable across a save.
+    private void PairTunnels()
+    {
+        if (_tunnelPartner.Length != _undergrounds.Count)
+            _tunnelPartner = new int[_undergrounds.Count];
+        Array.Fill(_tunnelPartner, -1);
+
+        for (var i = 0; i < _undergrounds.Count; i++)
+        {
+            var entrance = _undergrounds[i];
+            if (!entrance.IsEntrance || _tunnelPartner[i] >= 0) continue;
+
+            var (dx, dy) = Directions.Delta(entrance.Facing);
+            for (var d = 1; d <= entrance.Reach; d++)
+            {
+                if (!_undergroundAt.TryGetValue(
+                        Key(entrance.X + dx * d, entrance.Y + dy * d), out var j))
+                    continue;
+
+                var exit = _undergrounds[j];
+                if (exit.IsEntrance || exit.Facing != entrance.Facing) continue;
+                if (_tunnelPartner[j] >= 0 || d > exit.Reach) continue;
+
+                _tunnelPartner[i] = j;
+                _tunnelPartner[j] = i;
+                break;
+            }
+        }
     }
 
     /// Points every inserter at whatever is now beside it. Segment numbering
@@ -396,15 +736,110 @@ public sealed class BeltMap
         }
     }
 
+    /// Points a segment's exit at whatever is on the tile ahead of it.
+    private void WireOnward(BeltNetwork network, Func<int, int, Endpoint> resolve,
+                            int segment, (int X, int Y) ahead)
+    {
+        var (nx, ny) = ahead;
+
+        if (_beltAt.ContainsKey(Key(nx, ny)))
+        {
+            var into = _tileSegment[Key(nx, ny)].Segment;
+            if (into != segment) network.LinkBelts(segment, into);
+            return;
+        }
+
+        // A tunnel entrance takes a belt's items down; a tunnel exit does not
+        // accept anything from the surface, so a belt pointing at one backs up.
+        if (_undergroundAt.TryGetValue(Key(nx, ny), out var end)
+            && _undergrounds[end].IsEntrance)
+        {
+            var into = _tunnelSegment[Key(nx, ny)].Segment;
+            if (into != segment) network.LinkBelts(segment, into);
+            return;
+        }
+
+        if (_splitterAt.TryGetValue(Key(nx, ny), out var splitter))
+        {
+            for (var lane = 0; lane < BeltSegment.LaneCount; lane++)
+                network.SetOutput(segment, lane,
+                                  Endpoint.Splitter(SplitterIndex(splitter, lane)));
+            return;
+        }
+
+        // Belts do not feed machines directly -- that is an inserter's job,
+        // as in Factorio. A belt pointing at a machine simply backs up.
+        var target = resolve(nx, ny);
+        if (target.Kind == EndpointKind.Splitter)
+            for (var lane = 0; lane < BeltSegment.LaneCount; lane++)
+                network.SetOutput(segment, lane, target);
+    }
+
+    /// Which network splitter carries one lane of one placed splitter.
+    ///
+    /// Two per tile, because `Splitter` balances items and knows nothing about
+    /// lanes. Merging both lanes into one buffer would halve a splitter's
+    /// throughput; splitting each lane independently keeps the line full and
+    /// keeps items on the side they were already riding. The cost is that this
+    /// splitter does not lane-balance the way Factorio's does -- a line with
+    /// one full lane and one empty one comes out of it just as lopsided.
+    private static int SplitterIndex(int placed, int lane)
+        => placed * BeltSegment.LaneCount + lane;
+
+    /// Points every splitter at the two tiles it feeds, lane for lane.
+    private void WireSplitters(BeltNetwork network, Func<int, int, Endpoint> resolve)
+    {
+        for (var i = 0; i < _splitters.Count; i++)
+        {
+            var placed = _splitters[i];
+
+            for (var lane = 0; lane < BeltSegment.LaneCount; lane++)
+            {
+                var splitter = network.Splitters[SplitterIndex(i, lane)];
+                splitter.Outputs[0] = OutputTo(placed.Straight, lane, resolve);
+                splitter.Outputs[1] = OutputTo(placed.Branch, lane, resolve);
+            }
+        }
+    }
+
+    /// What a splitter side hands to: the segment starting on that tile, or
+    /// whatever the world says is there.
+    private Endpoint OutputTo((int X, int Y) tile, int lane, Func<int, int, Endpoint> resolve)
+    {
+        if (_tileSegment.TryGetValue(Key(tile.X, tile.Y), out var belt))
+            return Endpoint.Belt(belt.Segment, lane);
+
+        if (_undergroundAt.TryGetValue(Key(tile.X, tile.Y), out var end)
+            && _undergrounds[end].IsEntrance)
+            return Endpoint.Belt(_tunnelSegment[Key(tile.X, tile.Y)].Segment, lane);
+
+        return resolve(tile.X, tile.Y);
+    }
+
     /// A belt tile resolves to its own segment, so an inserter reads and writes
     /// the exact tile it faces. Both lanes are not addressable from one tile, so
     /// lane 0 is the inserter's side by convention.
     private Endpoint EndpointAt(int x, int y, Func<int, int, Endpoint> resolve)
-        => _tileSegment.TryGetValue(Key(x, y), out var found)
-            ? Endpoint.Belt(found.Segment, 0)
-            : resolve(x, y);
+    {
+        if (_tileSegment.TryGetValue(Key(x, y), out var found))
+            return Endpoint.Belt(found.Segment, 0);
 
-    private readonly record struct Riding(int X, int Y, int WithinTile, int Lane, ItemId Item);
+        // An inserter may load a splitter, on the same lane-0 convention. It
+        // may NOT reach into a tunnel end: that is a hole in the ground rather
+        // than a belt deck, and an arm reaching into an entrance would be
+        // taking from the far side of the span it faces.
+        if (_splitterAt.TryGetValue(Key(x, y), out var splitter))
+            return Endpoint.Splitter(SplitterIndex(splitter, 0));
+
+        return resolve(x, y);
+    }
+
+    /// `Tunnel` says which of the two tile maps this item was standing on. A
+    /// buried tile and a surface belt can share coordinates -- a tunnel passing
+    /// under a belt is the point of tunnels -- so the position alone does not
+    /// say which segment an item should go back onto.
+    private readonly record struct Riding(int X, int Y, int WithinTile, int Lane,
+                                          ItemId Item, bool Tunnel);
 
     /// Where every item on every belt is, in world terms, before the segments
     /// are thrown away. Without this, extending a working belt would destroy
@@ -412,36 +847,32 @@ public sealed class BeltMap
     private List<Riding> Snapshot(BeltNetwork network)
     {
         var carried = new List<Riding>();
-        if (_tileSegment.Count == 0) return carried;
+        if (_tileSegment.Count == 0 && _tunnelSegment.Count == 0) return carried;
 
-        // Segment -> its tiles, exit last.
-        var tilesBySegment = new Dictionary<int, List<(int X, int Y, int FromExit)>>();
+        // Segment -> distance-from-exit -> the tile at that distance.
+        var tiles = new Dictionary<(int Segment, int FromExit), (int X, int Y, bool Tunnel)>();
         foreach (var (key, value) in _tileSegment)
-        {
-            var x = (int)(key >> 32);
-            var y = (int)(uint)key;
-            if (!tilesBySegment.TryGetValue(value.Segment, out var list))
-                tilesBySegment[value.Segment] = list = new List<(int, int, int)>();
-            list.Add((x, y, value.DistanceFromExit));
-        }
+            tiles[(value.Segment, value.DistanceFromExit)] =
+                ((int)(key >> 32), (int)(uint)key, false);
+        foreach (var (key, value) in _tunnelSegment)
+            tiles[(value.Segment, value.DistanceFromExit)] =
+                ((int)(key >> 32), (int)(uint)key, true);
 
-        foreach (var (segment, tiles) in tilesBySegment)
+        for (var segment = 0; segment < network.Segments.Count; segment++)
         {
-            if (segment >= network.Segments.Count) continue;
-
             for (var lane = 0; lane < BeltSegment.LaneCount; lane++)
             {
                 var source = network.Segments[segment].LaneAt(lane);
                 for (var i = 0; i < source.Count; i++)
                 {
                     var fromExit = source.PositionOf(i);
-                    var tileIndex = fromExit / BeltUnits.Tile;
                     var within = fromExit % BeltUnits.Tile;
 
-                    var tile = tiles.FirstOrDefault(t => t.FromExit == tileIndex * BeltUnits.Tile);
-                    if (tile == default && tileIndex * BeltUnits.Tile != 0) continue;
+                    if (!tiles.TryGetValue((segment, fromExit - within), out var tile))
+                        continue;
 
-                    carried.Add(new Riding(tile.X, tile.Y, within, lane, source.ItemAt(i)));
+                    carried.Add(new Riding(tile.X, tile.Y, within, lane,
+                                           source.ItemAt(i), tile.Tunnel));
                 }
             }
         }
@@ -459,7 +890,8 @@ public sealed class BeltMap
 
         foreach (var riding in carried)
         {
-            if (!_tileSegment.TryGetValue(Key(riding.X, riding.Y), out var found))
+            var map = riding.Tunnel ? _tunnelSegment : _tileSegment;
+            if (!map.TryGetValue(Key(riding.X, riding.Y), out var found))
             {
                 SpilledOnRemoval++;
                 continue;

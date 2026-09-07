@@ -173,7 +173,13 @@ public sealed partial class Boot : Node
         }
 
         var bench = carried[0];
-        var recipe = catalogue.RecipesFor(bench).FirstOrDefault();
+
+        // The bench is placed on a recipe it can actually finish. It used to be
+        // placed on `RecipesFor(bench).FirstOrDefault()` -- form_copper_plate,
+        // which needs a copper ingot, which needs a furnace, which needs the
+        // bench -- and the flow then printed "ok". See docs/0021.
+        var recipe = catalogue.RecipesFor(bench).FirstOrDefault(r => r.Id == "build_man_furnace")
+                     ?? catalogue.RecipesFor(bench).FirstOrDefault();
         GD.Print($"holding         {bench.Name} ({catalogue.RecipesFor(bench).Count} recipes)");
 
         // A bare tile near spawn, chosen the way the ghost chooses one.
@@ -201,6 +207,56 @@ public sealed partial class Boot : Node
                  && world.PlayerInventory.Count(bench.Item) == 1;
 
         GD.Print(ok ? "--- building ok ---" : "building        FAILED");
+
+        RunOpeningRoute();
+    }
+
+    /// The opening route, played end to end on what a new game is actually
+    /// given: one bench, 24 stone, a prospector and the ground.
+    ///
+    /// The milestone is a steam miner **in the player's hands** -- the first
+    /// thing that automates anything, and the step the game dead-ended before.
+    /// Reaching it needs ten distinct bench recipes and the bench is the only
+    /// one there will ever be, so this passes only if a placed machine can be
+    /// retasked. It is deliberately the assertion the old build flow was not:
+    /// break any link in the chain and it goes red rather than printing "ok".
+    private void RunOpeningRoute()
+    {
+        GD.Print("--- opening route ---");
+
+        var data = Sim.Data.Catalogue.Instance;
+        var buildables = new Sim.BuildCatalogue(data);
+        var world = GameSession.NewGame(seed: 20260907);
+
+        var route = new OpeningRoute(world, data, buildables, GD.Print);
+        var reached = route.Reach("stm_miner", 1);
+
+        GD.Print($"stuck on        {route.StuckOn ?? "nothing"}");
+        // One bench, and the whole steam tier is crafted on it. If a machine
+        // can only ever run the recipe it was placed with, this is 1.
+        var benchRecipes = route.RecipesRun
+            .Count(r => data.Data.Recipes.Any(d => d.Id == r && d.Machine == "manual_crafting"));
+        GD.Print($"bench recipes   {benchRecipes} distinct on one bench");
+        GD.Print($"retasks         {route.Retasks}");
+        GD.Print($"machines built  {world.MachineCount}");
+        var minersInHand = world.PlayerInventory.Count(data.Item("stm_miner"));
+        GD.Print($"miner in hand   {minersInHand}");
+
+        // And it is a real miner: placed on ore, it digs.
+        var patch = new Sim.Prospector(radius: 400)
+            .Scan(world.Ground.Gen, 0, 0)
+            .FirstOrDefault(h => world.Items.GetName(h.Item) == "chalcopyrite");
+
+        var built = world.TryBuild(buildables, data.Item("stm_miner"), patch.X, patch.Y);
+        GD.Print($"miner placed    {built}");
+
+        var ok = reached
+                 && route.StuckOn is null
+                 && benchRecipes >= 10
+                 && minersInHand >= 1
+                 && built == Sim.BuildResult.Ok;
+
+        GD.Print(ok ? "--- opening route ok ---" : "opening route   FAILED");
     }
 
     /// Belts as a player lays them: a run of tiles built one at a time from the

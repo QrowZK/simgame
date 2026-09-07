@@ -31,7 +31,17 @@ public sealed class SaveFile
     /// so an older save has belts that exist and cannot be seen or extended.
     /// 6 added accumulators; an older file has none, so a factory that was
     /// riding out its nights on stored power would reload with no buffer.
-    public const int CurrentVersion = 7;
+    /// 8 added underground belt ends and splitter tiles. An older file has
+    /// neither, and loading one as version 8 would be harmless -- but a
+    /// version 8 file read by a version 7 loader would drop them and quietly
+    /// reconnect the factory a different way, which is the failure the version
+    /// number exists to prevent.
+    /// 9 added the item a machine was placed from, which is what a recipe
+    /// change is checked against (ADR 0021). A version 8 file loaded as 9 would
+    /// give every machine an unknown source and refuse to retask any of them --
+    /// a factory that silently cannot be reconfigured is exactly the quiet
+    /// wrongness the version number exists to prevent.
+    public const int CurrentVersion = 9;
 
     public int Version { get; set; } = CurrentVersion;
     public int Seed { get; set; }
@@ -73,8 +83,15 @@ public sealed class StackSave
 
 public sealed class MachineSave
 {
-    /// Recipe id, looked up in the running game's recipe set on load.
+    /// Recipe id, looked up in the running game's recipe set on load. A machine
+    /// that was retasked writes what it makes now, not what it was placed with.
     public string Recipe { get; set; } = "";
+
+    /// The item id this machine was placed from ("stm_furnace"), or empty for a
+    /// machine built without one -- headless analysis and the demo world do
+    /// that. Stored as a name rather than an index for the same reason the
+    /// recipe is: it survives a change to registration order.
+    public string SourceItem { get; set; } = "";
 
     /// The capacity the machine was built with, before parallelism scaled it.
     /// Storing the scaled figure would multiply it again on every load.
@@ -240,6 +257,13 @@ public sealed class BeltNetworkSave
 
     public List<InserterTileSave> InserterTiles { get; set; } = new();
 
+    /// One end of an underground belt each. Which end is which is stored, not
+    /// re-derived: the role is placement order, and placement order is exactly
+    /// what a reload does not have.
+    public List<UndergroundTileSave> UndergroundTiles { get; set; } = new();
+
+    public List<SplitterTileSave> SplitterTiles { get; set; } = new();
+
     public List<BeltSegmentSave> Segments { get; set; } = new();
     public List<EndpointSave> LaneOutputs { get; set; } = new();
     public List<SplitterSave> Splitters { get; set; } = new();
@@ -252,6 +276,28 @@ public sealed class BeltTileSave
     public int Y { get; set; }
     public int Facing { get; set; }
     public int Speed { get; set; }
+}
+
+public sealed class UndergroundTileSave
+{
+    public int X { get; set; }
+    public int Y { get; set; }
+    public int Facing { get; set; }
+    public int Speed { get; set; }
+
+    /// The span this end was built with. Stored rather than re-read from the
+    /// tier ladder, so a balance change to reach cannot silently unpair a
+    /// tunnel that is already in the ground.
+    public int Reach { get; set; }
+
+    public bool Entrance { get; set; }
+}
+
+public sealed class SplitterTileSave
+{
+    public int X { get; set; }
+    public int Y { get; set; }
+    public int Facing { get; set; }
 }
 
 public sealed class InserterTileSave

@@ -23,6 +23,11 @@ Two rules make it safe:
 
 ## Recipes are chosen before placing, not after
 
+> **Superseded by ADR 0021.** A placed machine can now be retasked, and the
+> eviction rule this section deferred is conservation: everything inside comes
+> back to the player. The reasoning below is kept as the record of what was
+> decided and why it did not survive a playthrough.
+
 A machine needs to know what it makes before it exists. Changing a placed
 machine's recipe means deciding what happens to the inputs already inside it —
 evict them, void them, refuse while non-empty — and that is its own decision,

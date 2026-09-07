@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Sim;
 
 namespace Game;
@@ -33,6 +34,20 @@ public static class DemoWorld
         var world = new World(seed, db);
         var side = (int)System.Math.Ceiling(System.Math.Sqrt(machineCount));
 
+        // The demo's machines are placed directly rather than built, so they
+        // would have no source item and the inspection panel would report every
+        // one of them as un-retaskable. That is true of the code and false of
+        // the factory it is pretending to be, and it is the only factory big
+        // enough to photograph the panel against. So each machine is told which
+        // buildable could have made it: the meshes stay decorative, and the
+        // recipe picker shows what a player would actually see.
+        var buildables = new BuildCatalogue(catalogue);
+        ItemId? SourceFor(Recipe recipe) => buildables.Offerable
+            .FirstOrDefault(b => buildables.CanRun(b, recipe))?.Item;
+
+        var smeltSource = SourceFor(smelt);
+        var assembleSource = SourceFor(assemble);
+
         for (var i = 0; i < machineCount; i++)
         {
             var cell = i % side;
@@ -53,24 +68,27 @@ public static class DemoWorld
             var x = cell * MaxFootprint;
             var y = row * MaxFootprint;
             var recipe = (i % 3 == 0) ? assemble : smelt;
+            var source = (i % 3 == 0) ? assembleSource : smeltSource;
             var placement = new MachinePlacement(x, y, tier, category, size);
 
             switch (i % 4)
             {
                 case 0:
                     // Starved: placed, powered, but nothing feeding it.
-                    world.TryPlaceMachine(recipe, placement);
+                    world.TryPlaceMachine(recipe, placement, sourceItem: source);
                     break;
 
                 case 1:
                     // Backpressured: one cycle's worth of room, then it stalls
                     // with its inputs untouched.
-                    var blocked = world.TryPlaceMachine(recipe, placement, outputCapacityPerItem: 1);
+                    var blocked = world.TryPlaceMachine(recipe, placement, outputCapacityPerItem: 1,
+                                                        sourceItem: source);
                     if (blocked is not null) Feed(blocked, recipe, 64);
                     break;
 
                 default:
-                    var running = world.TryPlaceMachine(recipe, placement, outputCapacityPerItem: 4096);
+                    var running = world.TryPlaceMachine(recipe, placement, outputCapacityPerItem: 4096,
+                                                        sourceItem: source);
                     if (running is not null) Feed(running, recipe, 100_000);
                     break;
             }
@@ -111,6 +129,33 @@ public static class DemoWorld
         // belt that goes nowhere.
         world.TryPlaceMachine(smelt, new MachinePlacement(0, beltY - 2, 1, 1, 1));
         world.BeltMap.PlaceInserter(0, beltY - 1, Direction.North);
+
+        // A second line, clear of the first and of the machine beside it, that exists so the
+        // renderer has one of everything a belt map can hold: a paired tunnel
+        // with items riding under it, a splitter with a branch, and a lone
+        // unpaired tunnel end. None of these are drawable-by-inspection --
+        // they had to be on screen to be checked.
+        var showY = beltY - 4;
+        for (var x = 0; x < 6; x++)
+            world.BeltMap.PlaceBelt(x, showY, Direction.East, BeltUnits.SpeedFast);
+
+        world.BeltMap.PlaceUnderground(6, showY, Direction.East, BeltUnits.SpeedFast, 4, out _);
+        world.BeltMap.PlaceUnderground(10, showY, Direction.East, BeltUnits.SpeedFast, 4, out _);
+
+        for (var x = 11; x < 15; x++)
+            world.BeltMap.PlaceBelt(x, showY, Direction.East, BeltUnits.SpeedFast);
+
+        world.BeltMap.PlaceSplitter(15, showY, Direction.East);
+        for (var x = 16; x < 19; x++)
+        {
+            world.BeltMap.PlaceBelt(x, showY, Direction.East, BeltUnits.SpeedFast);
+            world.BeltMap.PlaceBelt(x, showY + 1, Direction.East, BeltUnits.SpeedFast);
+        }
+
+        // Deliberately alone: an unpaired end behaves as a one-tile belt, and
+        // a player who cannot tell it from half a tunnel cannot debug the line.
+        world.BeltMap.PlaceUnderground(22, showY, Direction.East, BeltUnits.SpeedFast, 4, out _);
+
         world.SyncBelts();
 
         // Something to carry. Fed straight onto the line rather than through a

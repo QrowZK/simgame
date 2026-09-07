@@ -9,9 +9,19 @@ obj/
 .mono/
 data_export/
 export.cfg
-export_presets.cfg
+# export_presets.cfg is normally ignored because it can hold signing
+# credentials. This project's preset holds none -- it is a plain Linux export
+# with no keystore -- and committing it is what makes `tools/export.sh`
+# reproducible for anyone else. Re-add the ignore the day a signed preset
+# appears, and move the secret out of it rather than out of git.
+!export_presets.cfg
 *.translation
 
 # OS
 .DS_Store
 Thumbs.db
+
+# Python
+__pycache__/
+*.pyc
+/dist/

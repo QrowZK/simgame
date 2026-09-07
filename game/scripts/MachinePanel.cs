@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using Godot;
 using Sim;
@@ -20,12 +21,29 @@ public sealed partial class MachinePanel : PanelContainer
     private Label _inputs = null!;
     private Label _outputs = null!;
     private Label _carrying = null!;
+    private Label _recipeTitle = null!;
+    private ItemList _recipes = null!;
+    private Label _retask = null!;
+
+    /// The recipes currently listed, in list order, and the machine they belong
+    /// to. Rebuilt only when the panel is pointed at a different machine: the
+    /// panel refreshes every frame, and rebuilding an ItemList under the
+    /// player's cursor would make it impossible to click a row.
+    private readonly List<Recipe> _shownRecipes = new();
+    private int _index = -1;
+
+    /// What the last retask did, shown until the panel moves to another
+    /// machine. A recipe change hands items back, and a player who is not told
+    /// how many has no way to know it happened.
+    private string _retaskMessage = "";
 
     private Machine? _machine;
     private Miner? _miner;
     private MachinePlacement _placement;
     private ItemDatabase _names = null!;
     private Inventory _bag = null!;
+    private World _world = null!;
+    private BuildCatalogue _buildables = null!;
 
     public override void _Ready()
     {
@@ -36,6 +54,15 @@ public sealed partial class MachinePanel : PanelContainer
         _inputs = GetNode<Label>("Margin/Rows/Inputs");
         _outputs = GetNode<Label>("Margin/Rows/Outputs");
         _carrying = GetNode<Label>("Margin/Rows/Carrying");
+        _recipeTitle = GetNode<Label>("Margin/Rows/RecipeTitle");
+        _recipes = GetNode<ItemList>("Margin/Rows/Recipes");
+        _retask = GetNode<Label>("Margin/Rows/Retask");
+
+        // Same icon size and idiom as the build menu's recipe list: this is the
+        // same question asked at a different moment, so it should not look like
+        // a different control.
+        _recipes.FixedIconSize = new Vector2I(18, 18);
+        _recipes.ItemSelected += OnRecipePicked;
 
         GetNode<Button>("Margin/Rows/Buttons/Load").Pressed += LoadOneCycle;
         GetNode<Button>("Margin/Rows/Buttons/Take").Pressed += TakeOutput;
@@ -43,20 +70,100 @@ public sealed partial class MachinePanel : PanelContainer
         Visible = false;
     }
 
-    /// Wires the panel to the world's item names and the player's inventory.
-    public void Bind(ItemDatabase names, Inventory bag)
+    /// Wires the panel to the world it is inspecting. It needs the world and
+    /// the build catalogue as well as the names now, because retasking a placed
+    /// machine is a sim operation and the panel is where a player asks for it.
+    public void Bind(ItemDatabase names, Inventory bag, World world, BuildCatalogue buildables)
     {
         _names = names;
         _bag = bag;
+        _world = world;
+        _buildables = buildables;
     }
 
-    public void Show(Machine machine, in MachinePlacement placement)
+    public void Show(Machine machine, in MachinePlacement placement, int index)
     {
+        var moved = !ReferenceEquals(_machine, machine);
         _machine = machine;
         _miner = null;
         _placement = placement;
+        _index = index;
+        if (moved)
+        {
+            _retaskMessage = "";
+            RebuildRecipeList(machine);
+        }
         Visible = true;
         Refresh();
+    }
+
+    /// The recipes this machine could be making instead. Built from
+    /// `BuildCatalogue.RecipesFor` -- the same source and the same ordering the
+    /// build menu offers before placing, so the two lists can never disagree
+    /// about what a machine is allowed to run.
+    private void RebuildRecipeList(Machine machine)
+    {
+        _recipes.Clear();
+        _shownRecipes.Clear();
+
+        if (machine.SourceItem is not { } item || !_buildables.TryGet(item, out var buildable))
+        {
+            // An empty list still reserves its height, which reads as a control
+            // that failed to load rather than one that does not apply.
+            _recipes.Visible = false;
+            _recipeTitle.Text = "Makes: (this machine cannot be retasked)";
+            return;
+        }
+
+        _recipes.Visible = true;
+
+        _recipeTitle.Text = "Makes -- pick another to retask:";
+
+        foreach (var recipe in _buildables.RecipesFor(buildable))
+        {
+            _shownRecipes.Add(recipe);
+            _recipes.AddItem(Describe(recipe),
+                             recipe.Outputs.Count > 0
+                                 ? ItemIcons.For(_names.GetName(recipe.Outputs[0].Item))
+                                 : null);
+        }
+
+        var current = _shownRecipes.FindIndex(r => ReferenceEquals(r, machine.Recipe));
+        if (current >= 0) _recipes.Select(current);
+    }
+
+    /// A recipe as the player judges it: what comes out, from what. Same shape
+    /// as the build menu's rows, for the same reason.
+    private string Describe(Recipe recipe)
+    {
+        var outputs = string.Join(" + ", recipe.Outputs.Select(o => $"{o.Count} {ItemName(o.Item)}"));
+        var inputs = recipe.Inputs.Count == 0
+            ? "nothing"
+            : string.Join(" + ", recipe.Inputs.Select(i => $"{i.Count} {ItemName(i.Item)}"));
+        return $"{outputs}  <-  {inputs}";
+    }
+
+    /// Retasking, from the player's click. The sim decides whether it is
+    /// allowed and hands back whatever was inside; every outcome gets its own
+    /// sentence, because "it already makes that" and "it cannot make that" are
+    /// not the same thing to the person who just clicked.
+    private void OnRecipePicked(long row)
+    {
+        if (_machine is null || row < 0 || row >= _shownRecipes.Count) return;
+
+        var result = _world.TryChangeRecipe(_buildables, _index, _shownRecipes[(int)row],
+                                            out var evicted);
+
+        _retaskMessage = result switch
+        {
+            RecipeChangeResult.Ok when evicted > 0 =>
+                $"Retasked. {evicted} item(s) came back to you.",
+            RecipeChangeResult.Ok => "Retasked. It was empty, so nothing came back.",
+            RecipeChangeResult.AlreadyRunning => "It already makes that.",
+            RecipeChangeResult.CannotRun => "This machine cannot make that.",
+            RecipeChangeResult.UnknownMachine => "This machine cannot be retasked.",
+            _ => "There is no machine here any more.",
+        };
     }
 
     /// Miners get the same panel. A player should not have to learn two
@@ -65,6 +172,12 @@ public sealed partial class MachinePanel : PanelContainer
     {
         _miner = miner;
         _machine = null;
+        _index = -1;
+        _retaskMessage = "";
+        _recipes.Clear();
+        _shownRecipes.Clear();
+        _recipes.Visible = false;
+        _recipeTitle.Text = "";
         _placement = placement;
         _patchRemaining = remainingInPatch;
         Visible = true;
@@ -77,10 +190,23 @@ public sealed partial class MachinePanel : PanelContainer
     {
         _machine = null;
         _miner = null;
+        _index = -1;
         Visible = false;
     }
 
     public bool IsShowing => _machine is not null || _miner is not null;
+
+    /// How many recipes the picker is offering, and whether the one the machine
+    /// is actually running is the highlighted row. Reported by the headless
+    /// smoke run: a picker with no rows and a picker that has lost track of
+    /// what the machine makes both photograph as a box with text in it.
+    public int RecipeOptions => _shownRecipes.Count;
+
+    public bool CurrentRecipeIsSelected =>
+        _machine is not null && _recipes.IsAnythingSelected() &&
+        _recipes.GetSelectedItems().Length == 1 &&
+        _shownRecipes.Count > _recipes.GetSelectedItems()[0] &&
+        ReferenceEquals(_shownRecipes[_recipes.GetSelectedItems()[0]], _machine.Recipe);
 
     public override void _Process(double delta)
     {
@@ -132,6 +258,7 @@ public sealed partial class MachinePanel : PanelContainer
         _inputs.Text = "In:  " + Describe(machine.InputContents);
         _outputs.Text = "Out: " + Describe(machine.OutputContents);
         _carrying.Text = "Carrying: " + Describe(_bag.Contents);
+        _retask.Text = _retaskMessage;
     }
 
     /// A miner's readout. It reports what is left in the ground, because that is
@@ -158,6 +285,7 @@ public sealed partial class MachinePanel : PanelContainer
         _inputs.Text = "In:  the ground";
         _outputs.Text = $"Out: {miner.Buffered} {ItemName(miner.Item)}";
         _carrying.Text = "Carrying: " + Describe(_bag.Contents);
+        _retask.Text = "";
     }
 
     private string Missing(Machine machine)

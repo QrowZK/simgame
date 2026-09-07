@@ -35,7 +35,7 @@ anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = -340.0
-offset_top = -300.0
+offset_top = -420.0
 offset_right = -16.0
 offset_bottom = -16.0
 grow_horizontal = 0
@@ -75,6 +75,16 @@ text = "Inputs"
 
 [node name="Outputs" type="Label" parent="Margin/Rows"]
 text = "Outputs"
+
+[node name="RecipeTitle" type="Label" parent="Margin/Rows"]
+text = "Makes:"
+
+[node name="Recipes" type="ItemList" parent="Margin/Rows"]
+custom_minimum_size = Vector2(0, 84)
+
+[node name="Retask" type="Label" parent="Margin/Rows"]
+text = ""
+autowrap_mode = 2
 
 [node name="Buttons" type="HBoxContainer" parent="Margin/Rows"]
 theme_override_constants/separation = 8

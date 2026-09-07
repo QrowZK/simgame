@@ -27,8 +27,17 @@ if [ -z "$GODOT" ] || [ ! -x "$GODOT" ]; then
 fi
 
 if [ -n "$GODOT" ] && [ -x "$GODOT" ]; then
-    # So `godot ...` works as the README writes it.
-    godot() { "$GODOT" "$@"; }
+    # A real executable on PATH rather than a shell function, so that `godot`
+    # also works under timeout, xargs, env and any other command that execs
+    # rather than going through the shell. A function silently fails there,
+    # which costs a confusing run to diagnose.
+    _shim_dir="${TMPDIR:-/tmp}/simgame-bin"
+    mkdir -p "$_shim_dir"
+    printf '#!/bin/sh\nexec "%s" "$@"\n' "$GODOT" > "$_shim_dir/godot"
+    chmod +x "$_shim_dir/godot"
+    PATH="$_shim_dir:$PATH"
+    export PATH
+    unset _shim_dir
 fi
 
 if ! command -v dotnet >/dev/null 2>&1; then

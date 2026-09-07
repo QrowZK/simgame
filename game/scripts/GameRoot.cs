@@ -70,8 +70,10 @@ public sealed partial class GameRoot : Node3D
 
         AddChild(BuildLighting());
         _hud = BuildHud();
-        _panel = BuildPanel();
+        // Before the panel: the panel binds to it, and a null catalogue there
+        // silently costs the recipe picker.
         _buildables = new BuildCatalogue(Sim.Data.Catalogue.Instance);
+        _panel = BuildPanel();
         _build = BuildBuildMenu();
         _ghost = new BuildGhost { Name = "BuildGhost" };
         AddChild(_ghost);
@@ -328,6 +330,19 @@ public sealed partial class GameRoot : Node3D
             ghostShown = _ghost.Visible;
         }
 
+        GD.Print($"item icons      known={ItemIcons.Known} of {_world.Items.Count}");
+
+        // The ground is shaded from the worldgen's own noise, which means a
+        // rebuild evaluates it once per visible tile. It only happens when the
+        // camera crosses a tile boundary, but it happens inside a frame, so the
+        // cost of the whole field is worth a number rather than a shrug.
+        var terrainWatch = System.Diagnostics.Stopwatch.StartNew();
+        _terrain.Sync(_world, _rig.Position + new Vector3(1f, 0f, 1f));
+        terrainWatch.Stop();
+
+        var field = _terrain.ViewRadius * 2 + 1;
+        GD.Print($"terrain rebuild {field}x{field} tiles in " +
+                 $"{terrainWatch.Elapsed.TotalMilliseconds:0.0} ms");
         GD.Print($"build menu      offered={offered} " +
                  $"holding={_holding?.DisplayName ?? "<none>"} ghost={ghostShown}");
         StopBuilding();
@@ -338,6 +353,13 @@ public sealed partial class GameRoot : Node3D
                  $"inserters={_world.BeltMap.Inserters.Count} " +
                  $"items drawn={_belts.DrawnItems}");
 
+        // Tunnels and splitters have no state a screenshot can confirm from
+        // across the map: a placed-but-undrawn tunnel end and an empty tile are
+        // the same picture. The counts say the buffers were actually filled.
+        GD.Print($"belt parts      undergrounds={_world.BeltMap.Undergrounds.Count} " +
+                 $"splitters={_world.BeltMap.Splitters.Count} " +
+                 $"solids drawn={_belts.DrawnSolids} arrows drawn={_belts.DrawnArrows}");
+
         GD.Print($"accumulators    {_world.Power.Accumulators.Count} " +
                  $"stored={_world.StoredEnergy}/{_world.StorageCapacity}");
 
@@ -346,7 +368,14 @@ public sealed partial class GameRoot : Node3D
 
         GD.Print($"picking         largest={largest}x{largest} " +
                  $"all tiles resolve to one machine: {pickOk}");
+        // The recipe picker cannot be seen in the smoke run and photographs as
+        // an empty box when it is broken -- a null catalogue at bind time cost
+        // exactly that, and only a screenshot found it. So the panel is opened
+        // on a real machine here and asked how many recipes it is offering.
+        ShowAnyRunningMachine();
         GD.Print($"panel           showing={_panel.IsShowing}");
+        GD.Print($"recipe picker   options={_panel.RecipeOptions} " +
+                 $"current selected={_panel.CurrentRecipeIsSelected}");
         GD.Print("=== SMOKE OK ===");
 
         GetTree().Quit();
@@ -473,7 +502,7 @@ public sealed partial class GameRoot : Node3D
         }
 
         if (_world.TryMachineAt(tileX, tileY, out var machine, out var index))
-            _panel.Show(machine, _world.PlacementOf(index));
+            _panel.Show(machine, _world.PlacementOf(index), index);
         else if (_world.TryMinerAt(tileX, tileY, out var miner, out var minerIndex))
             _panel.Show(miner, _world.MinerPlacements[minerIndex],
                         _world.Ground.RemainingAt(tileX, tileY));
@@ -488,12 +517,12 @@ public sealed partial class GameRoot : Node3D
         for (var i = 0; i < _world.MachineCount; i++)
             if (_world.Machines[i].State == MachineState.Working)
             {
-                _panel.Show(_world.Machines[i], _world.PlacementOf(i));
+                _panel.Show(_world.Machines[i], _world.PlacementOf(i), i);
                 return;
             }
 
         if (_world.MachineCount > 0)
-            _panel.Show(_world.Machines[0], _world.PlacementOf(0));
+            _panel.Show(_world.Machines[0], _world.PlacementOf(0), 0);
     }
 
     private BuildMenu BuildBuildMenu()
@@ -603,6 +632,8 @@ public sealed partial class GameRoot : Node3D
             BuildResult.NoneCarried => $"You have no {_holding.DisplayName} left.",
             BuildResult.NoResource => "A miner needs ore under it.",
             BuildResult.NoFluid => "A pump needs water or a fluid deposit under it.",
+            BuildResult.TooFarToTunnel =>
+                $"Too far: a {_holding.DisplayName} tunnels {_holding.UndergroundReach} tiles.",
             BuildResult.NeedsRecipe => $"Choose what the {_holding.DisplayName} should make.",
             BuildResult.NotPlaceableYet => $"Nothing places a {_holding.DisplayName} yet.",
             _ => $"Cannot build a {_holding.DisplayName}.",
@@ -644,9 +675,27 @@ public sealed partial class GameRoot : Node3D
     private void FrameTheBelts()
     {
         _panel.Close();
-        if (_world.BeltMap.Belts.Count == 0) return;
 
-        var belt = _world.BeltMap.Belts[_world.BeltMap.Belts.Count / 2];
+        // Prefer a tunnel when there is one: an underground end is the piece
+        // whose drawing is hardest to confirm, and a capture centred on the
+        // middle of a plain run will not contain one.
+        var map = _world.BeltMap;
+        for (var i = 0; i < map.Undergrounds.Count; i++)
+        {
+            var partner = map.PartnerOf(i);
+            if (partner < 0) continue;
+
+            var a = map.Undergrounds[i];
+            var b = map.Undergrounds[partner];
+            _rig.Position = new Vector3((a.X + b.X + 1) * 0.5f * _renderer.TileSize, 0f,
+                                        (a.Y + b.Y + 1) * 0.5f * _renderer.TileSize);
+            _rig.ZoomLevel = 22f;
+            return;
+        }
+
+        if (map.Belts.Count == 0) return;
+
+        var belt = map.Belts[map.Belts.Count / 2];
         _rig.Position = new Vector3((belt.X + 0.5f) * _renderer.TileSize, 0f,
                                     (belt.Y + 0.5f) * _renderer.TileSize);
         _rig.ZoomLevel = 16f;
@@ -686,7 +735,7 @@ public sealed partial class GameRoot : Node3D
             // keeps the camera where the player left it.
             _world = world;
             _panel.Close();
-            _panel.Bind(_world.Items, _world.PlayerInventory);
+            _panel.Bind(_world.Items, _world.PlayerInventory, _world, _buildables);
             _renderer.Sync(_world);
             _toast = "Quick loaded.";
         }
@@ -745,7 +794,7 @@ public sealed partial class GameRoot : Node3D
                       .Instantiate<MachinePanel>();
         layer.AddChild(panel);
         AddChild(layer);
-        panel.Bind(_world.Items, _world.PlayerInventory);
+        panel.Bind(_world.Items, _world.PlayerInventory, _world, _buildables);
         return panel;
     }
 

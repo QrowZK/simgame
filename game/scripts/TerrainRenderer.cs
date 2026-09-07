@@ -36,6 +36,26 @@ public sealed partial class TerrainRenderer : Node3D
     private int _builtY = int.MinValue;
     private int _builtDug = -1;
 
+    /// Finished tile colours, keyed by tile.
+    ///
+    /// A rebuild is triggered by the camera crossing a single tile boundary,
+    /// and then re-evaluates the whole 193x193 field -- of which all but two
+    /// strips were already on screen the frame before. Evaluating the
+    /// worldgen's noise 37,000 times for that cost 24 ms before this renderer
+    /// shaded anything, which is a stutter every time the view creeps sideways.
+    ///
+    /// Caching by tile makes the second and every later rebuild a dictionary
+    /// probe. It is correct to cache because the inputs are pure functions of
+    /// the seed and the tile: the only thing that can change a tile's colour is
+    /// mining it out, and that already forces a rebuild by its own counter, so
+    /// the cache is dropped there.
+    private readonly System.Collections.Generic.Dictionary<long, Color> _colours = new();
+
+    /// Panning far enough, for long enough, would otherwise grow the cache
+    /// without bound. Dropping the lot costs one expensive rebuild, which is
+    /// what the player would have paid anyway had they never come back.
+    private const int MaxCachedTiles = 400_000;
+
     public override void _Ready()
     {
         // Slightly under a tile, so the seams read as a grid. The game is
@@ -79,6 +99,7 @@ public sealed partial class TerrainRenderer : Node3D
 
         _builtX = centreX;
         _builtY = centreY;
+        if (dug != _builtDug || _colours.Count > MaxCachedTiles) _colours.Clear();
         _builtDug = dug;
 
         var side = ViewRadius * 2 + 1;
@@ -93,7 +114,11 @@ public sealed partial class TerrainRenderer : Node3D
             {
                 var x = centreX + dx;
                 var y = centreY + dy;
-                Write(cursor++, x, y, Colour(world, x, y));
+                var key = ((long)x << 32) ^ (uint)y;
+                if (!_colours.TryGetValue(key, out var colour))
+                    _colours[key] = colour = Colour(world, x, y);
+
+                Write(cursor++, x, y, colour);
             }
 
         var multiMesh = _pool.Multimesh!;
@@ -109,9 +134,10 @@ public sealed partial class TerrainRenderer : Node3D
     /// needs to see its shape, not a marker at its centre.
     private static Color Colour(World world, int x, int y)
     {
-        var ground = world.Ground.Gen.TerrainAt(x, y);
+        var gen = world.Ground.Gen;
+        var ground = gen.TerrainAt(x, y);
 
-        var basecolour = ground switch
+        var basecolour = Vary(gen, ground, x, y, ground switch
         {
             TerrainType.DeepWater => new Color(0.09f, 0.16f, 0.30f),
             TerrainType.Water => new Color(0.15f, 0.28f, 0.45f),
@@ -119,7 +145,7 @@ public sealed partial class TerrainRenderer : Node3D
             TerrainType.Grass => new Color(0.26f, 0.42f, 0.24f),
             TerrainType.Rock => new Color(0.40f, 0.40f, 0.42f),
             _ => new Color(0.62f, 0.62f, 0.66f),
-        };
+        });
 
         if (!world.Ground.TryPatchAt(x, y, out var patch))
             return basecolour;
@@ -129,6 +155,53 @@ public sealed partial class TerrainRenderer : Node3D
         var remaining = world.Ground.Remaining(patch);
         var ore = OreColour(patch.Item);
         return remaining > 0 ? basecolour.Lerp(ore, 0.65f) : basecolour.Lerp(ore, 0.18f);
+    }
+
+    /// Breaks one flat colour per terrain type into ground that reads as
+    /// ground, at three scales at once.
+    ///
+    /// Every input is a pure function of the world seed and the tile, so the
+    /// map looks identical between runs and between machines. That is not
+    /// tidiness: screenshots are how rendering is verified here, and a renderer
+    /// that rolled its own dice would make every capture a different picture.
+    ///
+    /// The scales answer different questions. **Height** is the one the
+    /// worldgen already computed and the one the player is reading anyway --
+    /// high ground dry and pale, low ground dark and damp -- so the shading
+    /// follows the same contours that decide where the water is. **Patches**,
+    /// about nine tiles across, give a field somewhere to be greener; a single
+    /// global ramp leaves large flats as smooth as before. **Grain**, one hash
+    /// per tile, stops any two neighbours matching exactly, which is what makes
+    /// a zoomed-in floor look painted rather than tiled.
+    ///
+    /// Water is varied at about a third of the strength. It is a surface rather
+    /// than a soil, and the shoreline was not the thing that needed fixing.
+    private static Color Vary(WorldGen gen, TerrainType ground, int x, int y, Color colour)
+    {
+        var amount = ground switch
+        {
+            TerrainType.DeepWater or TerrainType.Water => 0.35f,
+            TerrainType.Sand => 0.80f,
+            TerrainType.Mountain => 0.90f,
+            _ => 1.0f,
+        };
+
+        // [-1, 1] each.
+        var lift = gen.HeightAt(x, y) / 127.5f - 1f;
+        var patch = (float)(Sim.Noise.Value(gen.Seed ^ 0x5EED, x, y, cell: 9) * 2.0 - 1.0);
+        var grain = (Sim.Noise.Hash(gen.Seed + 7919, x, y) & 0xFF) / 127.5f - 1f;
+
+        var value = 1f + amount * (0.15f * lift + 0.13f * patch + 0.05f * grain);
+
+        // A little warmth with the patch as well as brightness: dry ground is
+        // not just paler grass, it is browner, and value alone reads as a
+        // lighting artefact rather than as terrain.
+        var warm = amount * 0.05f * patch;
+
+        return new Color(
+            Mathf.Clamp(colour.R * value + warm, 0f, 1f),
+            Mathf.Clamp(colour.G * value, 0f, 1f),
+            Mathf.Clamp(colour.B * value - warm, 0f, 1f));
     }
 
     /// A stable colour per resource. Derived from the item id rather than

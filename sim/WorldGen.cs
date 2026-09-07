@@ -25,12 +25,19 @@ public readonly struct OreSpec
     /// than a bet on what you will find when you get there.
     public readonly int BaseAmount;
 
-    public OreSpec(ItemId item, int minRing, int patchRadius, int baseAmount)
+    /// Whether the deposit holds a fluid rather than a solid. Crude oil is
+    /// buried like an ore because the derrick needs something to stand on, but
+    /// it is not something a player can pick up -- see `HandOps.Mine`.
+    public readonly bool IsFluid;
+
+    public OreSpec(ItemId item, int minRing, int patchRadius, int baseAmount,
+                   bool isFluid = false)
     {
         Item = item;
         MinRing = minRing;
         PatchRadius = patchRadius;
         BaseAmount = baseAmount;
+        IsFluid = isFluid;
     }
 }
 
@@ -44,13 +51,18 @@ public readonly struct OrePatch
     /// Total units this patch holds.
     public readonly int Amount;
 
-    public OrePatch(ItemId item, int x, int y, int radius, int amount)
+    /// Carried down from the `OreSpec` so anything holding a patch can ask what
+    /// form it is without a catalogue in hand.
+    public readonly bool IsFluid;
+
+    public OrePatch(ItemId item, int x, int y, int radius, int amount, bool isFluid = false)
     {
         Item = item;
         X = x;
         Y = y;
         Radius = radius;
         Amount = amount;
+        IsFluid = isFluid;
     }
 
     public bool Contains(int x, int y)
@@ -218,7 +230,7 @@ public sealed class WorldGen
                 var amount = (int)(spec.BaseAmount * (1.0 + AmountJitter * wobble));
                 var radius = Math.Max(2, spec.PatchRadius + (int)Math.Round(wobble));
 
-                patches.Add(new OrePatch(spec.Item, x, y, radius, Math.Max(1, amount)));
+                patches.Add(new OrePatch(spec.Item, x, y, radius, Math.Max(1, amount), spec.IsFluid));
             }
         }
 
