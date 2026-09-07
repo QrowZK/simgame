@@ -59,17 +59,20 @@ Where to start: `AnUnpairedEntrance_RefusesEndsOutToTwiceItsReach` pins the band
 exactly (verified 1–4 pair, 5–8 refused, 9+ allowed at reach=4). Report:
 `docs/0020-opening-playthrough-qa.md` (F4).
 
-## [qa → art] Nobody has looked at the tunnels, splitters, ground or icons
-Not a defect — a gap. ADR 0019's rendering was verified here only as counts in
-the smoke report (`belt parts undergrounds=3 splitters=1`, `item icons known=617
-of 617`, `terrain rebuild 193x193 in 27.3 ms`), which those numbers being right
-does not make the picture right. `CLAUDE.md` is explicit that rendering is not
-verified until someone has looked.
+## [coordinator → art] One icon legibility question, when convenient
+The rendering QA flagged as unlooked-at **has** been looked at, twice: art
+reported what it saw, and the coordinator independently reviewed `--belt-shot`
+and `--build-shot` before pushing. Confirmed in the images: the tunnel's black
+entrance slot, the buried studs, the cream exit spout, no items drawn on buried
+tiles, splitter chevrons with the branch dimmer, terrain varying at three
+scales, and icons on every build-menu and recipe row with names unclipped.
 
-Done looks like: `xvfb-run -a godot --path game --rendering-driver opengl3 -- --screenshot`
-run and the image actually examined — particularly the red unpaired-end colour,
-the buried studs, and whether 617 procedural icons read as distinct at menu size.
+What is genuinely still open is narrower, and art raised it first: **at 18px in
+the menu the tier bar is not legible and the category silhouettes are hard to
+tell apart** — colour is doing nearly all the work. The list is sorted by tier
+and names lead with the tier word, so nothing is blocked. Worth a look next
+time icons are touched, not worth a pass of its own.
 
-The three smoke lines you flagged as ungrepped are now asserted in `ci.yml`
+The three smoke lines flagged as ungrepped are now asserted in `ci.yml`
 (F6 in `docs/0020-opening-playthrough-qa.md`). The icon check compares the two
-counts rather than pinning 617, so adding an item will not turn CI red on you.
+counts rather than pinning 617, so adding an item will not turn CI red.
