@@ -7,13 +7,12 @@ public sealed class World
     private readonly List<Machine> _machines = new();
     private MachinePlacement[] _placements = new MachinePlacement[64];
     private MachineState[] _states = new MachineState[64];
+    private bool[] _placed = new bool[64];
 
     /// Tile -> machine index, for every tile a placed machine covers. A grid
     /// rather than a scan over placements: click-to-inspect and the placement
     /// check both want an O(1) answer, and at 100k machines a scan is neither.
     private readonly Dictionary<long, int> _occupancy = new();
-
-    public readonly Random Rng;
 
     /// Item names for this world. Owned here because the GUI has to name what a
     /// machine is holding, and a name table that is not world state would let
@@ -36,9 +35,13 @@ public sealed class World
 
     public World(int seed, ItemDatabase? items = null)
     {
-        Rng = new Random(seed);
+        Seed = seed;
         Items = items ?? new ItemDatabase();
     }
+
+    /// The seed this world was generated from. Terrain and ore are pure
+    /// functions of it, so a save stores the seed rather than the map.
+    public int Seed { get; }
 
     public int MachineCount => _machines.Count;
 
@@ -77,6 +80,14 @@ public sealed class World
 
     public MachinePlacement PlacementOf(int index) => _placements[index];
 
+    /// Whether a machine occupies tiles. Headless analysis builds machines with
+    /// no position at all, and a save must not invent one for them.
+    public bool IsPlaced(int index) => _placed[index];
+
+    /// Restores the tick counter. Save surface only: nothing else may move the
+    /// clock, or the tick would stop being the sim's single source of time.
+    public void RestoreTick(long tick) => TickCount = tick;
+
     /// Adds a machine with no position. Used by tests and by headless analysis,
     /// where a machine's throughput is the question and its tile is not.
     public Machine AddMachine(Recipe recipe, int outputCapacityPerItem = 100)
@@ -93,6 +104,7 @@ public sealed class World
 
         var machine = AddMachine(recipe, placement, outputCapacityPerItem);
         var index = _machines.Count - 1;
+        _placed[index] = true;
 
         for (var dy = 0; dy < placement.Size; dy++)
             for (var dx = 0; dx < placement.Size; dx++)
@@ -109,6 +121,7 @@ public sealed class World
         {
             Array.Resize(ref _placements, _placements.Length * 2);
             Array.Resize(ref _states, _states.Length * 2);
+            Array.Resize(ref _placed, _placed.Length * 2);
         }
 
         _machines.Add(machine);

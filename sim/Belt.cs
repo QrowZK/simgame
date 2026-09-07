@@ -140,6 +140,41 @@ public sealed class Lane
 
     /// Position of item i measured from the lane exit. O(i), for rendering and
     /// tests rather than the tick loop.
+    /// Copies the lane out, front item first. Together with Restore this is the
+    /// lane's entire save surface -- the ring buffer's head index deliberately
+    /// does not survive, because a lane restored with head 0 is the same lane.
+    public void CopyTo(List<ItemId> items, List<int> gaps)
+    {
+        for (var i = 0; i < _count; i++)
+        {
+            var slot = (_head + i) % _items.Length;
+            items.Add(_items[slot]);
+            gaps.Add(_gaps[slot]);
+        }
+    }
+
+    /// Rebuilds a lane from front-first items and their relative gaps.
+    public void Restore(IReadOnlyList<ItemId> items, IReadOnlyList<int> gaps)
+    {
+        if (items.Count != gaps.Count)
+            throw new ArgumentException("items and gaps must be the same length");
+        if (items.Count > _items.Length)
+            throw new ArgumentException("more items than the lane can hold");
+
+        Array.Clear(_items);
+        Array.Clear(_gaps);
+        _head = 0;
+        _count = items.Count;
+        _sumGaps = 0;
+
+        for (var i = 0; i < items.Count; i++)
+        {
+            _items[i] = items[i];
+            _gaps[i] = gaps[i];
+            _sumGaps += gaps[i];
+        }
+    }
+
     public int PositionOf(int index)
     {
         if (index < 0 || index >= _count)

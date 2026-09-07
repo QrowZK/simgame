@@ -72,6 +72,17 @@ public sealed class FluidNetwork
     public int RemainingInflow => _inBudget;
     public int RemainingOutflow => _outBudget;
 
+    /// Save surface. Capacity and throughput are restored directly rather than
+    /// replayed through AddPipe, so a network reloads as the network it was
+    /// rather than as one assembled from a pipe count.
+    public void Restore(int capacity, int throughputPerTick, ItemId fluid, int amount)
+    {
+        Capacity = capacity;
+        ThroughputPerTick = throughputPerTick;
+        Fluid = fluid;
+        Amount = amount;
+    }
+
     public bool Accepts(ItemId fluid) => Amount == 0 || Fluid.Equals(fluid);
 
     /// Returns how much actually went in: capacity and the per-tick throughput

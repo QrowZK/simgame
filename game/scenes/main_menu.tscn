@@ -1,0 +1,99 @@
+[gd_scene load_steps=3 format=3 uid="uid://d2n5q8vzk1bb"]
+
+[ext_resource type="Script" path="res://scripts/MainMenu.cs" id="1_menu"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_card"]
+bg_color = Color(0.09, 0.1, 0.12, 0.97)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.33, 0.36, 0.42, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+content_margin_left = 28.0
+content_margin_top = 24.0
+content_margin_right = 28.0
+content_margin_bottom = 24.0
+
+[node name="MainMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_menu")
+
+[node name="Backdrop" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.11, 0.12, 0.14, 1)
+
+[node name="Card" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -200.0
+offset_top = -180.0
+offset_right = 200.0
+offset_bottom = 180.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_vertical = 4
+theme_override_styles/panel = SubResource("StyleBoxFlat_card")
+
+[node name="Rows" type="VBoxContainer" parent="Card"]
+theme_override_constants/separation = 10
+
+[node name="Title" type="Label" parent="Card/Rows"]
+theme_override_font_sizes/font_size = 32
+text = "AUTOMATION"
+
+[node name="Subtitle" type="Label" parent="Card/Rows"]
+theme_override_colors/font_color = Color(0.62, 0.66, 0.73, 1)
+text = "a factory game"
+
+[node name="Gap" type="Control" parent="Card/Rows"]
+custom_minimum_size = Vector2(0, 12)
+
+[node name="Continue" type="Button" parent="Card/Rows"]
+custom_minimum_size = Vector2(0, 34)
+text = "Continue"
+
+[node name="NewGame" type="Button" parent="Card/Rows"]
+custom_minimum_size = Vector2(0, 34)
+text = "New Game"
+
+[node name="LoadGame" type="Button" parent="Card/Rows"]
+custom_minimum_size = Vector2(0, 34)
+text = "Load Game"
+
+[node name="Quit" type="Button" parent="Card/Rows"]
+custom_minimum_size = Vector2(0, 34)
+text = "Quit"
+
+[node name="Gap2" type="Control" parent="Card/Rows"]
+custom_minimum_size = Vector2(0, 12)
+
+[node name="SeedRow" type="HBoxContainer" parent="Card/Rows"]
+theme_override_constants/separation = 8
+
+[node name="SeedLabel" type="Label" parent="Card/Rows/SeedRow"]
+text = "Seed"
+
+[node name="Seed" type="LineEdit" parent="Card/Rows/SeedRow"]
+custom_minimum_size = Vector2(240, 0)
+placeholder_text = "blank for random"
+
+[node name="Saves" type="ItemList" parent="Card/Rows"]
+custom_minimum_size = Vector2(0, 150)
+
+[node name="Status" type="Label" parent="Card/Rows"]
+text = ""
+autowrap_mode = 2

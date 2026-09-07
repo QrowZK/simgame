@@ -28,6 +28,10 @@ public sealed class ItemDatabase
     public string GetName(ItemId id) => _namesById[id.Value];
 
     public int Count => _namesById.Count;
+
+    /// Every registered name in id order. A save writes this table so that item
+    /// references survive a change to registration order.
+    public IReadOnlyList<string> Names => _namesById;
 }
 
 public readonly struct ItemStack

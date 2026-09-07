@@ -69,6 +69,27 @@ public sealed class Machine
     public IReadOnlyDictionary<ItemId, int> OutputContents =>
         new Dictionary<ItemId, int>(_outputBuffer);
 
+    /// Save surface. State, the cycle timer and both buffers are the whole of a
+    /// machine's mutable state; everything else is rebuilt from its recipe and
+    /// placement.
+    public void Restore(MachineState state, int ticksRemaining,
+                        IReadOnlyList<(ItemId Item, int Count)> inputs,
+                        IReadOnlyList<(ItemId Item, int Count)> outputs)
+    {
+        _inputBuffer.Clear();
+        _outputBuffer.Clear();
+        foreach (var (item, count) in inputs) _inputBuffer[item] = count;
+        foreach (var (item, count) in outputs) _outputBuffer[item] = count;
+
+        State = state;
+        _ticksRemaining = state == MachineState.Working ? ticksRemaining : 0;
+    }
+
+    /// Ticks left in the cycle regardless of state, for saving. TicksRemaining
+    /// reports 0 when not working, which is right for a progress bar and wrong
+    /// for a save.
+    public int RawTicksRemaining => _ticksRemaining;
+
     public int GetInputCount(ItemId item) => _inputBuffer.GetValueOrDefault(item);
 
     public int GetOutputCount(ItemId item) => _outputBuffer.GetValueOrDefault(item);

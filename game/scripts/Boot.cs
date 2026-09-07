@@ -1,0 +1,161 @@
+using System.Linq;
+using Godot;
+
+namespace Game;
+
+/// The entry point. Decides whether this launch shows the title screen or goes
+/// straight into a world.
+///
+/// The headless paths -- `--smoke`, `--screenshot`, `--machines=N` -- bypass the
+/// menu entirely. CI drives those, and a title screen waiting for a click is a
+/// hang rather than a test.
+public sealed partial class Boot : Node
+{
+    private MainMenu? _menu;
+    private GameRoot? _game;
+
+    private int _menuShotCountdown = -1;
+
+    public override void _Ready()
+    {
+        if (Cli.Has("--menu-shot"))
+        {
+            ShowMenu();
+            _menuShotCountdown = 12;    // let the theme settle before capturing
+            return;
+        }
+
+        if (Cli.Has("--session-test"))
+        {
+            CallDeferred(nameof(RunSessionTest));
+            return;
+        }
+
+        if (Cli.WantsHeadlessRun())
+        {
+            StartGame(GameSession.NewGame(seed: 1234, Cli.ReadInt("--machines", GameSession.DefaultMachineCount)));
+            return;
+        }
+
+        ShowMenu();
+    }
+
+    public override void _Process(double delta)
+    {
+        if (_menuShotCountdown > 0 && --_menuShotCountdown == 0)
+        {
+            var image = GetViewport().GetTexture().GetImage();
+            image.SavePng("user://menu.png");
+            GD.Print($"menu screenshot -> {ProjectSettings.GlobalizePath("user://menu.png")}");
+            GetTree().Quit();
+        }
+    }
+
+    /// Drives the whole save loop headlessly: new game, run it, save, load it
+    /// back, and check the world that returns is the one that was saved. This is
+    /// the path a player actually takes, and none of the unit tests cover it --
+    /// they stop at the sim boundary and never touch the file layer.
+    private void RunSessionTest()
+    {
+        GD.Print("=== SESSION ===");
+
+        var world = GameSession.NewGame(seed: 777, machineCount: 64);
+        world.Tick(300);
+
+        var before = Sim.Save.SaveGame.ToJson(Sim.Save.SaveGame.Capture(world));
+        GameSession.Save("session test");
+
+        var slots = GameSession.List();
+        GD.Print($"saves listed    {slots.Count}");
+        GD.Print($"slot name       {(slots.Count > 0 ? slots[0].Name : "<none>")}");
+        GD.Print($"slot tick       {(slots.Count > 0 ? slots[0].Tick : -1)}");
+
+        var loaded = GameSession.Load(GameSession.PathFor("session test"));
+        var after = Sim.Save.SaveGame.ToJson(Sim.Save.SaveGame.Capture(loaded));
+
+        GD.Print($"round trip      identical: {before == after}");
+
+        // And it must still be identical after both run on from there.
+        world.Tick(2000);
+        loaded.Tick(2000);
+        var beforeRun = Sim.Save.SaveGame.ToJson(Sim.Save.SaveGame.Capture(world));
+        var afterRun = Sim.Save.SaveGame.ToJson(Sim.Save.SaveGame.Capture(loaded));
+        GD.Print($"after 2000      identical: {beforeRun == afterRun}");
+
+        GameSession.Delete(GameSession.PathFor("session test"));
+        GD.Print($"deleted         {!GameSession.List().Any(s => s.Name == "session test")}");
+        GD.Print("=== SESSION OK ===");
+
+        GetTree().Quit();
+    }
+
+    private void ShowMenu()
+    {
+        _game?.QueueFree();
+        _game = null;
+
+        _menu = GD.Load<PackedScene>("res://scenes/main_menu.tscn").Instantiate<MainMenu>();
+        _menu.NewGameRequested += OnNewGame;
+        _menu.LoadRequested += OnLoad;
+
+        var layer = new CanvasLayer { Name = "MenuLayer" };
+        layer.AddChild(_menu);
+        AddChild(layer);
+    }
+
+    private void OnNewGame(int seed) =>
+        StartGame(GameSession.NewGame(seed), disposeMenu: true);
+
+    private void OnLoad(string path)
+    {
+        try
+        {
+            StartGame(GameSession.Load(path), disposeMenu: true);
+        }
+        catch (System.Exception e)
+        {
+            // A save that will not load is a message, never a broken world: the
+            // player keeps their other saves and knows why this one failed.
+            GD.PushWarning($"load failed: {e.Message}");
+            _menu?.ShowError(e.Message);
+        }
+    }
+
+    private void StartGame(Sim.World world, bool disposeMenu = false)
+    {
+        if (disposeMenu)
+        {
+            _menu?.GetParent()?.QueueFree();
+            _menu = null;
+        }
+
+        _game = new GameRoot { Name = "GameRoot", InitialWorld = world };
+        _game.ReturnToMenuRequested += ShowMenu;
+        AddChild(_game);
+    }
+}
+
+/// Command-line arguments. Godot splits engine args from anything after "--",
+/// so both halves have to be checked.
+public static class Cli
+{
+    public static string[] All() =>
+        OS.GetCmdlineArgs().Concat(OS.GetCmdlineUserArgs()).ToArray();
+
+    public static bool Has(string flag) => All().Any(a => a == flag || a.StartsWith(flag + "="));
+
+    public static bool WantsHeadlessRun() =>
+        Has("--smoke") || Has("--screenshot") || Has("--machines");
+
+    public static int ReadInt(string name, int fallback)
+    {
+        foreach (var arg in All())
+        {
+            if (!arg.StartsWith(name + "=")) continue;
+            if (int.TryParse(arg[(name.Length + 1)..], out var value) && value > 0)
+                return value;
+        }
+
+        return fallback;
+    }
+}

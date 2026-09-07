@@ -1,0 +1,80 @@
+[gd_scene load_steps=3 format=3 uid="uid://b7v3k9wqp2cc"]
+
+[ext_resource type="Script" path="res://scripts/PauseMenu.cs" id="1_pause"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_pause"]
+bg_color = Color(0.09, 0.1, 0.12, 0.97)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.33, 0.36, 0.42, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+content_margin_left = 24.0
+content_margin_top = 20.0
+content_margin_right = 24.0
+content_margin_bottom = 20.0
+
+[node name="PauseMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_pause")
+
+[node name="Dim" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.05, 0.05, 0.06, 0.55)
+
+[node name="Card" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -170.0
+offset_top = -150.0
+offset_right = 170.0
+offset_bottom = 150.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_pause")
+
+[node name="Rows" type="VBoxContainer" parent="Card"]
+theme_override_constants/separation = 10
+
+[node name="Title" type="Label" parent="Card/Rows"]
+text = "Paused"
+
+[node name="Resume" type="Button" parent="Card/Rows"]
+text = "Resume"
+
+[node name="NameRow" type="HBoxContainer" parent="Card/Rows"]
+theme_override_constants/separation = 8
+
+[node name="NameLabel" type="Label" parent="Card/Rows/NameRow"]
+text = "Name"
+
+[node name="SaveName" type="LineEdit" parent="Card/Rows/NameRow"]
+custom_minimum_size = Vector2(160, 0)
+text = "autosave"
+
+[node name="Save" type="Button" parent="Card/Rows"]
+text = "Save"
+
+[node name="MainMenu" type="Button" parent="Card/Rows"]
+text = "Main Menu"
+
+[node name="Quit" type="Button" parent="Card/Rows"]
+text = "Quit"
+
+[node name="Status" type="Label" parent="Card/Rows"]
+text = ""
+autowrap_mode = 2
