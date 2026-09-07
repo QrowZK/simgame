@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Sim;
 
 namespace Game;
@@ -33,6 +34,20 @@ public static class DemoWorld
         var world = new World(seed, db);
         var side = (int)System.Math.Ceiling(System.Math.Sqrt(machineCount));
 
+        // The demo's machines are placed directly rather than built, so they
+        // would have no source item and the inspection panel would report every
+        // one of them as un-retaskable. That is true of the code and false of
+        // the factory it is pretending to be, and it is the only factory big
+        // enough to photograph the panel against. So each machine is told which
+        // buildable could have made it: the meshes stay decorative, and the
+        // recipe picker shows what a player would actually see.
+        var buildables = new BuildCatalogue(catalogue);
+        ItemId? SourceFor(Recipe recipe) => buildables.Offerable
+            .FirstOrDefault(b => buildables.CanRun(b, recipe))?.Item;
+
+        var smeltSource = SourceFor(smelt);
+        var assembleSource = SourceFor(assemble);
+
         for (var i = 0; i < machineCount; i++)
         {
             var cell = i % side;
@@ -53,24 +68,27 @@ public static class DemoWorld
             var x = cell * MaxFootprint;
             var y = row * MaxFootprint;
             var recipe = (i % 3 == 0) ? assemble : smelt;
+            var source = (i % 3 == 0) ? assembleSource : smeltSource;
             var placement = new MachinePlacement(x, y, tier, category, size);
 
             switch (i % 4)
             {
                 case 0:
                     // Starved: placed, powered, but nothing feeding it.
-                    world.TryPlaceMachine(recipe, placement);
+                    world.TryPlaceMachine(recipe, placement, sourceItem: source);
                     break;
 
                 case 1:
                     // Backpressured: one cycle's worth of room, then it stalls
                     // with its inputs untouched.
-                    var blocked = world.TryPlaceMachine(recipe, placement, outputCapacityPerItem: 1);
+                    var blocked = world.TryPlaceMachine(recipe, placement, outputCapacityPerItem: 1,
+                                                        sourceItem: source);
                     if (blocked is not null) Feed(blocked, recipe, 64);
                     break;
 
                 default:
-                    var running = world.TryPlaceMachine(recipe, placement, outputCapacityPerItem: 4096);
+                    var running = world.TryPlaceMachine(recipe, placement, outputCapacityPerItem: 4096,
+                                                        sourceItem: source);
                     if (running is not null) Feed(running, recipe, 100_000);
                     break;
             }

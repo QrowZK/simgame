@@ -74,22 +74,65 @@ public class OpeningRouteTests
 
     /// S1 -- the opening route dead-ends after one craft.
     ///
-    /// A placed machine's recipe is chosen at build time and `Machine.Recipe`
-    /// is readonly, nothing removes a placed machine, and no recipe in the data
-    /// produces another crafting bench. So the one bench the starter kit gives
-    /// the player is locked to one of the 49 recipes it can run, forever --
-    /// while the route to the first miner needs seven of them.
-    [Fact(Skip = "S1 open against gameplay: see docs/0020-opening-playthrough-qa.md")]
+    /// The three facts QA found still hold: nothing removes a placed machine,
+    /// no recipe makes a second bench, and the route to the first miner needs
+    /// ten distinct bench recipes. What changed is the fourth: a placed machine
+    /// can be retasked (ADR 0021), so those ten fit in one bench.
+    ///
+    /// Asserted by playing it rather than by counting it. The counting version
+    /// of this test could only ever have been satisfied by *more benches*,
+    /// which is one of three possible fixes and not the one taken; running the
+    /// route is agnostic about which fix is in place and fails for all three if
+    /// none is. It is also strictly stronger: it fails if the recipes exist and
+    /// the route still cannot be walked.
+    [Fact]
     public void TheRouteToTheFirstMiner_FitsInTheBenchesAPlayerCanEverHave()
     {
         var route = RouteToTheFirstMiner();
         var benches = BenchesObtainable();
 
-        Assert.True(benches >= route.Count,
-            $"the route to the first miner needs {route.Count} distinct crafting-bench " +
-            $"recipes ({string.Join(", ", route.OrderBy(r => r))}), a placed bench runs " +
-            $"exactly one recipe for its whole life, and a player can only ever obtain " +
-            $"{benches} bench(es).");
+        var world = NewGame.Create(seed: 20260907, Data);
+        var runner = new OpeningRouteRunner(world, Data, Buildables);
+
+        var reached = runner.Reach("stm_miner", 1);
+
+        Assert.True(reached && runner.StuckOn is null,
+            $"the route to the first miner stopped at {runner.StuckOn}: it needs " +
+            $"{route.Count} distinct crafting-bench recipes " +
+            $"({string.Join(", ", route.OrderBy(r => r))}) and a player can only ever " +
+            $"obtain {(benches == int.MaxValue ? "any number of" : benches.ToString())} bench(es).");
+
+        Assert.Equal(1, world.PlayerInventory.Count(Data.Item("stm_miner")));
+
+        // The whole point: those recipes ran on ONE machine. A bench locked to
+        // what it was placed with makes this 1, whatever else passes.
+        var benchRecipes = runner.RanOn
+            .Where(kv => Data.Data.Recipes.Any(d => d.Id == kv.Key && d.Machine == "manual_crafting"))
+            .ToList();
+
+        Assert.Single(benchRecipes.Select(kv => kv.Value).Distinct());
+        Assert.True(benchRecipes.Count >= route.Count,
+            $"only {benchRecipes.Count} of the {route.Count} route recipes ran on the bench");
+    }
+
+    /// The starter kit is still the only source of benches, and the stone in it
+    /// is still exactly two manual machines. Retasking is what makes the route
+    /// fit; it must not have been paid for by quietly widening the kit.
+    [Fact]
+    public void TheFixIsRetasking_NotASecondBench()
+    {
+        Assert.Equal(1, BenchesObtainable());
+
+        var world = NewGame.Create(seed: 20260907, Data);
+        var runner = new OpeningRouteRunner(world, Data, Buildables);
+        Assert.True(runner.Reach("stm_miner", 1), runner.StuckOn);
+
+        // Three machines placed all told -- the kit's bench, and the furnace
+        // and alloy smelter its 24 stone pays for -- and the bench did the work
+        // of ten.
+        Assert.Equal(3, world.MachineCount);
+        Assert.True(runner.MostRecipesOnOneMachine >= 10,
+            $"the busiest machine ran {runner.MostRecipesOnOneMachine} recipes");
     }
 
     /// S3 -- crude oil is a fluid deposit and can be dug out with bare hands.
@@ -97,7 +140,7 @@ public class OpeningRouteTests
     /// `NewGame.OreSpecs` buries every non-ambient raw item, crude oil
     /// included, and `HandOps.Mine` does not ask what form the deposit is. The
     /// oil derrick is the gate, and the player's hands walk straight past it.
-    [Fact(Skip = "S3 open against gameplay: see docs/0020-opening-playthrough-qa.md")]
+    [Fact]
     public void HandMining_RefusesAFluidDeposit()
     {
         var fluids = Data.RawSolids.Where(i => i.Form == "fluid").Select(i => i.Id).ToHashSet();

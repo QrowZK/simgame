@@ -70,8 +70,10 @@ public sealed partial class GameRoot : Node3D
 
         AddChild(BuildLighting());
         _hud = BuildHud();
-        _panel = BuildPanel();
+        // Before the panel: the panel binds to it, and a null catalogue there
+        // silently costs the recipe picker.
         _buildables = new BuildCatalogue(Sim.Data.Catalogue.Instance);
+        _panel = BuildPanel();
         _build = BuildBuildMenu();
         _ghost = new BuildGhost { Name = "BuildGhost" };
         AddChild(_ghost);
@@ -366,7 +368,14 @@ public sealed partial class GameRoot : Node3D
 
         GD.Print($"picking         largest={largest}x{largest} " +
                  $"all tiles resolve to one machine: {pickOk}");
+        // The recipe picker cannot be seen in the smoke run and photographs as
+        // an empty box when it is broken -- a null catalogue at bind time cost
+        // exactly that, and only a screenshot found it. So the panel is opened
+        // on a real machine here and asked how many recipes it is offering.
+        ShowAnyRunningMachine();
         GD.Print($"panel           showing={_panel.IsShowing}");
+        GD.Print($"recipe picker   options={_panel.RecipeOptions} " +
+                 $"current selected={_panel.CurrentRecipeIsSelected}");
         GD.Print("=== SMOKE OK ===");
 
         GetTree().Quit();
@@ -493,7 +502,7 @@ public sealed partial class GameRoot : Node3D
         }
 
         if (_world.TryMachineAt(tileX, tileY, out var machine, out var index))
-            _panel.Show(machine, _world.PlacementOf(index));
+            _panel.Show(machine, _world.PlacementOf(index), index);
         else if (_world.TryMinerAt(tileX, tileY, out var miner, out var minerIndex))
             _panel.Show(miner, _world.MinerPlacements[minerIndex],
                         _world.Ground.RemainingAt(tileX, tileY));
@@ -508,12 +517,12 @@ public sealed partial class GameRoot : Node3D
         for (var i = 0; i < _world.MachineCount; i++)
             if (_world.Machines[i].State == MachineState.Working)
             {
-                _panel.Show(_world.Machines[i], _world.PlacementOf(i));
+                _panel.Show(_world.Machines[i], _world.PlacementOf(i), i);
                 return;
             }
 
         if (_world.MachineCount > 0)
-            _panel.Show(_world.Machines[0], _world.PlacementOf(0));
+            _panel.Show(_world.Machines[0], _world.PlacementOf(0), 0);
     }
 
     private BuildMenu BuildBuildMenu()
@@ -726,7 +735,7 @@ public sealed partial class GameRoot : Node3D
             // keeps the camera where the player left it.
             _world = world;
             _panel.Close();
-            _panel.Bind(_world.Items, _world.PlayerInventory);
+            _panel.Bind(_world.Items, _world.PlayerInventory, _world, _buildables);
             _renderer.Sync(_world);
             _toast = "Quick loaded.";
         }
@@ -785,7 +794,7 @@ public sealed partial class GameRoot : Node3D
                       .Instantiate<MachinePanel>();
         layer.AddChild(panel);
         AddChild(layer);
-        panel.Bind(_world.Items, _world.PlayerInventory);
+        panel.Bind(_world.Items, _world.PlayerInventory, _world, _buildables);
         return panel;
     }
 

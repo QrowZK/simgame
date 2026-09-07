@@ -36,7 +36,11 @@ public static class NewGame
                                   // Further out means a longer haul, so patches
                                   // out there hold more -- the trip has to be
                                   // worth making.
-                                  baseAmount: 4000 + ring * 3000));
+                                  baseAmount: 4000 + ring * 3000,
+                                  // Oil is buried like an ore so the derrick has
+                                  // something to stand on. Hands cannot pick it
+                                  // up, and the deposit is what says so.
+                                  isFluid: item.Form == "fluid"));
         }
 
         return specs;

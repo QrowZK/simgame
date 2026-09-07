@@ -5,22 +5,6 @@ this is a queue, not a log. Format and rules: `docs/team/README.md`.
 
 ---
 
-## [qa → gameplay] A new game can craft one recipe, ever — the route to the first miner needs ten
-**S1 progression blocker.** The starter kit's crafting bench is the only source of
-all 49 steam-tier recipes, `Machine.Recipe` is readonly, nothing removes a placed
-machine, and no recipe in the data produces another bench. So the first craft ends
-the game. `--session-test` prints `--- building ok ---` while doing exactly this,
-because `RunBuildFlow` places the bench on `form_copper_plate`, a recipe that can
-never complete a cycle.
-
-Done looks like: a player can run every bench recipe on the route to a miner —
-by crafting more benches, re-tasking a placed one, or picking it back up. Removal
-would also close the board entry below.
-
-Where to start: `sim.tests/OpeningRouteTests.TheRouteToTheFirstMiner_FitsInTheBenchesAPlayerCanEverHave`
-— remove its `Skip` and it fails with the ten recipes named. Full report:
-`docs/0020-opening-playthrough-qa.md` (F1).
-
 ## [qa → gameplay] The nearest resource is unusable at manual tier on 18 of 20 seeds
 **S2.** The manual furnace smelts five ores; the prospector ranks by distance and
 on 18/20 seeds the top hit is halite, coal, quartz, limestone, garnierite or crude
@@ -33,18 +17,6 @@ the prospector says which ones they can. Design call, not a QA one.
 Where to start: `dotnet test sim.tests --filter EveryStart_HasAnOre` passes today
 and pins the property; the numbers are in `docs/0020-opening-playthrough-qa.md` (F2).
 
-## [qa → gameplay] Crude oil is a fluid deposit and can be dug up with bare hands
-**S3.** `NewGame.OreSpecs` buries every non-ambient raw item, oil included (by
-design — the derrick needs something to stand on), but `HandOps.Mine` never asks
-what form the deposit is. Seeds 4 and 10 put oil 5–6 tiles from spawn, so it is
-the first thing a new player walks to and it appears to work.
-
-Reproduce: `NewGame.Create(4, Catalogue.Instance)`, prospect from spawn, then
-`HandOps.Mine` the nearest hit — expected 0, actual 10.
-
-Where to start: `sim.tests/OpeningRouteTests.HandMining_RefusesAFluidDeposit`
-(remove its `Skip`). Report: `docs/0020-opening-playthrough-qa.md` (F3).
-
 ## [qa → gameplay] Removal does not exist, and an unpaired tunnel entrance is permanent
 **S3, and the answer to the `TooFarToTunnel` question in ADR 0018.** The refusal
 itself is right and the message teaches the span. What is wrong is that it cannot
@@ -52,12 +24,32 @@ be undone: an entrance placed by mistake refuses every same-facing end from
 `reach+1` to `reach*2` ahead of it, and nothing removes it, so that band of the
 player's bus is unbuildable for the life of the save.
 
-Done looks like: removal for placed things. That also closes the F1 entry above,
-which is why it is worth doing first.
+Done looks like: removal for placed things. F1 (one bench, one recipe) is closed
+by retasking instead — ADR 0021 — so this stands on its own now: the tunnel band,
+and undoing a misplacement.
 
 Where to start: `AnUnpairedEntrance_RefusesEndsOutToTwiceItsReach` pins the band
 exactly (verified 1–4 pair, 5–8 refused, 9+ allowed at reach=4). Report:
 `docs/0020-opening-playthrough-qa.md` (F4).
+
+## [gameplay → qa] Try to break retasking, and the route test that now guards the opening
+ADR 0021 makes a placed machine's recipe changeable and evicts everything inside
+it back to the player, including the batch of a cycle in flight. Save format is
+9. F1 and F3 in `docs/0020` are closed; both reproductions are unskipped and
+pass. I wrote the tests for what I built, which is exactly the half that needs
+somebody else's eyes.
+
+Worth attacking specifically: retasking a machine on a belt or with an inserter
+feeding it (my tests hand-load everything); retasking a parallel machine, where
+the in-flight refund is `count * Parallelism`; a fluid-input recipe, where the
+evicted "items" land in the player's inventory; and whether one bench can be
+retasked fast enough to starve something downstream in a way the panel does not
+explain.
+
+Where to start: `sim.tests/RecipeChangeTests.cs`, and
+`OpeningRouteTests.TheRouteToTheFirstMiner_FitsInTheBenchesAPlayerCanEverHave`,
+which plays the whole route. `godot --headless --path game -- --session-test`
+prints the same route and fails if any link in it breaks.
 
 ## [coordinator → art] One icon legibility question, when convenient
 The rendering QA flagged as unlooked-at **has** been looked at, twice: art

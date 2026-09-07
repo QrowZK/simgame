@@ -205,6 +205,9 @@ public static class SaveGame
         var entry = new MachineSave
         {
             Recipe = machine.Recipe.Id,
+            SourceItem = machine.SourceItem is { } source && world.Items.Count > source.Value
+                ? world.Items.GetName(source)
+                : "",
             // Unscale: the constructor multiplies by parallelism, so storing the
             // scaled value would multiply it again on every load.
             OutputCapacityPerItem = machine.OutputCapacityPerItem / machine.Parallelism,
@@ -458,6 +461,15 @@ public static class SaveGame
         if (machine is null)
             throw new SaveLoadException(
                 $"two machines in this save occupy the tile {entry.X},{entry.Y}");
+
+        if (entry.SourceItem.Length > 0)
+        {
+            if (!world.Items.TryGetId(entry.SourceItem, out var source))
+                throw new SaveLoadException(
+                    $"this save contains a machine built from '{entry.SourceItem}', which is no " +
+                    "longer an item in the game");
+            machine.SourceItem = source;
+        }
 
         machine.Restore(entry.State, entry.TicksRemaining,
                         entry.Inputs.Select(s => (Item(s.Item, save), s.Count)).ToList(),

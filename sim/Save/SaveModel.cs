@@ -36,7 +36,12 @@ public sealed class SaveFile
     /// version 8 file read by a version 7 loader would drop them and quietly
     /// reconnect the factory a different way, which is the failure the version
     /// number exists to prevent.
-    public const int CurrentVersion = 8;
+    /// 9 added the item a machine was placed from, which is what a recipe
+    /// change is checked against (ADR 0021). A version 8 file loaded as 9 would
+    /// give every machine an unknown source and refuse to retask any of them --
+    /// a factory that silently cannot be reconfigured is exactly the quiet
+    /// wrongness the version number exists to prevent.
+    public const int CurrentVersion = 9;
 
     public int Version { get; set; } = CurrentVersion;
     public int Seed { get; set; }
@@ -78,8 +83,15 @@ public sealed class StackSave
 
 public sealed class MachineSave
 {
-    /// Recipe id, looked up in the running game's recipe set on load.
+    /// Recipe id, looked up in the running game's recipe set on load. A machine
+    /// that was retasked writes what it makes now, not what it was placed with.
     public string Recipe { get; set; } = "";
+
+    /// The item id this machine was placed from ("stm_furnace"), or empty for a
+    /// machine built without one -- headless analysis and the demo world do
+    /// that. Stored as a name rather than an index for the same reason the
+    /// recipe is: it survives a change to registration order.
+    public string SourceItem { get; set; } = "";
 
     /// The capacity the machine was built with, before parallelism scaled it.
     /// Storing the scaled figure would multiply it again on every load.

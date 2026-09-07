@@ -109,6 +109,11 @@ jobs:
           # fine in a screenshot and cannot be used.
           grep -qE "build menu      offered=[1-9][0-9]* holding=.+ ghost=True" smoke.log
           grep -q "build closed    menu=False ghost=False" smoke.log
+          # The recipe picker on a placed machine. It photographs as an empty
+          # box when it is broken -- a null catalogue at bind time did exactly
+          # that -- so the smoke run asks it how many recipes it is offering and
+          # whether the running one is the highlighted row.
+          grep -qE "recipe picker   options=[1-9][0-9]* current selected=True" smoke.log
           # Underground belts and splitters have to reach the renderer too. A
           # tunnel end drawn as nothing is indistinguishable from a tunnel that
           # was never placed, which is the belt bug hardest to see by eye.
@@ -163,6 +168,16 @@ jobs:
           # steam tier is crafted on it. If it ever stops being offered, the
           # game has no opening move at all.
           grep -q "holding         Crafting Bench" session.log
+          # The opening route, played end to end on what a new game is given:
+          # one bench, 24 stone and the ground. The milestone is a steam miner
+          # in the player's hands, which needs ten distinct bench recipes on the
+          # one bench a player can ever have -- so this is red unless a placed
+          # machine can be retasked (docs/0021). The old "--- building ok ---"
+          # passed on a bench placed on a recipe it could never complete.
+          grep -q -- "--- opening route ok ---" session.log
+          grep -q "stuck on        nothing" session.log
+          grep -qE "bench recipes   1[0-9]+ distinct on one bench" session.log
+          grep -q "miner placed    Ok" session.log
           # Belts: a run laid tile by tile from the inventory, an inserter at
           # the end of it, and ore actually arriving in a machine that had
           # none. Getting an inserter's reach wrong is silent -- it just holds

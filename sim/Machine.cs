@@ -18,9 +18,41 @@ public enum MachineState
     Unpowered,
 }
 
+/// Why a recipe change did or did not happen. An enum rather than a bool for
+/// the same reason `BuildResult` is one: "this machine cannot make that" and
+/// "it already makes that" need different sentences in front of a player.
+public enum RecipeChangeResult
+{
+    /// Changed. Everything the machine was holding went back to the player.
+    Ok,
+
+    /// It was already set to that recipe. Nothing was evicted -- re-picking the
+    /// current recipe must never cost a player the stack sitting in the machine.
+    AlreadyRunning,
+
+    /// This machine cannot run that recipe: wrong machine, or a tier above it.
+    CannotRun,
+
+    /// The machine was not placed from a buildable, so there is nothing to
+    /// check the recipe against. Only headless and demo worlds build these.
+    UnknownMachine,
+
+    /// There is no machine at that index.
+    NoMachine,
+}
+
 public sealed class Machine
 {
-    public readonly Recipe Recipe;
+    /// What this machine makes. Settable, but only through `SetRecipe`, which
+    /// hands the contents back first -- see ADR 0021.
+    public Recipe Recipe { get; private set; }
+
+    /// The item this machine was placed from, when it was placed by a player.
+    /// A recipe change is checked against this: without it there is no way to
+    /// ask the build catalogue what this machine is allowed to run. Machines
+    /// built directly by tests and the demo world have none.
+    public ItemId? SourceItem { get; set; }
+
     public readonly int OutputCapacityPerItem;
 
     /// How many batches of the recipe this machine runs per cycle. This is what
@@ -107,6 +139,62 @@ public sealed class Machine
     /// reports 0 when not working, which is right for a progress bar and wrong
     /// for a save.
     public int RawTicksRemaining => _ticksRemaining;
+
+    /// Retasks a placed machine, handing everything it was holding back to the
+    /// player. Returns the number of units evicted.
+    ///
+    /// The eviction rule is conservation, and it is the whole of ADR 0021: an
+    /// item that went into a machine comes back out. That covers three things a
+    /// player would otherwise lose without being told:
+    ///
+    /// - the input buffer, which is theirs and was never consumed;
+    /// - the output buffer, which is finished goods they have already paid for;
+    /// - **the batch of a cycle in flight**, whose inputs were taken at the
+    ///   start of the cycle and whose outputs are not written until the end.
+    ///   Refunding it is exact, not generous: no output has been produced yet,
+    ///   so returning the inputs creates nothing.
+    ///
+    /// The energy buffer is deliberately left alone. It is at most one tick's
+    /// draw, it is not an item, and there is nothing to hand it back to.
+    ///
+    /// Callers are expected to have checked that the machine can run `recipe`;
+    /// `World.TryChangeRecipe` is the checked entry point.
+    public int SetRecipe(Recipe recipe, Inventory into)
+    {
+        ArgumentNullException.ThrowIfNull(recipe);
+        ArgumentNullException.ThrowIfNull(into);
+
+        var evicted = 0;
+
+        // The in-flight batch first: those inputs left the buffer when the
+        // cycle started and exist nowhere else.
+        if (_ticksRemaining > 0)
+            foreach (var input in Recipe.Inputs)
+            {
+                into.Add(input.Item, input.Count * Parallelism);
+                evicted += input.Count * Parallelism;
+            }
+
+        foreach (var (item, count) in _inputBuffer)
+        {
+            into.Add(item, count);
+            evicted += count;
+        }
+
+        foreach (var (item, count) in _outputBuffer)
+        {
+            into.Add(item, count);
+            evicted += count;
+        }
+
+        _inputBuffer.Clear();
+        _outputBuffer.Clear();
+        _ticksRemaining = 0;
+        Recipe = recipe;
+        State = MachineState.Idle;
+
+        return evicted;
+    }
 
     public int GetInputCount(ItemId item) => _inputBuffer.GetValueOrDefault(item);
 
