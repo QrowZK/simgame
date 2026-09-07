@@ -316,7 +316,10 @@
     "tiers": [
       "VLT",
       "ARC",
-      "PLS"
+      "PLS",
+      "FUS",
+      "QNT",
+      "SNG"
     ],
     "min_tier": "VLT",
     "size": 1,

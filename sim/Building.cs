@@ -227,13 +227,13 @@ public sealed class BuildCatalogue
     /// What a build UI should actually offer.
     ///
     /// Excludes the not-yet-placeable, and excludes a machine with no recipe it
-    /// could run. The data has several machines with no recipes at all (the
-    /// sifter, mixer, cutter and vacuum freezer are in the item list and the
-    /// tech tree, and nothing in recipes.json uses them) and the spinneret is
-    /// offered two tiers below its first recipe. Building one would produce a
-    /// machine that can never do anything, so the honest thing is not to offer
-    /// it. `All` still lists them, so this stays a display decision rather than
-    /// a quiet deletion.
+    /// could run -- a build menu that hands you a machine which can never do
+    /// anything is a trap.
+    ///
+    /// Nothing is currently excluded on the second count: every machine in the
+    /// data has a job. The filter stays because that is a property of the data
+    /// rather than of the code, and it is cheaper to keep the guard than to
+    /// discover the next unused machine through a player building one.
     public IEnumerable<Buildable> Offerable
         => _all.Where(b => b.Kind != BuildKind.NotPlaceable)
                .Where(b => b.Kind != BuildKind.Machine || RecipesFor(b).Count > 0);

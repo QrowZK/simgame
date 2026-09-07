@@ -4568,6 +4568,33 @@
     "tags": []
   },
   {
+    "id": "fus_cutter",
+    "name": "Fusion Cutter",
+    "category": "machine",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "qnt_cutter",
+    "name": "Quantum Cutter",
+    "category": "machine",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "sng_cutter",
+    "name": "Singular Cutter",
+    "category": "machine",
+    "tier": "SNG",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
     "id": "arc_centrifuge",
     "name": "Arc Centrifuge",
     "category": "machine",

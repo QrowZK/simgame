@@ -269,4 +269,75 @@ public class GraphInvariantTests
 
         Assert.True(problems.Count == 0, "Invalid recipe timings:\n" + string.Join("\n", problems));
     }
+
+    /// Every machine in the data is used by something.
+    ///
+    /// Five were not: the sifter, mixer, cutter and vacuum freezer had items,
+    /// build recipes and tech-tree entries with no recipe in the data naming
+    /// them, and the spinneret existed two tiers before its only recipe. A
+    /// player could craft any of them and get a machine that could never run.
+    ///
+    /// Structures are exempt because they are placed rather than run: a power
+    /// pole with a recipe would be the strange thing.
+    [Fact]
+    public void EveryProcessingMachine_IsUsedByAtLeastOneRecipe()
+    {
+        var structures = new HashSet<string>
+        {
+            "miner", "oil_derrick", "prospector", "pump_station",
+            "generator", "accumulator", "pole",
+            "transport_belt", "underground_belt", "splitter",
+            "inserter", "stack_inserter",
+            "pipe", "inline_pump", "storage_tank",
+        };
+
+        var used = Data.Recipes.Select(r => r.Machine).ToHashSet();
+        var idle = Data.Machines
+            .Where(m => !structures.Contains(m.Id))
+            .Where(m => !used.Contains(m.Id))
+            .Select(m => m.Id)
+            .ToList();
+
+        Assert.True(idle.Count == 0,
+                    "machines nothing uses: " + string.Join(", ", idle));
+    }
+
+    /// And every machine can run something at the tier it first appears.
+    ///
+    /// A machine offered before its earliest recipe is the subtler version of
+    /// the same bug: craftable, placeable, and inert. The spinneret was sold
+    /// from Plasma with nothing to spin until Quantum.
+    [Fact]
+    public void NoMachine_IsSoldBeforeItsFirstRecipe()
+    {
+        var tierIndex = Data.Tiers.ToDictionary(t => t.Id, t => t.Index);
+        var structures = new HashSet<string>
+        {
+            "miner", "oil_derrick", "prospector", "pump_station",
+            "generator", "accumulator", "pole",
+            "transport_belt", "underground_belt", "splitter",
+            "inserter", "stack_inserter",
+            "pipe", "inline_pump", "storage_tank",
+        };
+
+        var earliest = Data.Recipes
+            .GroupBy(r => r.Machine)
+            .ToDictionary(g => g.Key, g => g.Min(r => tierIndex[r.Tier]));
+
+        var problems = new List<string>();
+
+        foreach (var machine in Data.Machines.Where(m => !structures.Contains(m.Id)))
+        {
+            if (!earliest.TryGetValue(machine.Id, out var first)) continue;
+
+            var sold = machine.Tiers.Min(t => tierIndex[t]);
+            if (sold < first)
+                problems.Add($"{machine.Id}: sold from tier index {sold}, " +
+                             $"first recipe at {first}");
+        }
+
+        Assert.True(problems.Count == 0,
+                    "machines available before they can do anything:\n" +
+                    string.Join("\n", problems));
+    }
 }

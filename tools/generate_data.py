@@ -39,6 +39,12 @@ def main():
     mats = {m["id"]: m for m in spec["materials"]}
 
     items, recipes, machines, techs = [], [], [], []
+
+    # Which materials are polymers, taken from what the polymerizer makes rather
+    # than from a hand-kept list -- adding a polymer to the chemistry section
+    # should not also require remembering to add it here.
+    polymers = {c["outputs"][0]["item"].rsplit("_", 1)[0]
+                for c in spec["chemistry"] if c["machine"] == "polymerizer"}
     seen_items = {}
 
     # Which metals actually exist at the Manual tier, where there are no shaping
@@ -159,6 +165,18 @@ def main():
             add_recipe("macerate_%s" % oid, "macerator", "STM", 80,
                        [{"item": "%s_crushed" % oid, "count": 1}],
                        [{"item": "%s_dust" % mid, "count": 1}], "processing")
+            # A dry route to purified ore, a tier before the washer and without
+            # its water. Worse per crushed ore and with no byproduct, which is
+            # what keeps the washer worth building -- but it is the only way to
+            # reach the Arc centrifuge's 3x yield without ever laying a pipe,
+            # and that is a decision the factory planner cannot see because it
+            # does not model what infrastructure costs to build.
+            if by_index[mtier] <= by_index["ARC"]:
+                add_recipe("sift_%s" % oid, "sifter", "STM", 140,
+                           [{"item": "%s_crushed" % oid, "count": 3}],
+                           [{"item": "%s_purified" % oid, "count": 2},
+                            {"item": "stone_dust", "count": 1}], "processing")
+
             # 2.5x — wash for the first byproduct
             wash_out = [{"item": "%s_purified" % oid, "count": 1},
                         {"item": "stone_dust", "count": 1}]
@@ -210,6 +228,22 @@ def main():
                        alloy["inputs"],
                        [{"item": "%s_ingot" % mid, "count": alloy["count"]}], "metallurgy")
 
+            # The dust route to the same alloy. Same ratio, but the inputs come
+            # straight off the macerator instead of being smelted to ingots
+            # first, so an alloy costs one smelt instead of one per component.
+            # That is the whole reason to build a mixer.
+            dusts = []
+            for i in alloy["inputs"]:
+                base = i["item"].rsplit("_", 1)[0]
+                dust = i["item"] if i["item"].endswith("_dust") else "%s_dust" % base
+                dusts.append({"item": dust, "count": i["count"]})
+
+            if "dust" in forms and all(d["item"] in seen_items for d in dusts):
+                add_recipe("mix_%s" % mid, "mixer", "VLT", alloy["ticks"],
+                           dusts,
+                           [{"item": "%s_dust" % mid, "count": alloy["count"]}],
+                           "metallurgy")
+
         # shaping. At the Manual tier there are no machines yet, so these are
         # hand recipes at half yield -- enough to bootstrap the first bronze.
         for form in forms:
@@ -222,6 +256,24 @@ def main():
                 add_recipe("form_%s_%s" % (mid, form), mach, pt, ticks,
                            [{"item": "%s_%s" % (mid, src), "count": ic}],
                            [{"item": "%s_%s" % (mid, form), "count": oc}], "metallurgy")
+        # A better way to make plates, and the reason to rebuild a plate line.
+        # Every other shaping step doubles or quadruples -- rods, wire, foil --
+        # and only the bender's ingot-to-plate is one for one, which is the
+        # hole these two fill. A metal is cut; a polymer is spun.
+        if "plate" in forms and "ingot" in forms:
+            if mid in polymers:
+                # Spinning is for the engineering polymers. A Plasma-tier
+                # spinneret cannot reach the thermosets below it, and they are
+                # not spun in the first place.
+                if by_index[mtier] >= by_index["PLS"]:
+                    add_recipe("spin_%s_plate" % mid, "spinneret", mtier, 100,
+                               [{"item": "%s_ingot" % mid, "count": 1}],
+                               [{"item": "%s_plate" % mid, "count": 2}], "metallurgy")
+            else:
+                add_recipe("cut_%s_plate" % mid, "cutter", "VLT", 80,
+                           [{"item": "%s_ingot" % mid, "count": 1}],
+                           [{"item": "%s_plate" % mid, "count": 2}], "metallurgy")
+
         if "gear" in forms and "plate" in forms and "rod" in forms:
             mach = "manual_crafting" if (pt == "MAN" and mid in man_metals) else "assembler"
             add_recipe("form_%s_gear" % mid, mach, pt, GEAR_TICKS,
