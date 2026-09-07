@@ -107,11 +107,24 @@ saying so.
 
 ## Verification
 
-Nineteen tests across drones, controllers and saves. The properties held to are:
+Twenty-two tests across drones, controllers and saves. The properties held to are:
 an infinite loop cannot hang the sim, a syntax error is a message rather than a
 crash, one controller's runtime error does not stop another, the sandbox is
 closed, nothing is created or destroyed in the carrying, distance costs time,
 and **the same program produces the same factory twice**.
+
+Ten mutations, one behaviour at a time; all ten caught after two rounds. The two
+that survived the first round were both coverage gaps rather than false alarms,
+and both were worth closing:
+
+- The capacity clamp inside `Drone.Load` is unreachable in play, because the
+  dispatcher already clamps what it offers. It is still part of the method's
+  contract, so it now has a direct test rather than an implicit one.
+- Nothing checked that a drone's **speed** affects travel time. Removing the
+  movement gate made every drone cross a tile per tick whatever its speed, and
+  the distance test still passed because both distances got faster together.
+  Now asserted exactly: sixty points a tick crosses ten tiles in ten ticks, half
+  that takes twenty.
 
 The instruction budget proved itself the hard way. Removing `AutoYieldCounter`
 as a mutation did not merely fail a test — it **hung the test runner outright**,

@@ -93,6 +93,52 @@ public class DroneTests
     }
 
     [Fact]
+    public void ADroneRefusesMoreThanItCanCarry_EvenWhenAskedDirectly()
+    {
+        // The dispatcher already clamps what it offers, so the clamp inside
+        // Load is only reachable through the public API. It is still part of
+        // the contract: a caller that asks for too much gets what fits.
+        var drone = new Drone(0, 0, capacity: 20);
+        var ore = new ItemId(3);
+
+        Assert.Equal(20, drone.Load(ore, 500));
+        Assert.Equal(20, drone.CargoCount);
+        Assert.Equal(0, drone.Load(ore, 5));
+
+        drone.Unload(8);
+        Assert.Equal(8, drone.Load(ore, 100));
+    }
+
+    [Fact]
+    public void ADroneRefusesASecondKindOfCargo()
+    {
+        var drone = new Drone(0, 0, capacity: 20);
+        Assert.Equal(5, drone.Load(new ItemId(1), 5));
+        Assert.Equal(0, drone.Load(new ItemId(2), 5));
+    }
+
+    [Fact]
+    public void ASlowerDroneTakesProportionallyLonger()
+    {
+        // Speed has to actually gate movement. Without the progress check a
+        // drone crosses one tile per tick whatever its speed, and every drone
+        // in the game becomes the same drone.
+        static int TicksToCross(int speed)
+        {
+            var drone = new Drone(0, 0, speed: speed);
+            for (var t = 1; t <= 10_000; t++)
+                if (drone.StepToward(10, 0)) return t;
+            return -1;
+        }
+
+        var fast = TicksToCross(Drone.PointsPerTile);        // one tile a tick
+        var half = TicksToCross(Drone.PointsPerTile / 2);    // one tile every two
+
+        Assert.Equal(10, fast);
+        Assert.Equal(20, half);
+    }
+
+    [Fact]
     public void DispatchIsTheOldestTaskToTheLowestNumberedIdleDrone()
     {
         // Dull on purpose. Nearest-drone dispatch would depend on distance
