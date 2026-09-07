@@ -673,6 +673,8 @@ public sealed class World
         if (buildable.Kind == BuildKind.Machine && (recipe is null || !catalogue.CanRun(buildable, recipe)))
             return BuildResult.NeedsRecipe;
 
+        var tunnel = TunnelRefusal.None;
+
         var built = buildable.Kind switch
         {
             BuildKind.Machine =>
@@ -706,6 +708,11 @@ public sealed class World
             BuildKind.Inserter => BeltMap.PlaceInserter(
                 x, y, facing, buildable.InserterSwingTicks, buildable.InserterStackSize),
 
+            BuildKind.UndergroundBelt => BeltMap.PlaceUnderground(
+                x, y, facing, buildable.BeltSpeed, buildable.UndergroundReach, out tunnel),
+
+            BuildKind.Splitter => BeltMap.PlaceSplitter(x, y, facing),
+
             _ => false,
         };
 
@@ -716,6 +723,8 @@ public sealed class World
                 // a refusal here is the thing under the tile, not the tile.
                 BuildKind.Miner => BuildResult.NoResource,
                 BuildKind.Pump => BuildResult.NoFluid,
+                BuildKind.UndergroundBelt when tunnel == TunnelRefusal.TooFar
+                    => BuildResult.TooFarToTunnel,
                 _ => BuildResult.Blocked,
             };
 

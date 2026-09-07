@@ -27,6 +27,12 @@ public enum BuildKind
     Belt,
     Inserter,
 
+    /// A pair of tiles with a span between them, placed one end at a time.
+    UndergroundBelt,
+
+    /// One tile, one input, two outputs.
+    Splitter,
+
     /// In the data and craftable, but nothing places it yet. Named rather than
     /// omitted so the UI can say "not yet" instead of silently not listing it.
     NotPlaceable,
@@ -108,6 +114,16 @@ public sealed class Buildable
         _ => BeltUnits.SpeedTurbo,
     };
 
+    /// How far an underground belt of this tier tunnels, measured between the
+    /// two ends: a VLT pair covers four tiles, a QNT pair twelve.
+    ///
+    /// Two per tier rather than a flat span, so the upgrade is felt the same
+    /// way a faster belt is: the same obstacle needs fewer holes, and a
+    /// four-wide bus can finally be crossed in one piece. It is also the reason
+    /// tiering an underground belt is worth doing at all -- speed alone would
+    /// be a reason to replace only the surface belt around it.
+    public int UndergroundReach => Math.Max(2, Tier * 2);
+
     /// Ticks an inserter takes to swing. Faster up the ladder, and a stack
     /// inserter moves more per swing rather than swinging faster.
     public int InserterSwingTicks => Math.Max(4, 20 - Tier * 2);
@@ -187,10 +203,8 @@ public sealed class BuildCatalogue
         "transport_belt" => BuildKind.Belt,
         "inserter" or "stack_inserter" => BuildKind.Inserter,
 
-        // Still unplaceable. An underground belt is a *pair* of tiles with a
-        // span between them, and a splitter straddles two -- both are their own
-        // placement gesture rather than the single tile these two are.
-        "underground_belt" or "splitter" => BuildKind.NotPlaceable,
+        "underground_belt" => BuildKind.UndergroundBelt,
+        "splitter" => BuildKind.Splitter,
 
         // Carried, not built. The manual crafting bench is NOT in this list:
         // it is the one machine the starter kit hands over, and placing it is
@@ -275,4 +289,8 @@ public enum BuildResult
 
     /// A pump or fluid extractor was placed away from the water it needs.
     NoFluid,
+
+    /// An underground belt end was placed in line with an unpaired entrance
+    /// facing the same way, but beyond what this tier can tunnel.
+    TooFarToTunnel,
 }

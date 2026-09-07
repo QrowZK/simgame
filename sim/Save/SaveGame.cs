@@ -250,6 +250,25 @@ public static class SaveGame
                 StackSize = inserter.StackSize,
             });
 
+        foreach (var end in map.Undergrounds)
+            save.UndergroundTiles.Add(new UndergroundTileSave
+            {
+                X = end.X,
+                Y = end.Y,
+                Facing = (int)end.Facing,
+                Speed = end.Speed,
+                Reach = end.Reach,
+                Entrance = end.IsEntrance,
+            });
+
+        foreach (var splitter in map.Splitters)
+            save.SplitterTiles.Add(new SplitterTileSave
+            {
+                X = splitter.X,
+                Y = splitter.Y,
+                Facing = (int)splitter.Facing,
+            });
+
         foreach (var segment in belts.Segments)
         {
             var entry = new BeltSegmentSave { Tiles = segment.Tiles, Speed = segment.Speed };
@@ -461,7 +480,20 @@ public static class SaveGame
             world.BeltMap.PlaceInserter(entry.X, entry.Y, (Direction)entry.Facing,
                                         entry.SwingTicks, entry.StackSize);
 
-        var compiled = save.Tiles.Count > 0;
+        // Underground ends restore their saved role rather than re-deriving it
+        // from placement order: a save is not placed in the order it was built
+        // in the first place -- it is placed in list order -- and a pair whose
+        // entrance loaded second would come back as two entrances.
+        foreach (var entry in save.UndergroundTiles)
+            world.BeltMap.RestoreUnderground(entry.X, entry.Y, (Direction)entry.Facing,
+                                             entry.Speed, entry.Reach, entry.Entrance);
+
+        foreach (var entry in save.SplitterTiles)
+            world.BeltMap.PlaceSplitter(entry.X, entry.Y, (Direction)entry.Facing);
+
+        var compiled = save.Tiles.Count > 0
+                       || save.UndergroundTiles.Count > 0
+                       || save.SplitterTiles.Count > 0;
         if (compiled) world.SyncBelts();
 
         for (var i = 0; i < save.Segments.Count; i++)
@@ -493,9 +525,16 @@ public static class SaveGame
                 belts.SetOutput(segment, lane, FromSave(save.LaneOutputs[i]));
             }
 
-        foreach (var entry in save.Splitters)
+        // A compiled world made its splitters from tiles already, wired to
+        // whatever the tiles say; only what they are holding still needs
+        // restoring. A hand-built one carries its wiring in the save.
+        for (var i = 0; i < save.Splitters.Count; i++)
         {
-            var id = belts.AddSplitter(FromSave(entry.Outputs[0]), FromSave(entry.Outputs[1]));
+            var entry = save.Splitters[i];
+            var id = compiled
+                ? i
+                : belts.AddSplitter(FromSave(entry.Outputs[0]), FromSave(entry.Outputs[1]));
+            if (id >= belts.Splitters.Count) continue;
             belts.Splitters[id].Restore(entry.Buffer.Select(v => Item(v, file)).ToList(), entry.Next);
         }
 

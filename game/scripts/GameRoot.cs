@@ -603,6 +603,8 @@ public sealed partial class GameRoot : Node3D
             BuildResult.NoneCarried => $"You have no {_holding.DisplayName} left.",
             BuildResult.NoResource => "A miner needs ore under it.",
             BuildResult.NoFluid => "A pump needs water or a fluid deposit under it.",
+            BuildResult.TooFarToTunnel =>
+                $"Too far: a {_holding.DisplayName} tunnels {_holding.UndergroundReach} tiles.",
             BuildResult.NeedsRecipe => $"Choose what the {_holding.DisplayName} should make.",
             BuildResult.NotPlaceableYet => $"Nothing places a {_holding.DisplayName} yet.",
             _ => $"Cannot build a {_holding.DisplayName}.",
