@@ -18,7 +18,11 @@ permissions:
 env:
   # A tag push names itself; a manual run is told what to call itself. Both end
   # up as one string, so nothing below has to care which way it was started.
-  VERSION: ${{ github.event.inputs.version || github.ref_name }}
+  #
+  # Not called VERSION. Every environment variable is visible to MSBuild as a
+  # property, so `VERSION=v0.1.0` set the project's Version and the build died
+  # with "'v0.1.0' is not a valid version string" before the export began.
+  RELEASE_TAG: ${{ github.event.inputs.version || github.ref_name }}
 
 jobs:
   export:
@@ -88,10 +92,10 @@ jobs:
         run: |
           cp dist/README.txt dist/windows/README.txt
           cd dist
-          zip -qr ../simgame-${{ env.VERSION }}-linux-x86_64.zip \
+          zip -qr ../simgame-${{ env.RELEASE_TAG }}-linux-x86_64.zip \
             simgame.x86_64 data_Game_linuxbsd_x86_64 README.txt
           cd windows
-          zip -qr ../../simgame-${{ env.VERSION }}-windows-x86_64.zip \
+          zip -qr ../../simgame-${{ env.RELEASE_TAG }}-windows-x86_64.zip \
             simgame.exe data_Game_windows_x86_64 README.txt
 
       - name: Publish the release
@@ -99,11 +103,11 @@ jobs:
         with:
           # Named explicitly so a manual run creates its own tag rather than
           # trying to release the branch it was started from.
-          tag_name: ${{ env.VERSION }}
-          name: ${{ env.VERSION }}
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: ${{ env.RELEASE_TAG }}
           files: |
-            simgame-${{ env.VERSION }}-linux-x86_64.zip
-            simgame-${{ env.VERSION }}-windows-x86_64.zip
+            simgame-${{ env.RELEASE_TAG }}-linux-x86_64.zip
+            simgame-${{ env.RELEASE_TAG }}-windows-x86_64.zip
           body: |
             Automation -- a factory game about logistics.
 
