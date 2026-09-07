@@ -242,6 +242,62 @@ public sealed class FluidSystem
         return true;
     }
 
+    /// Fluid units lost by pulling up a pipe, tank or pump.
+    ///
+    /// Counted for the same reason `VoidedByMixing` is: a player who cannot see
+    /// the loss will never work out where their oil went.
+    public int VoidedByRemoval { get; private set; }
+
+    /// Takes the node on a tile off the map, draining whatever share of its
+    /// network it was holding. Returns false when there is no node there.
+    ///
+    /// The share is taken *and* the network's capacity reduced by the same node
+    /// before the layout is marked dirty. Doing only the first would make the
+    /// next rebuild divide the remaining fluid by the old capacity as well, and
+    /// the difference -- a second helping of the same loss -- would vanish with
+    /// nothing counting it.
+    public bool RemoveNode(int x, int y, out int voided)
+    {
+        voided = 0;
+        var key = Key(x, y);
+        if (!_byTile.TryGetValue(key, out var index)) return false;
+
+        // Settle the networks first, so the share below is computed against a
+        // layout that matches the node list rather than a stale one.
+        Rebuild();
+
+        var node = _nodes[index];
+        var network = _nodeNetwork[index];
+        if (network >= 0 && network < _networks.Count)
+        {
+            var held = _networks[network];
+            if (held.Amount > 0 && held.Capacity > 0)
+            {
+                voided = (int)((long)held.Amount * node.Capacity / held.Capacity);
+                held.Restore(Math.Max(0, held.Capacity - node.Capacity),
+                             held.ThroughputPerTick, held.Fluid, held.Amount - voided);
+                VoidedByRemoval += voided;
+            }
+        }
+
+        // Swap-remove: the tile index of exactly one other node moves, and the
+        // per-node network array has to move with it or the next rebuild would
+        // hand the moved node someone else's contents.
+        var last = _nodes.Count - 1;
+        _nodes[index] = _nodes[last];
+        _nodes.RemoveAt(last);
+        _byTile.Remove(key);
+        if (index != last)
+        {
+            _byTile[Key(_nodes[index].X, _nodes[index].Y)] = index;
+            if (last < _nodeNetwork.Length) _nodeNetwork[index] = _nodeNetwork[last];
+        }
+
+        _dirty = true;
+        Version++;
+        return true;
+    }
+
     /// The network on a tile, or -1.
     public int NetworkAt(int x, int y)
     {

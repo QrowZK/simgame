@@ -53,6 +53,14 @@ public sealed partial class GameRoot : Node3D
     /// Which way the next belt or inserter will face. Held across placements,
     /// because laying a run means placing the same direction many times.
     private Direction _facing = Direction.East;
+
+    /// Whether the next click takes something back rather than inspecting it.
+    ///
+    /// A mode rather than a modifier-click, and mutually exclusive with build
+    /// mode, because both own the left button and a player needs to be able to
+    /// see which one is armed before they click. X is next to the movement
+    /// keys, which is where a key you press between placements has to be.
+    private bool _removing;
     private double _accumulator;
     private int _screenshotCountdown = -1;
     private string _toast = "";
@@ -133,7 +141,7 @@ public sealed partial class GameRoot : Node3D
 
         if (AllArgs().Contains("--screenshot") || AllArgs().Contains("--build-shot")
             || AllArgs().Contains("--belt-shot") || AllArgs().Contains("--uplink-shot")
-            || AllArgs().Contains("--survey-shot"))
+            || AllArgs().Contains("--survey-shot") || AllArgs().Contains("--shore-shot"))
         {
             _screenshotCountdown = 12;      // let a few frames draw first
 
@@ -197,6 +205,7 @@ public sealed partial class GameRoot : Node3D
             else if (AllArgs().Contains("--belt-shot")) FrameTheBelts();
             else if (AllArgs().Contains("--uplink-shot")) ShowTheUplink();
             else if (AllArgs().Contains("--survey-shot")) ShowTheSurvey();
+            else if (AllArgs().Contains("--shore-shot")) FrameTheShore();
             else ShowAnyRunningMachine();
         }
 
@@ -251,7 +260,7 @@ public sealed partial class GameRoot : Node3D
                         $"batches {_renderer.BatchCount}   fps {Engine.GetFramesPerSecond():0}" +
                         power + stored + "\n" +
                         "WASD pan   Q/E rotate   wheel zoom   click a machine to inspect   " +
-                        "B build   P survey   T objectives   R rotate   F5 save   F9 load   F1 script   Esc menu" +
+                        "B build   X remove   P survey   T objectives   R rotate   F5 save   F9 load   F1 script   Esc menu" +
                         (_toastFrames > 0 ? "\n" + _toast : "");
         }
     }
@@ -381,6 +390,16 @@ public sealed partial class GameRoot : Node3D
         var field = _terrain.ViewRadius * 2 + 1;
         GD.Print($"terrain rebuild {field}x{field} tiles in " +
                  $"{terrainWatch.Elapsed.TotalMilliseconds:0.0} ms");
+
+        // Water is recessed into real pools, and a still cannot prove that: a
+        // dark blue plate and a hole in the ground look alike from above. The
+        // count and the deepest recess say it in numbers instead -- measured
+        // over the coast, because spawn is deliberately nowhere near it and a
+        // field with no water in it reports nothing either way.
+        var coast = TerrainRenderer.NearestWater(_world, _rig.Position);
+        if (coast is { } shore) _terrain.Sync(_world, shore);
+        GD.Print($"terrain water   tiles={_terrain.WaterTiles} " +
+                 $"deepest={_terrain.DeepestWater:0.00} below land");
         GD.Print($"build menu      offered={offered} " +
                  $"holding={_holding?.DisplayName ?? "<none>"} ghost={ghostShown}");
         StopBuilding();
@@ -496,6 +515,7 @@ public sealed partial class GameRoot : Node3D
             // then the pause menu. Jumping straight to a menu from an open panel
             // would feel like the game ignored the panel.
             if (_build.IsShowing) StopBuilding();
+            else if (_removing) StopRemoving();
             else if (_quests.IsShowing) _quests.Close();
             else if (_survey.IsShowing) _survey.Close();
             else if (_panel.IsShowing) _panel.Close();
@@ -539,6 +559,26 @@ public sealed partial class GameRoot : Node3D
             return;
         }
 
+        // X arms removal. Build mode is turned off rather than layered under
+        // it: both modes own the left button, and a click that could either
+        // place or destroy depending on state nobody can see is how a player
+        // loses a machine they did not mean to touch.
+        if (@event is InputEventKey { Pressed: true, Keycode: Key.X })
+        {
+            if (_removing) StopRemoving();
+            else StartRemoving();
+            return;
+        }
+
+        // Right-click leaves removal mode too, for the same reason it leaves
+        // build mode.
+        if (_removing && @event is InputEventMouseButton
+            { Pressed: true, ButtonIndex: MouseButton.Right })
+        {
+            StopRemoving();
+            return;
+        }
+
         // Right-click leaves build mode, the same as Escape. A player holding a
         // machine wants out without moving their hand to the keyboard.
         if (_build.IsShowing && @event is InputEventMouseButton
@@ -577,6 +617,12 @@ public sealed partial class GameRoot : Node3D
         if (_build.IsShowing)
         {
             PlaceHeld(tileX, tileY);
+            return;
+        }
+
+        if (_removing)
+        {
+            RemoveAt(tileX, tileY);
             return;
         }
 
@@ -643,6 +689,12 @@ public sealed partial class GameRoot : Node3D
     /// means the ghost can never promise a placement the build then refuses.
     private void UpdateGhost()
     {
+        if (_removing)
+        {
+            UpdateRemovalGhost();
+            return;
+        }
+
         if (!_build.IsShowing || _holding is null)
         {
             _ghost.Hide();
@@ -672,6 +724,86 @@ public sealed partial class GameRoot : Node3D
                           || _world.Ground.TryResourceAt(tileX, tileY, out _, out _));
 
         _ghost.Show(_holding, tileX, tileY, allowed, _renderer.TileSize);
+    }
+
+    public void StartRemoving()
+    {
+        if (_build.IsShowing) StopBuilding();
+        _panel.Close();
+        _removing = true;
+        Say("Removal: click a building to take it back. X or Esc to stop.");
+    }
+
+    public void StopRemoving()
+    {
+        _removing = false;
+        _ghost.Hide();
+        Say("Removal off.");
+    }
+
+    /// The ghost, standing on what the click would take rather than on what it
+    /// would place.
+    ///
+    /// The same ghost, deliberately. It already draws a footprint in the mesh
+    /// of the thing it represents, and the question a player asks before a
+    /// removal click is the one it already answers: *which* building is under
+    /// my cursor, and will this click do anything. Green still means the click
+    /// works and red still means it will be refused, so nothing has to be
+    /// relearned for the second mode.
+    private void UpdateRemovalGhost()
+    {
+        if (!TileUnderCursor(out var tileX, out var tileY))
+        {
+            _ghost.Hide();
+            return;
+        }
+
+        if (!_world.TryRemovableAt(tileX, tileY, out var item, out var anchorX, out var anchorY)
+            || !_buildables.TryGet(item, out var buildable))
+        {
+            _ghost.Hide();
+            return;
+        }
+
+        _ghost.Show(buildable, anchorX, anchorY, true, _renderer.TileSize);
+    }
+
+    /// Takes back what is under the cursor, and says what came with it.
+    ///
+    /// Every refusal gets its own sentence, as with building. The counts are
+    /// said out loud rather than left to the player to notice: a removal that
+    /// hands back eleven items and mentions none of them is indistinguishable
+    /// from one that ate them.
+    public void RemoveAt(int tileX, int tileY)
+    {
+        var report = _world.TryRemove(tileX, tileY);
+
+        var name = report.Ok && _buildables.TryGet(report.Item, out var buildable)
+            ? buildable.DisplayName
+            : "building";
+
+        Say(report.Result switch
+        {
+            RemoveResult.Ok => Removed(name, report),
+            RemoveResult.NothingThere => "Nothing of yours is there.",
+            RemoveResult.UnknownBuilding =>
+                "That was not built from anything you carried, so there is nothing to give back.",
+            _ => "That cannot be removed.",
+        });
+
+        // The panel may have been showing the machine that just went, or one
+        // whose index moved when the arrays closed up behind it.
+        _panel.Close();
+        _build.Refresh();
+    }
+
+    private static string Removed(string name, RemovalReport report)
+    {
+        var text = $"Took back the {name}";
+        if (report.Returned > 0) text += $" and {report.Returned} item(s) inside it";
+        if (report.FluidVoided > 0) text += $"; {report.FluidVoided} fluid drained away";
+        if (report.Spilled > 0) text += $"; {report.Spilled} item(s) fell off the belt";
+        return text + ".";
     }
 
     private bool TileUnderCursor(out int tileX, out int tileY)
@@ -804,6 +936,25 @@ public sealed partial class GameRoot : Node3D
 
     /// Points the camera at the belt line and closes the panel, so a capture
     /// shows the belts rather than a corner of them behind a GUI.
+    /// Capture path for the coastline. Worldgen lifts the whole home region
+    /// out of the sea so a new game is playable, so every other capture in this
+    /// file is inland and the shoreline -- the one place this renderer puts
+    /// relief -- appears in none of them. Walks out to the nearest water and
+    /// frames it close enough that the bank and the pool floor are both legible.
+    private void FrameTheShore()
+    {
+        _panel.Close();
+        _quests.Close();
+
+        var coast = TerrainRenderer.NearestWater(_world, _rig.Position);
+        if (coast is not { } shore) return;
+
+        _rig.Position = shore;
+        _rig.ZoomLevel = 48f;
+        _rig.Apply();
+        _terrain.Sync(_world, _rig.Position);
+    }
+
     private void FrameTheBelts()
     {
         _panel.Close();

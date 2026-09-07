@@ -25,20 +25,33 @@ Where to start: `sim.tests/OpeningRouteTests.cs` --
 `godot --headless --path game -- --session-test` prints `first usable`, which
 CI now greps for rank 1.
 
-## [qa → gameplay] Removal does not exist, and an unpaired tunnel entrance is permanent
-**S3, and the answer to the `TooFarToTunnel` question in ADR 0018.** The refusal
-itself is right and the message teaches the span. What is wrong is that it cannot
-be undone: an entrance placed by mistake refuses every same-facing end from
-`reach+1` to `reach*2` ahead of it, and nothing removes it, so that band of the
-player's bus is unbuildable for the life of the save.
+## [gameplay → qa] Try to break removal, and what the swap-remove moved
+ADR 0028. Anything a player placed can be taken back with X and a click: the
+building plus everything inside it, on ADR 0021's eviction rule. Save format is
+12, because a build now records which item paid for it and removal hands that
+item back. F4 is closed -- the tunnel band is freed by pulling the entrance, and
+`--session-test` prints `--- removal ok ---` walking it end to end.
 
-Done looks like: removal for placed things. F1 (one bench, one recipe) is closed
-by retasking instead — ADR 0021 — so this stands on its own now: the tunnel band,
-and undoing a misplacement.
+Worth attacking specifically: **swap-remove**, which is where I would expect the
+bug to be. Removing a machine, miner, pump, generator, accumulator or pole moves
+the *last* one of its kind into the freed slot and repaints one occupancy entry.
+My tests check three machines and three poles; nobody has checked what a
+`Controller` program, a drone with a task in flight, or an inserter mid-swing
+sees when the machine it was talking to changes index underneath it. Belt
+endpoints hold machine indices and I force a recompile after every removal -- a
+drone hauling to a machine that moves is the case I did not test.
 
-Where to start: `AnUnpairedEntrance_RefusesEndsOutToTwiceItsReach` pins the band
-exactly (verified 1–4 pair, 5–8 refused, 9+ allowed at reach=4). Report:
-`docs/0020-opening-playthrough-qa.md` (F4).
+Also worth attacking: removing a machine an inserter is feeding *this tick*;
+removing the only Uplink mid-delivery (the item comes back, but `Research`
+progress is not something removal touches); removing a tank with 20k of fluid in
+it, which is voided and only reported as a number; two tunnels sharing a span
+where one entrance is pulled; and `UnknownBuilding` -- anything placed outside
+`TryBuild` can never be removed, which is honest but is a trap if some future
+scenario code places things for the player.
+
+Where to start: `sim.tests/RemovalTests.cs` (22 tests), and
+`godot --headless --path game -- --session-test`, which greps for
+`--- removal ok ---`. Worth adding to `ci.yml` alongside the other flow lines.
 
 ## [gameplay → qa] Try to break retasking, and the route test that now guards the opening
 ADR 0021 makes a placed machine's recipe changeable and evicts everything inside
@@ -99,3 +112,24 @@ time icons are touched, not worth a pass of its own.
 The three smoke lines flagged as ungrepped are now asserted in `ci.yml`
 (F6 in `docs/0020-opening-playthrough-qa.md`). The icon check compares the two
 counts rather than pinning 617, so adding an item will not turn CI red.
+
+## [art → qa] `--start-shot` on its own never captures, and hangs
+Found while shooting the ground work. `Cli.WantsHeadlessRun` accepts
+`--start-shot`, so Boot starts a real new game headlessly, but `GameRoot._Ready`
+does not list `--start-shot` among the flags that arm `_screenshotCountdown`.
+The result is a run that renders forever and writes nothing -- it has to be
+spelled `--screenshot --start-shot` to produce a file. `--menu-shot` and
+`--editor-shot` are worth checking for the same shape of gap.
+
+Predates this work and I have not touched it: the fix is in `GameRoot._Ready`,
+which gameplay is editing right now. `README.md` documents `--start-shot` as a
+capture flag, so today the docs and the code disagree.
+
+## [art → gameplay] The demo world builds machines in the sea
+`--shore-shot` on the `--machines=4096` demo world puts several hundred machines
+standing in open water, because `DemoWorld` places on a plain grid and never
+asks `WorldGen.IsWater`. Harmless to the sim and invisible until the water had a
+surface to stand on, which it now does -- see `docs/0029`. It only affects the
+placeholder factory, not a real game, so nothing is blocked; but any capture of
+the demo world near a coast now looks like a bug in placement. `--shore-shot`
+takes `--start-shot` alongside it to get a real world for this reason.

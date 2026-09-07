@@ -53,7 +53,13 @@ public sealed class SaveFile
     /// keyed to patches at coordinates that no longer hold those patches, and a
     /// miner standing on ore that has moved out from under it is precisely the
     /// silent wrongness this number exists to refuse.
-    public const int CurrentVersion = 11;
+    /// 12 added the item each building was placed from, which is what removal
+    /// hands back (ADR 0028). A version 11 file loaded as 12 would come back
+    /// with no record for anything on the map, so every belt, pole and machine
+    /// in a twenty-hour factory would refuse to be picked up -- the exact
+    /// permanence this change exists to end, reintroduced silently by a file
+    /// that looked like it loaded correctly.
+    public const int CurrentVersion = 12;
 
     public int Version { get; set; } = CurrentVersion;
     public int Seed { get; set; }
@@ -65,6 +71,11 @@ public sealed class SaveFile
     public List<string> Items { get; set; } = new();
 
     public List<StackSave> Player { get; set; } = new();
+
+    /// Which item paid for the building anchored on each tile. Written in
+    /// coordinate order rather than in build order, so the same world saved
+    /// twice produces the same bytes.
+    public List<BuiltSave> Built { get; set; } = new();
     public List<MachineSave> Machines { get; set; } = new();
     public List<MinerSave> Miners { get; set; } = new();
 
@@ -180,6 +191,14 @@ public sealed class MinerSave
     public int Energy { get; set; }
     public int PowerDraw { get; set; }
     public MachineState State { get; set; }
+}
+
+/// One "this tile's building was built from this item" record.
+public sealed class BuiltSave
+{
+    public int X { get; set; }
+    public int Y { get; set; }
+    public int Item { get; set; }
 }
 
 public sealed class PoleSave

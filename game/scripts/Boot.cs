@@ -271,7 +271,69 @@ public sealed partial class Boot : Node
 
         GD.Print(ok ? "--- building ok ---" : "building        FAILED");
 
+        RunRemovalFlow();
         RunOpeningRoute();
+    }
+
+    /// Removal, played as a player plays it: put something down, take it back,
+    /// and find both the item and the tile where they were before.
+    ///
+    /// The second half is the case that made removal exist (ADR 0028): an
+    /// underground belt entrance placed by mistake refuses every same-facing
+    /// end from reach+1 to reach*2 ahead of it, and before this that band of
+    /// the player's bus was unbuildable for the life of the save.
+    private void RunRemovalFlow()
+    {
+        GD.Print("--- removal ---");
+
+        var world = GameSession.NewGame(seed: 20260907);
+        var catalogue = new Sim.BuildCatalogue(Sim.Data.Catalogue.Instance);
+
+        var bench = catalogue.Offerable
+                             .First(b => world.PlayerInventory.Count(b.Item) > 0);
+        var recipe = catalogue.RecipesFor(bench).FirstOrDefault(r => r.Id == "build_man_furnace")
+                     ?? catalogue.RecipesFor(bench).FirstOrDefault();
+
+        var (x, y) = (0, 0);
+        for (var r = 0; r < 200 && !Free(world, bench, x, y); r++)
+            (x, y) = (r, 0);
+
+        var carried = world.PlayerInventory.Count(bench.Item);
+        var built = world.TryBuild(catalogue, bench.Item, x, y, recipe);
+        var report = world.TryRemove(x, y);
+        var backAgain = world.TryBuild(catalogue, bench.Item, x, y, recipe);
+
+        GD.Print($"built           {built} at {x},{y}");
+        GD.Print($"removed         {report.Result} returning " +
+                 $"{world.Items.GetName(report.Item)} +{report.Returned} inside");
+        GD.Print($"carrying        {carried} before, " +
+                 $"{world.PlayerInventory.Count(bench.Item)} after rebuild");
+        GD.Print($"tile reusable   {backAgain}");
+        GD.Print($"bare ground     {world.TryRemove(x + 40, y + 40).Result}");
+
+        // The tunnel band, end to end.
+        var tunnel = catalogue.Find("vlt_underground_belt")!;
+        var band = tunnel.UndergroundReach + 1;
+        world.PlayerInventory.Add(tunnel.Item, 2);
+        var entrance = world.TryBuild(catalogue, tunnel.Item, 200, 0, null, Sim.Direction.East);
+        var refused = world.TryBuild(catalogue, tunnel.Item, 200 + band, 0, null,
+                                     Sim.Direction.East);
+        var freed = world.TryRemove(200, 0);
+        var afterward = world.TryBuild(catalogue, tunnel.Item, 200 + band, 0, null,
+                                       Sim.Direction.East);
+
+        GD.Print($"tunnel band     entrance={entrance} then {refused} at +{band}");
+        GD.Print($"entrance pulled {freed.Result}, band now {afterward}");
+
+        var ok = built == Sim.BuildResult.Ok
+                 && report.Result == Sim.RemoveResult.Ok
+                 && backAgain == Sim.BuildResult.Ok
+                 && world.PlayerInventory.Count(bench.Item) == carried - 1
+                 && refused == Sim.BuildResult.TooFarToTunnel
+                 && freed.Result == Sim.RemoveResult.Ok
+                 && afterward == Sim.BuildResult.Ok;
+
+        GD.Print(ok ? "--- removal ok ---" : "removal         FAILED");
     }
 
     /// The opening route, played end to end on what a new game is actually
@@ -586,7 +648,8 @@ public static class Cli
 
     public static bool WantsHeadlessRun() =>
         Has("--smoke") || Has("--screenshot") || Has("--machines") || Has("--start-shot")
-        || Has("--build-shot") || Has("--survey-shot") || Has("--belt-shot") || Has("--uplink-shot");
+        || Has("--build-shot") || Has("--survey-shot") || Has("--belt-shot") || Has("--uplink-shot")
+        || Has("--shore-shot");
 
     public static int ReadInt(string name, int fallback)
     {
