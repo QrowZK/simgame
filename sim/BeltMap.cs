@@ -134,10 +134,23 @@ public sealed class BeltMap
     /// list, or every world that builds segments by hand -- the tests, the
     /// placeholder factory, an older save -- would have them wiped on its first
     /// tick.
+    /// Each compiled segment's tiles, entry first and exit last. Rendering needs
+    /// it to put an item riding at a given distance from a segment's exit onto
+    /// the tile it is actually crossing.
+    private readonly List<List<PlacedBelt>> _segmentTiles = new();
+
     private bool _dirty;
 
     public IReadOnlyList<PlacedBelt> Belts => _belts;
     public IReadOnlyList<PlacedInserter> Inserters => _inserters;
+
+    /// The tiles a compiled segment runs across, entry first.
+    public IReadOnlyList<PlacedBelt> TilesOfSegment(int segment)
+        => segment >= 0 && segment < _segmentTiles.Count
+            ? _segmentTiles[segment]
+            : Array.Empty<PlacedBelt>();
+
+    public int SegmentCount => _segmentTiles.Count;
 
     /// Bumped on every rebuild, so renderers and caches can tell when the
     /// compiled topology changed without diffing it.
@@ -208,6 +221,7 @@ public sealed class BeltMap
 
         network.ClearSegments();
         _tileSegment.Clear();
+        _segmentTiles.Clear();
 
         // Where segments must break. An inserter's tiles are boundaries so that
         // it takes from and gives to the exact tile it faces: an item handed to
@@ -276,6 +290,7 @@ public sealed class BeltMap
         {
             var run = runs[i];
             var segment = network.AddCompiledSegment(run.Count, run[0].Speed);
+            _segmentTiles.Add(run);
 
             // The run is entry-first, so the last tile's exit edge is the
             // segment's exit: distance zero.

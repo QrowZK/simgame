@@ -98,6 +98,12 @@ jobs:
           # Accumulators must exist and be taking charge: a bank that is on no
           # network stores nothing and would pass a count-only check.
           grep -qE "accumulators    [1-9][0-9]* stored=[1-9]" smoke.log
+          # Belts: tiles compile into segments, and a long straight run must
+          # stay ONE segment -- a segment per tile would throw away the whole
+          # reason a lane advances in O(1). Items have to reach the renderer
+          # too: a belt nobody can see anything moving on is a grey strip.
+          grep -qE "belts           tiles=[1-9][0-9]* segments=[1-9] inserters=[1-9]" smoke.log
+          grep -qE "belts .* items drawn=[1-9][0-9]*" smoke.log
           # Build mode: the menu offers something and the ghost actually
           # appears. A build UI that lists machines and previews nothing looks
           # fine in a screenshot and cannot be used.
@@ -138,6 +144,14 @@ jobs:
           grep -q "built           Ok" session.log
           grep -q "same tile       Blocked" session.log
           grep -q "no recipe       NeedsRecipe" session.log
+          # Belts: a run laid tile by tile from the inventory, an inserter at
+          # the end of it, and ore actually arriving in a machine that had
+          # none. Getting an inserter's reach wrong is silent -- it just holds
+          # an item forever -- so the assertion is that ore arrived.
+          grep -q -- "--- belts ok ---" session.log
+          grep -qE "laid            [1-9] belt tiles" session.log
+          grep -q "reached machine True" session.log
+          grep -q "spilled         0" session.log
           # Fluids: water pumped from a lake, piped inland, and consumed by a
           # machine. The whole chain, with nothing hand-fed.
           grep -q -- "--- fluids ok ---" session.log

@@ -141,6 +141,7 @@ public sealed partial class Boot : Node
         GD.Print($"ground fell     {after < before - dug}");
 
         RunBuildFlow();
+        RunBeltFlow();
         RunPowerFlow(world, hit.X, hit.Y);
         RunFluidFlow(world);
         GD.Print("--- start flow ok ---");
@@ -200,6 +201,89 @@ public sealed partial class Boot : Node
                  && world.PlayerInventory.Count(bench.Item) == 1;
 
         GD.Print(ok ? "--- building ok ---" : "building        FAILED");
+    }
+
+    /// Belts as a player lays them: a run of tiles built one at a time from the
+    /// inventory, an inserter at the end of it, and ore actually arriving in a
+    /// machine that had none.
+    ///
+    /// The unit tests cover the compiler; this covers the path through the
+    /// build UI to it, and the thing a player would notice immediately if it
+    /// broke -- that a line they laid moves anything at all.
+    private void RunBeltFlow()
+    {
+        GD.Print("--- belts ---");
+
+        var catalogue = Sim.Data.Catalogue.Instance;
+        var buildables = new Sim.BuildCatalogue(catalogue);
+        var world = GameSession.NewGame(seed: 20260907);
+
+        var belt = buildables.Find("stm_transport_belt")!;
+        var inserter = buildables.Find("stm_inserter")!;
+        var furnace = buildables.Find("stm_furnace")!;
+
+        // A recipe that eats what the belt will carry.
+        var ore = catalogue.Item("chalcopyrite");
+        var recipe = buildables.RecipesFor(furnace)
+                               .FirstOrDefault(r => r.Inputs.Any(i => i.Item.Equals(ore)));
+        if (recipe is null)
+        {
+            GD.Print("belts           FAILED: no furnace recipe takes the ore");
+            return;
+        }
+
+        world.PlayerInventory.Add(belt.Item, 12);
+        world.PlayerInventory.Add(inserter.Item, 1);
+        world.PlayerInventory.Add(furnace.Item, 1);
+
+        // Far enough out to be clear of the landing site's ore and water.
+        const int y = 60;
+        var laid = 0;
+        for (var x = 0; x < 8; x++)
+            if (world.TryBuild(buildables, belt.Item, x, y, facing: Sim.Direction.East)
+                == Sim.BuildResult.Ok) laid++;
+
+        // The arm stands at (7, y-1) facing north: it reaches back to the belt
+        // tile at (7, y) and forward into the furnace at (7, y-2). Getting this
+        // wrong is silent -- the inserter simply holds an item forever -- which
+        // is why the check below is "did ore arrive" and not "did it build".
+        var machineBuilt = world.TryBuild(buildables, furnace.Item, 7, y - 2, recipe);
+        var armBuilt = world.TryBuild(buildables, inserter.Item, 7, y - 1,
+                                      facing: Sim.Direction.North);
+
+        world.SyncBelts();
+
+        GD.Print($"laid            {laid} belt tiles -> {world.Belts.Segments.Count} segments");
+        GD.Print($"inserter        {armBuilt} machine={machineBuilt}");
+
+        // Ore onto the head of the line, the way a miner's inserter would.
+        var head = world.BeltMap.SegmentAt(0, y);
+        var placed = 0;
+        for (var i = 0; i < 6 && head >= 0; i++)
+        {
+            if (world.Belts.Segments[head].LaneAt(0).TryInsertBack(ore)) placed++;
+            world.Tick(20);
+        }
+
+        GD.Print($"loaded          {placed} onto the belt");
+
+        world.Tick(1200);
+
+        var arrived = world.MachineCount > 0
+            ? world.Machines[0].GetInputCount(ore) + world.Machines[0].GetOutputCount(
+                  world.Machines[0].Recipe.Outputs[0].Item)
+            : 0;
+
+        GD.Print($"reached machine {arrived > 0}");
+        GD.Print($"spilled         {world.BeltMap.SpilledOnRemoval}");
+
+        var ok = laid == 8 && world.Belts.Segments.Count >= 1
+                 && armBuilt == Sim.BuildResult.Ok
+                 && machineBuilt == Sim.BuildResult.Ok
+                 && placed > 0 && arrived > 0
+                 && world.BeltMap.SpilledOnRemoval == 0;
+
+        GD.Print(ok ? "--- belts ok ---" : "belts           FAILED");
     }
 
     private static bool Free(Sim.World world, Sim.Buildable buildable, int x, int y)
@@ -383,7 +467,7 @@ public static class Cli
 
     public static bool WantsHeadlessRun() =>
         Has("--smoke") || Has("--screenshot") || Has("--machines") || Has("--start-shot")
-        || Has("--build-shot");
+        || Has("--build-shot") || Has("--belt-shot");
 
     public static int ReadInt(string name, int fallback)
     {
