@@ -45,6 +45,63 @@ dotnet build game/Game.csproj -c ExportRelease
 echo "exporting..."
 "$GODOT" --headless --path game --export-release "Linux/X11" ../dist/simgame.x86_64
 
+# A player-facing note, shipped beside the binary. Someone handed a folder of
+# 67 MB of ELF and a data_ directory has no way to know what to press, and the
+# in-game HUD only helps once they are already past the menu.
+cat > dist/README.txt <<'NOTE'
+AUTOMATION -- a factory game
+
+Run ./simgame.x86_64
+
+Keep the data_Game_linuxbsd_x86_64 folder beside the executable. It holds the
+.NET assemblies; without it the game exits immediately.
+
+
+THE IDEA
+
+Your probe came apart on entry. The fabricator survived; nothing else did.
+
+A Von Neumann probe exists to make another Von Neumann probe. Yours cannot,
+yet -- the machine that builds Seeds is itself a Seed's worth of industry. So
+you start with what a lander carries: a survey device, your hands, and enough
+stone to make a bench.
+
+Build the industry. Build the Seed. Send it on.
+
+
+GETTING STARTED
+
+You land with a prospector, your hands and 24 stone, and no factory at all.
+
+  1. Press B and place the Crafting Bench you are carrying.
+  2. Click it to open its panel. Feed it stone by hand and craft.
+  3. Click the recipe list in that panel to change what it makes -- one bench
+     can make anything at its tier, one recipe at a time.
+  4. Craft your way to a furnace, then a miner, then put the miner on ore.
+  5. From there it is belts, inserters and power.
+
+
+CONTROLS
+
+  WASD          pan
+  Q / E         rotate
+  mouse wheel   zoom
+  click         inspect a machine
+  B             build menu
+  R             rotate what you are holding
+  F1            script editor (Lua, for drones)
+  F5 / F9       quick save / quick load
+  Esc           menu
+
+
+KNOWN ROUGH EDGES
+
+  - The nearest ore is often something your first furnace cannot smelt yet.
+    Prospect for iron, copper, tin, or coal specifically.
+  - Nothing can be picked up or removed once placed. Choose tiles with care.
+  - Single player only.
+NOTE
+
 if [ ! -s dist/simgame.x86_64 ]; then
     echo "export.sh: no binary produced" >&2
     exit 1
