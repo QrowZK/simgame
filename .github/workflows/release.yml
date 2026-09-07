@@ -6,9 +6,19 @@ on:
   push:
     tags: ['v*']
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release, e.g. v0.1.0. The tag is created for you.'
+        required: true
+        type: string
 
 permissions:
   contents: write
+
+env:
+  # A tag push names itself; a manual run is told what to call itself. Both end
+  # up as one string, so nothing below has to care which way it was started.
+  VERSION: ${{ github.event.inputs.version || github.ref_name }}
 
 jobs:
   export:
@@ -78,18 +88,22 @@ jobs:
         run: |
           cp dist/README.txt dist/windows/README.txt
           cd dist
-          zip -qr ../simgame-${{ github.ref_name }}-linux-x86_64.zip \
+          zip -qr ../simgame-${{ env.VERSION }}-linux-x86_64.zip \
             simgame.x86_64 data_Game_linuxbsd_x86_64 README.txt
           cd windows
-          zip -qr ../../simgame-${{ github.ref_name }}-windows-x86_64.zip \
+          zip -qr ../../simgame-${{ env.VERSION }}-windows-x86_64.zip \
             simgame.exe data_Game_windows_x86_64 README.txt
 
       - name: Publish the release
         uses: softprops/action-gh-release@v2
         with:
+          # Named explicitly so a manual run creates its own tag rather than
+          # trying to release the branch it was started from.
+          tag_name: ${{ env.VERSION }}
+          name: ${{ env.VERSION }}
           files: |
-            simgame-${{ github.ref_name }}-linux-x86_64.zip
-            simgame-${{ github.ref_name }}-windows-x86_64.zip
+            simgame-${{ env.VERSION }}-linux-x86_64.zip
+            simgame-${{ env.VERSION }}-windows-x86_64.zip
           body: |
             Automation -- a factory game about logistics.
 
