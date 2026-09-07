@@ -173,10 +173,17 @@ public sealed partial class GameRoot : Node3D
         _drones.Sync(_world);
         _belts.Sync(_world, _renderer.TileSize);
 
-        // Open the inspection panel just before the capture, so a screenshot
-        // shows the GUI rather than only proving the world draws. It has to
-        // happen after some ticks: nothing is Working before the first one.
-        if (_screenshotCountdown == 2)
+        // Open the inspection panel before the capture, so a screenshot shows
+        // the GUI rather than only proving the world draws. It has to happen
+        // after some ticks: nothing is Working before the first one.
+        //
+        // Four frames of margin, not one. `GetViewport().GetTexture()` returns
+        // the frame that was *already drawn* when _Process runs, so anything
+        // set up here is invisible to a capture taken in the same pass -- a
+        // machine placed for the shot rendered as empty ground, and the shot
+        // looked like a renderer bug for a while. The gap has to cover the
+        // world change, the next Sync, and the draw that follows it.
+        if (_screenshotCountdown == 4)
         {
             if (AllArgs().Contains("--build-shot")) OpenBuildForCapture();
             else if (AllArgs().Contains("--belt-shot")) FrameTheBelts();
@@ -701,6 +708,10 @@ public sealed partial class GameRoot : Node3D
     /// rather than proving only that the menu exists.
     private void OpenBuildForCapture()
     {
+        // One panel at a time: the objectives panel covers the build menu, and
+        // a capture of two overlapping panels shows neither of them properly.
+        _quests.Close();
+
         // Hand over one of everything placeable, so the menu has a real list
         // rather than the one bench a new game carries.
         foreach (var buildable in _buildables.Offerable)
@@ -710,16 +721,21 @@ public sealed partial class GameRoot : Node3D
 
         if (_holding is null) return;
 
-        // Somewhere it would actually be allowed, so the capture shows the
-        // ordinary case. The refusal colour is covered by the unit tests.
-        for (var d = 0; d < 40; d++)
-        {
-            var placement = _holding.PlacementAt(d, -4);
-            if (!_world.CanPlace(placement) || _world.CoversFluidNode(placement)) continue;
+        // Close enough that the preview reads. At the default zoom the ghost
+        // was four pixels of green and proved nothing.
+        _rig.ZoomLevel = 16f;
+        _rig.Apply();
 
-            _ghost.Show(_holding, d, -4, true, _renderer.TileSize);
-            return;
-        }
+        // The cursor drives the preview, so the capture moves the cursor rather
+        // than placing a ghost directly: `UpdateGhost` re-derives it from the
+        // mouse every frame and would drop anything shown here on the next one.
+        //
+        // Clear of the menu, deliberately. The ghost is hidden while the
+        // pointer is over the build panel -- a preview of a click the panel
+        // will eat -- so a cursor parked at screen centre, which is inside the
+        // panel's rect, produced a capture with no ghost in it at all.
+        Input.WarpMouse(new Vector2(GetViewport().GetVisibleRect().Size.X * 0.72f,
+                                    GetViewport().GetVisibleRect().Size.Y * 0.22f));
     }
 
     /// Capture path for the Uplink: put one down, give it something research
@@ -775,6 +791,11 @@ public sealed partial class GameRoot : Node3D
             _rig.Position = new Vector3((a.X + b.X + 1) * 0.5f * _renderer.TileSize, 0f,
                                         (a.Y + b.Y + 1) * 0.5f * _renderer.TileSize);
             _rig.ZoomLevel = 22f;
+
+            // Zoom is the orthographic size, and nothing re-reads it until the
+            // rig is applied -- setting it alone left the belt capture at the
+            // default framing, too far out to see a tunnel end.
+            _rig.Apply();
             return;
         }
 
@@ -784,6 +805,7 @@ public sealed partial class GameRoot : Node3D
         _rig.Position = new Vector3((belt.X + 0.5f) * _renderer.TileSize, 0f,
                                     (belt.Y + 0.5f) * _renderer.TileSize);
         _rig.ZoomLevel = 16f;
+        _rig.Apply();
     }
 
     private void Say(string message)

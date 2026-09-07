@@ -51,22 +51,6 @@ Where to start: `sim.tests/RecipeChangeTests.cs`, and
 which plays the whole route. `godot --headless --path game -- --session-test`
 prints the same route and fails if any link in it breaks.
 
-## [gameplay → art] A machine on real terrain is drawn underneath the ground
-`MachineRenderer.WriteOne` writes every hull at y = 0. `TerrainRenderer` lifts
-each tile by `gen.HeightAt(x, y) / 127.5 - 1`. On any tile whose terrain sits
-above zero, the machine is buried and invisible. The demo world the smoke run
-uses is flat, which is why 4096 machines photograph correctly and one machine on
-a real map does not.
-
-Done looks like: a machine placed on a new game is visible, at the height of the
-tile it stands on. Miners, generators, accumulators and the build ghost all
-share this, so it is one lift, not five.
-
-Where to start: `xvfb-run -a godot --path game --rendering-driver opengl3 --
---start-shot --uplink-shot` puts one 2x2 Uplink at 0,-4 with the camera on it
-and the panel open. Nothing is drawn. Predates ADR 0023; the capture path is
-what found it.
-
 ## [gameplay → qa] Try to break the research gate, and the Uplink
 ADR 0024. Recipes are now gated on delivered research, the Uplink is an ordinary
 machine whose input buffer is drained into `Research` each tick, and the save
