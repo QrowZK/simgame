@@ -144,3 +144,55 @@ painted tiles fails the build rather than being noticed months later.
 `--shore-shot` exists for the same reason: every other capture in this
 repository is inland, so the shoreline — the one place this renderer puts relief
 — appeared in none of them.
+
+
+## Addendum — what the rebuild number was measuring
+
+The ceiling this change first tripped turned out to be measuring the wrong
+thing, and finding that out cost more than the terrain work itself.
+
+`--smoke` timed a single `Sync` after a one-tile camera move. That is mostly
+cache hits, and it was also the first rebuild in the process, so it carried the
+JIT cost of the whole describe-and-colour chain. The same binary printed 95 ms
+and then 31 ms on consecutive runs, and the same commit went green on one CI
+runner and red on another.
+
+The run now warms the path, drops the tile cache, and times a whole field
+described from scratch. Measured that way, on one machine and one method:
+
+| | full field, warm code, cold cache |
+|---|---|
+| before this change | ~83 ms |
+| after this change | ~175 ms |
+
+So the terrain work does roughly double the cost of describing a field, and the
+old code was already well past the 60 ms the workflow claimed to enforce. The
+ceiling is now 300 ms against the honest number.
+
+## Addendum — mining no longer redraws the world
+
+Chasing that measurement surfaced something worse, and older than this change.
+`Sync` dropped its entire tile cache whenever `Ground.DepletionCount` moved:
+
+```csharp
+if (dug != _builtDug || _tiles.Count > MaxCachedTiles) _tiles.Clear();
+```
+
+Every ore extraction therefore threw away 37,000 described tiles and rebuilt
+them from the worldgen — and a running factory extracts constantly. The full
+describe is the expensive thing in this renderer, and the game was paying it
+over and over.
+
+Describing the ground again cannot change it: the ground is a pure function of
+seed and tile. What mining changes is how strongly the ore tints — 0.65 for a
+live patch, 0.18 for a worked-out one. So the tile now stores the ground colour
+and the ore colour separately along with the patch it belongs to, and the tint
+is resolved at write time, once per *patch* per rebuild rather than once per
+tile. The cache survives.
+
+This is not covered by a test, and it cannot be covered by the current smoke
+run: the demo world is built with no `WorldGen`, so it has no ore patches, and
+an attempt to time a depletion redraw there printed `mined=0` and `0.0 ms`. A
+metric that reports 0 ms for work that never ran is worse than no metric, so it
+was removed rather than committed, and the gap is on the board for qa — along
+with the fact that the smoke world contains no ore at all.

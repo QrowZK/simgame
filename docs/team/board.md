@@ -5,6 +5,25 @@ this is a queue, not a log. Format and rules: `docs/team/README.md`.
 
 ---
 
+## [coordinator → qa] Mining no longer redraws the world, and nothing proves it
+The renderer used to drop its whole 37,000-tile cache on every ore extraction
+and describe the field again from the worldgen. With miners running that is
+constant, and a full describe measures ~175 ms. `TerrainRenderer.Sync` now keeps
+the cache and resolves the ore tint per *patch* at write time, so a depletion
+redraws from cached tiles instead.
+
+Nothing tests it. I tried to measure it in `--smoke` and could not: the demo
+world is built as `new World(seed, db)` with no `WorldGen`, so it has no ore
+patches at all and the redraw never ran -- the timing printed `mined=0` and
+`0.0 ms`, which is why that line is not in the commit. Worth knowing on its own:
+**the smoke run's world contains no ore, so nothing about ore rendering is
+covered there.**
+
+Done looks like: a test that mines a patch and asserts the field is not
+re-described (tile cache retained), and that a worked-out patch still draws at
+the dimmer tint. Where to start: `TerrainRenderer.ForgetCachedTiles`, the
+`_alive` map in `Sync`, and `docs/0029`.
+
 ## [gameplay → qa] Try to break the starter-ore guarantee and the survey device
 ADR 0026 closes F2. Worldgen now deals a guaranteed patch of a resource the
 player can use 12-40 tiles from spawn, which ores those are is derived from the

@@ -383,8 +383,24 @@ public sealed partial class GameRoot : Node3D
         // rebuild evaluates it once per visible tile. It only happens when the
         // camera crosses a tile boundary, but it happens inside a frame, so the
         // cost of the whole field is worth a number rather than a shrug.
-        var terrainWatch = System.Diagnostics.Stopwatch.StartNew();
+        // Warm first, then measure a genuinely cold field.
+        //
+        // Timed naively this number says almost nothing: the first rebuild in a
+        // process pays JIT for the whole describe-and-colour chain and measured
+        // 95 ms, while the same code a moment later measured 31 ms. CI asserts a
+        // ceiling on it, so the same commit went green on one runner and red on
+        // another. A rebuild after a small camera move is no better -- it is
+        // mostly cache hits, and measures the cache.
+        //
+        // So: rebuild twice to warm the path, drop the tile cache, and time the
+        // full field. Warm code, cold cache, which is what "the cost of
+        // describing the whole field" means.
         _terrain.Sync(_world, _rig.Position + new Vector3(1f, 0f, 1f));
+        _terrain.Sync(_world, _rig.Position + new Vector3(2f, 0f, 2f));
+        _terrain.ForgetCachedTiles();
+
+        var terrainWatch = System.Diagnostics.Stopwatch.StartNew();
+        _terrain.Sync(_world, _rig.Position + new Vector3(3f, 0f, 3f));
         terrainWatch.Stop();
 
         var field = _terrain.ViewRadius * 2 + 1;

@@ -112,21 +112,43 @@ public sealed partial class TerrainRenderer : Node3D
     /// land tile without exception, negative for water.
     private readonly struct Tile
     {
+        /// The ground, with no ore in it. Depends only on seed and position, so
+        /// it is true for the life of the world.
         public readonly Color Colour;
+
+        /// The ore tint, and which patch it came from. Kept apart from `Colour`
+        /// because mining changes only how strongly this is mixed in -- a live
+        /// patch at 0.65, a worked-out one at 0.18. Holding the two separately
+        /// is what lets a depletion redraw without describing anything again.
+        public readonly Color Ore;
+        public readonly long Patch;
+
         public readonly float Top;
         public readonly float Bottom;
         public readonly float Width;
 
-        public Tile(Color colour, float top, float bottom, float width)
+        public Tile(Color colour, float top, float bottom, float width,
+                    Color ore = default, long patch = NoPatch)
         {
             Colour = colour;
             Top = top;
             Bottom = bottom;
             Width = width;
+            Ore = ore;
+            Patch = patch;
         }
 
         public bool IsWater => Top < 0f;
+        public bool HasOre => Patch != NoPatch;
     }
+
+    /// No patch under this tile. A real patch key is an anchor packed into a
+    /// long, and anchors are signed, so the sentinel cannot be a coordinate.
+    private const long NoPatch = long.MinValue;
+
+    /// Which patches still hold something, for the rebuild in progress. Cleared
+    /// every rebuild: it is the one thing mining actually changes.
+    private readonly System.Collections.Generic.Dictionary<long, bool> _alive = new();
 
     /// Water tiles are drawn slightly wider than land ones.
     ///
@@ -186,8 +208,17 @@ public sealed partial class TerrainRenderer : Node3D
 
         _builtX = centreX;
         _builtY = centreY;
-        if (dug != _builtDug || _tiles.Count > MaxCachedTiles) _tiles.Clear();
+
+        // Mining does NOT drop the cache. It used to, and that was the single
+        // most expensive thing the renderer did: every ore extraction threw
+        // away 37,000 described tiles and rebuilt them from the worldgen, and a
+        // running factory extracts constantly. Describing the ground again
+        // cannot change it -- the ground is a pure function of seed and tile.
+        // What mining changes is how strongly the ore tints, and that is
+        // resolved below, per patch rather than per tile.
+        if (_tiles.Count > MaxCachedTiles) _tiles.Clear();
         _builtDug = dug;
+        _alive.Clear();
 
         var side = ViewRadius * 2 + 1;
         var count = side * side;
@@ -219,7 +250,24 @@ public sealed partial class TerrainRenderer : Node3D
                     if (tile.Top < deepest) deepest = tile.Top;
                 }
 
-                Write(cursor++, x, y, in tile);
+                // A patch is worked out or it is not; every tile of it draws
+                // the same either way. Asked once per patch per rebuild rather
+                // than once per tile, which is a few dozen questions instead of
+                // thirty-seven thousand.
+                var colour = tile.Colour;
+                if (tile.HasOre)
+                {
+                    if (!_alive.TryGetValue(tile.Patch, out var alive))
+                    {
+                        alive = world.Ground.TryPatchAt(x, y, out var patch)
+                                && world.Ground.Remaining(patch) > 0;
+                        _alive[tile.Patch] = alive;
+                    }
+
+                    colour = colour.Lerp(tile.Ore, alive ? 0.65f : 0.18f);
+                }
+
+                Write(cursor++, x, y, in tile, colour);
             }
 
         WaterTiles = water;
@@ -230,6 +278,15 @@ public sealed partial class TerrainRenderer : Node3D
             multiMesh.InstanceCount = count;
         multiMesh.Buffer = _buffer;
     }
+
+    /// Drops the per-tile cache, so the next `Sync` describes every tile again.
+    ///
+    /// Only the measurement path uses this. Timing a rebuild that is mostly
+    /// cache hits measures the cache; timing the very first rebuild in a
+    /// process measures the JIT. Clearing deliberately, after the code is warm,
+    /// is the only way to time the thing the number claims to be about -- the
+    /// cost of describing a whole field.
+    public void ForgetCachedTiles() => _tiles.Clear();
 
     /// How many of the drawn tiles are water. Appearance alone cannot settle
     /// whether a pool is recessed or merely painted blue -- a dark plate and a
@@ -306,15 +363,19 @@ public sealed partial class TerrainRenderer : Node3D
 
         var colour = water ? WaterColour(gen, x, y, height) : LandColour(gen, x, y, height);
 
+        // Ore is drawn as a tint on the ground rather than as its own object: a
+        // patch is a region you stand on, and a player deciding where to build
+        // needs to see its shape, not a marker at its centre. A worked-out
+        // patch still reads as a patch, just a dead one.
+        //
+        // Recorded, not mixed in. How strongly it tints is the only thing
+        // mining changes, and that is decided at write time.
+        var ore = default(Color);
+        var patchKey = NoPatch;
         if (world.Ground.TryPatchAt(x, y, out var patch))
         {
-            // Ore is drawn as a tint on the ground rather than as its own
-            // object: a patch is a region you stand on, and a player deciding
-            // where to build needs to see its shape, not a marker at its
-            // centre. A worked-out patch still reads as a patch, just a dead
-            // one, so the player can see where they have already been.
-            var ore = OreColour(patch.Item);
-            colour = colour.Lerp(ore, world.Ground.Remaining(patch) > 0 ? 0.65f : 0.18f);
+            ore = OreColour(patch.Item);
+            patchKey = ((long)patch.X << 32) ^ (uint)patch.Y;
         }
 
         var touchesLand = Height(gen, x - 1, y) >= SeaLevel || Height(gen, x + 1, y) >= SeaLevel
@@ -342,14 +403,14 @@ public sealed partial class TerrainRenderer : Node3D
 
             // Water columns run below the deepest bank, so a pool floor is
             // never a hole through which the background shows.
-            return new Tile(colour, top, -(BankThickness + 0.3f), WaterWidth);
+            return new Tile(colour, top, -(BankThickness + 0.3f), WaterWidth, ore, patchKey);
         }
 
         var bank = Height(gen, x - 1, y) < SeaLevel || Height(gen, x + 1, y) < SeaLevel
                 || Height(gen, x, y - 1) < SeaLevel || Height(gen, x, y + 1) < SeaLevel;
 
         return new Tile(colour, 0f, bank ? -BankThickness : -PlateThickness,
-                        bank ? WaterWidth : LandWidth);
+                        bank ? WaterWidth : LandWidth, ore, patchKey);
     }
 
     /// Water, darkening and cooling with depth.
@@ -490,7 +551,7 @@ public sealed partial class TerrainRenderer : Node3D
     /// Land tops are all at exactly y=0 -- the sim's plane -- and land is only
     /// ever thickened downwards, so no machine, belt or ghost can be lifted or
     /// buried by anything in here.
-    private void Write(int index, float x, float z, in Tile tile)
+    private void Write(int index, float x, float z, in Tile tile, Color colour)
     {
         var thickness = tile.Top - tile.Bottom;
         var centre = tile.Top - thickness * 0.5f;
@@ -499,9 +560,9 @@ public sealed partial class TerrainRenderer : Node3D
         _buffer[o + 0] = tile.Width; _buffer[o + 1] = 0f; _buffer[o + 2] = 0f; _buffer[o + 3] = x;
         _buffer[o + 4] = 0f; _buffer[o + 5] = thickness; _buffer[o + 6] = 0f; _buffer[o + 7] = centre;
         _buffer[o + 8] = 0f; _buffer[o + 9] = 0f; _buffer[o + 10] = tile.Width; _buffer[o + 11] = z;
-        _buffer[o + 12] = tile.Colour.R;
-        _buffer[o + 13] = tile.Colour.G;
-        _buffer[o + 14] = tile.Colour.B;
+        _buffer[o + 12] = colour.R;
+        _buffer[o + 13] = colour.G;
+        _buffer[o + 14] = colour.B;
         _buffer[o + 15] = 1f;
     }
 }
