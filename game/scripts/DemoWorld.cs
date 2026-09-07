@@ -111,6 +111,33 @@ public static class DemoWorld
         // belt that goes nowhere.
         world.TryPlaceMachine(smelt, new MachinePlacement(0, beltY - 2, 1, 1, 1));
         world.BeltMap.PlaceInserter(0, beltY - 1, Direction.North);
+
+        // A second line, clear of the first and of the machine beside it, that exists so the
+        // renderer has one of everything a belt map can hold: a paired tunnel
+        // with items riding under it, a splitter with a branch, and a lone
+        // unpaired tunnel end. None of these are drawable-by-inspection --
+        // they had to be on screen to be checked.
+        var showY = beltY - 4;
+        for (var x = 0; x < 6; x++)
+            world.BeltMap.PlaceBelt(x, showY, Direction.East, BeltUnits.SpeedFast);
+
+        world.BeltMap.PlaceUnderground(6, showY, Direction.East, BeltUnits.SpeedFast, 4, out _);
+        world.BeltMap.PlaceUnderground(10, showY, Direction.East, BeltUnits.SpeedFast, 4, out _);
+
+        for (var x = 11; x < 15; x++)
+            world.BeltMap.PlaceBelt(x, showY, Direction.East, BeltUnits.SpeedFast);
+
+        world.BeltMap.PlaceSplitter(15, showY, Direction.East);
+        for (var x = 16; x < 19; x++)
+        {
+            world.BeltMap.PlaceBelt(x, showY, Direction.East, BeltUnits.SpeedFast);
+            world.BeltMap.PlaceBelt(x, showY + 1, Direction.East, BeltUnits.SpeedFast);
+        }
+
+        // Deliberately alone: an unpaired end behaves as a one-tile belt, and
+        // a player who cannot tell it from half a tunnel cannot debug the line.
+        world.BeltMap.PlaceUnderground(22, showY, Direction.East, BeltUnits.SpeedFast, 4, out _);
+
         world.SyncBelts();
 
         // Something to carry. Fed straight onto the line rather than through a

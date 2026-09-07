@@ -328,6 +328,19 @@ public sealed partial class GameRoot : Node3D
             ghostShown = _ghost.Visible;
         }
 
+        GD.Print($"item icons      known={ItemIcons.Known} of {_world.Items.Count}");
+
+        // The ground is shaded from the worldgen's own noise, which means a
+        // rebuild evaluates it once per visible tile. It only happens when the
+        // camera crosses a tile boundary, but it happens inside a frame, so the
+        // cost of the whole field is worth a number rather than a shrug.
+        var terrainWatch = System.Diagnostics.Stopwatch.StartNew();
+        _terrain.Sync(_world, _rig.Position + new Vector3(1f, 0f, 1f));
+        terrainWatch.Stop();
+
+        var field = _terrain.ViewRadius * 2 + 1;
+        GD.Print($"terrain rebuild {field}x{field} tiles in " +
+                 $"{terrainWatch.Elapsed.TotalMilliseconds:0.0} ms");
         GD.Print($"build menu      offered={offered} " +
                  $"holding={_holding?.DisplayName ?? "<none>"} ghost={ghostShown}");
         StopBuilding();
@@ -337,6 +350,13 @@ public sealed partial class GameRoot : Node3D
                  $"segments={_world.Belts.Segments.Count} " +
                  $"inserters={_world.BeltMap.Inserters.Count} " +
                  $"items drawn={_belts.DrawnItems}");
+
+        // Tunnels and splitters have no state a screenshot can confirm from
+        // across the map: a placed-but-undrawn tunnel end and an empty tile are
+        // the same picture. The counts say the buffers were actually filled.
+        GD.Print($"belt parts      undergrounds={_world.BeltMap.Undergrounds.Count} " +
+                 $"splitters={_world.BeltMap.Splitters.Count} " +
+                 $"solids drawn={_belts.DrawnSolids} arrows drawn={_belts.DrawnArrows}");
 
         GD.Print($"accumulators    {_world.Power.Accumulators.Count} " +
                  $"stored={_world.StoredEnergy}/{_world.StorageCapacity}");
@@ -646,9 +666,27 @@ public sealed partial class GameRoot : Node3D
     private void FrameTheBelts()
     {
         _panel.Close();
-        if (_world.BeltMap.Belts.Count == 0) return;
 
-        var belt = _world.BeltMap.Belts[_world.BeltMap.Belts.Count / 2];
+        // Prefer a tunnel when there is one: an underground end is the piece
+        // whose drawing is hardest to confirm, and a capture centred on the
+        // middle of a plain run will not contain one.
+        var map = _world.BeltMap;
+        for (var i = 0; i < map.Undergrounds.Count; i++)
+        {
+            var partner = map.PartnerOf(i);
+            if (partner < 0) continue;
+
+            var a = map.Undergrounds[i];
+            var b = map.Undergrounds[partner];
+            _rig.Position = new Vector3((a.X + b.X + 1) * 0.5f * _renderer.TileSize, 0f,
+                                        (a.Y + b.Y + 1) * 0.5f * _renderer.TileSize);
+            _rig.ZoomLevel = 22f;
+            return;
+        }
+
+        if (map.Belts.Count == 0) return;
+
+        var belt = map.Belts[map.Belts.Count / 2];
         _rig.Position = new Vector3((belt.X + 0.5f) * _renderer.TileSize, 0f,
                                     (belt.Y + 0.5f) * _renderer.TileSize);
         _rig.ZoomLevel = 16f;
