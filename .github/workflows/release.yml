@@ -78,15 +78,27 @@ jobs:
           ./tools/export.sh
 
       # A release nobody ran is a release that closes instantly on the first
-      # player's machine. The Linux build is run here directly; the Windows one
-      # cannot be, and export.sh checks its assemblies are present instead.
-      - name: The exported build must actually run
+      # player's machine. The Linux build is run here; the Windows one cannot
+      # be, and export.sh checks its assemblies are present instead.
+      #
+      # Run from OUTSIDE the checkout, which is the whole point. v0.1.0 passed
+      # this step and still could not start a new game: it was run from dist/,
+      # inside the repository, and the game found the repository's own data
+      # directory by walking up from the binary. A player has no repository
+      # above them (ADR 0027).
+      - name: The exported build must actually run, away from the source tree
         run: |
-          cd dist
+          mkdir -p "$RUNNER_TEMP/play"
+          cp -r dist/simgame.x86_64 dist/data_Game_linuxbsd_x86_64 "$RUNNER_TEMP/play/"
+          cd "$RUNNER_TEMP/play"
           ./simgame.x86_64 --headless -- --smoke | tee smoke.log
           grep -q "=== SMOKE OK ===" smoke.log
           ./simgame.x86_64 --headless -- --session-test | tee session.log
           grep -q "=== SESSION OK ===" session.log
+          # The button a player actually presses.
+          ./simgame.x86_64 --headless -- --menu-test | tee menu.log
+          grep -q "=== MENU OK ===" menu.log
+          grep -qE "new game        tick=240 machines=0 carrying=[1-9]" menu.log
 
       - name: Package
         run: |

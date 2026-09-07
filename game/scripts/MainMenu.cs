@@ -78,12 +78,24 @@ public sealed partial class MainMenu : Control
         int seed;
 
         if (text.Length == 0)
-            seed = (int)(Time.GetUnixTimeFromSystem() * 1000) & 0x7FFFFFFF;
+            seed = SurpriseMeSeed();
         else if (!int.TryParse(text, out seed))
             seed = text.GetHashCode() & 0x7FFFFFFF;
 
         EmitSignal(SignalName.NewGameRequested, seed);
     }
+
+    /// The seed a blank field gets.
+    ///
+    /// Narrowed as a long first. Casting the milliseconds straight to int
+    /// overflows -- the double is about 1.7e12 -- and the result saturates to
+    /// int.MinValue, whose low 31 bits are zero. So every "surprise me" world
+    /// was seed 0: the same world, every time, for every player.
+    ///
+    /// Public so the headless menu test presses the button the player presses,
+    /// rather than a fixed seed that would have hidden this.
+    public static int SurpriseMeSeed() =>
+        (int)((long)(Time.GetUnixTimeFromSystem() * 1000) & 0x7FFFFFFF);
 
     private void ToggleSaveList()
     {

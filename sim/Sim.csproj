@@ -10,4 +10,13 @@
     <PackageReference Include="MoonSharp" Version="2.0.0" />
   </ItemGroup>
 
+  <!-- The recipe graph travels inside the assembly. It used to be read off
+       disk by walking up from the binary looking for a "data" directory,
+       which works in a checkout and nowhere else: an exported game ships no
+       such directory, so New Game threw DirectoryNotFoundException on every
+       machine that was not a developer's. -->
+  <ItemGroup>
+    <EmbeddedResource Include="../data/*.json" LogicalName="Sim.data.%(Filename)%(Extension)" />
+  </ItemGroup>
+
 </Project>

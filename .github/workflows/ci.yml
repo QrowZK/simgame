@@ -144,6 +144,20 @@ jobs:
           # Starting a game with nothing and mining your way up is the opening
           # loop; if it breaks, the game is unplayable whatever the units say.
           grep -q -- "--- start flow ok ---" session.log
+
+      # New Game, through the menu, with the seed the menu invents. Everything
+      # else builds its world directly and skips the button entirely, which is
+      # how a release shipped that could not start one (ADR 0027).
+      - name: New Game works from the menu
+        working-directory: game
+        run: |
+          GODOT=~/godot/Godot_v${GODOT_VERSION}_mono_linux_x86_64/Godot_v${GODOT_VERSION}_mono_linux.x86_64
+          "$GODOT" --headless -- --menu-test | tee menu.log
+          grep -q "=== MENU OK ===" menu.log
+          grep -q "research        present" menu.log
+          # Not seed 0 every time: the "surprise me" seed used to overflow to
+          # zero, so every random world was the same world.
+          grep -qE "menu seed       [1-9][0-9]+" menu.log
           grep -q "miner built     True" session.log
           # F2 (ADR 0026): the opening is only playable if the first thing the
           # survey device points at is something the player can use. "an ore

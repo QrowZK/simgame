@@ -31,6 +31,16 @@ public sealed partial class Boot : Node
             return;
         }
 
+        // The one path a player actually takes, and the one nothing covered:
+        // menu -> New Game with a clock-derived seed. Every other headless run
+        // builds its world directly and skips the menu entirely, which is how a
+        // release shipped with New Game broken.
+        if (Cli.Has("--menu-test"))
+        {
+            CallDeferred(nameof(RunMenuTest));
+            return;
+        }
+
         if (Cli.WantsHeadlessRun())
         {
             // --start-shot renders a real new game; the other headless runs want
@@ -55,6 +65,45 @@ public sealed partial class Boot : Node
             GD.Print($"menu screenshot -> {ProjectSettings.GlobalizePath("user://menu.png")}");
             GetTree().Quit();
         }
+    }
+
+    /// Presses New Game the way a player does: through the menu, with the seed
+    /// the menu would invent, and then runs the world the button produced.
+    private void RunMenuTest()
+    {
+        GD.Print("=== MENU ===");
+
+        ShowMenu();
+
+        if (_menu is null)
+        {
+            GD.Print("menu            FAILED: no menu instantiated");
+            GetTree().Quit(1);
+            return;
+        }
+
+        // The menu's own "surprise me" seed, not a fixed one: a new game that
+        // works on seed 20260907 and nowhere else is still a broken new game.
+        var seed = MainMenu.SurpriseMeSeed();
+        GD.Print($"menu seed       {seed}");
+
+        _menu.EmitSignal(MainMenu.SignalName.NewGameRequested, seed);
+
+        if (_game?.World is not { } world)
+        {
+            GD.Print("new game        FAILED: no world after New Game");
+            GetTree().Quit(1);
+            return;
+        }
+
+        for (var i = 0; i < 240; i++)
+            world.Tick();
+
+        GD.Print($"new game        tick={world.TickCount} machines={world.MachineCount} " +
+                 $"carrying={world.PlayerInventory.Contents.Count} kinds");
+        GD.Print($"research        {(world.Research is null ? "MISSING" : "present")}");
+        GD.Print("=== MENU OK ===");
+        GetTree().Quit();
     }
 
     /// Drives the whole save loop headlessly: new game, run it, save, load it
