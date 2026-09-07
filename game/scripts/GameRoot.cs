@@ -16,6 +16,11 @@ public sealed partial class GameRoot : Node3D
     /// game, or one restored from a save.
     public World? InitialWorld { get; set; }
 
+    /// The world this root is actually running, once _Ready has built it. Used
+    /// by the headless menu test, which has to inspect what the New Game button
+    /// produced rather than what it was handed.
+    public World? World => _world;
+
     private const int TicksPerSecond = 60;
     private const double SecondsPerTick = 1.0 / TicksPerSecond;
     /// Never advance more than this many ticks in one frame -- a long stall must

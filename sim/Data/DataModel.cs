@@ -74,9 +74,48 @@ public sealed class GameData
     public required List<TechDef> Techs { get; init; }
     public required List<RecipeDef> Recipes { get; init; }
 
-    private static readonly Lazy<GameData> Cached = new(() => Load(DataPaths.DataDirectory));
+    /// The running game reads the copy compiled into this assembly, never the
+    /// filesystem. A shipped build has no data directory beside it, and the
+    /// version that went looking for one threw on New Game for every player
+    /// outside a checkout (ADR 0027).
+    private static readonly Lazy<GameData> Cached = new(LoadEmbedded);
     public static GameData Instance => Cached.Value;
 
+    /// The embedded copy: the same five files, compiled in by Sim.csproj.
+    public static GameData LoadEmbedded()
+    {
+        var options = new JsonSerializerOptions();
+        return new GameData
+        {
+            Tiers = ReadEmbedded<List<TierDef>>("tiers.json", options),
+            Items = ReadEmbedded<List<ItemDef>>("items.json", options),
+            Machines = ReadEmbedded<List<MachineDef>>("machines.json", options),
+            Techs = ReadEmbedded<List<TechDef>>("techs.json", options),
+            Recipes = ReadEmbedded<List<RecipeDef>>("recipes.json", options),
+        };
+    }
+
+    /// One embedded file, as text. Public so a test can compare it against the
+    /// file on disk -- the two drifting apart would ship a game whose recipes
+    /// are not the ones in the repository.
+    public static string EmbeddedText(string fileName)
+    {
+        var name = $"Sim.data.{fileName}";
+        using var stream = typeof(GameData).Assembly.GetManifestResourceStream(name)
+            ?? throw new InvalidDataException(
+                $"{name} is not embedded in Sim.dll. Check the EmbeddedResource item in Sim.csproj: " +
+                "without it a shipped build has no recipes at all.");
+
+        using var reader = new StreamReader(stream);
+        return reader.ReadToEnd();
+    }
+
+    private static T ReadEmbedded<T>(string fileName, JsonSerializerOptions options) =>
+        JsonSerializer.Deserialize<T>(EmbeddedText(fileName), options)
+        ?? throw new InvalidDataException($"Failed to parse embedded {fileName}");
+
+    /// Reads the files on disk. For the generator and for tests that check the
+    /// embedded copy is current -- not for the running game.
     public static GameData Load(string dataDirectory)
     {
         var options = new JsonSerializerOptions();
