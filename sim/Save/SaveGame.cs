@@ -79,6 +79,23 @@ public static class SaveGame
                 WireRadius = pole.WireRadius,
             });
 
+        for (var i = 0; i < world.Power.Accumulators.Count; i++)
+        {
+            var accumulator = world.Power.Accumulators[i];
+            var placement = world.Power.AccumulatorPlacements[i];
+            save.Accumulators.Add(new AccumulatorSave
+            {
+                Capacity = accumulator.Capacity,
+                RatePerTick = accumulator.RatePerTick,
+                Charge = accumulator.Charge,
+                X = placement.X,
+                Y = placement.Y,
+                Tier = placement.Tier,
+                Category = placement.Category,
+                Size = placement.Size,
+            });
+        }
+
         for (var i = 0; i < world.Power.Generators.Count; i++)
         {
             var generator = world.Power.Generators[i];
@@ -315,6 +332,15 @@ public static class SaveGame
                                           entry.TicksPerFuel);
             generator.Restore(entry.FuelStock, entry.BurnTicksLeft);
             world.TryPlaceGenerator(generator, new MachinePlacement(
+                entry.X, entry.Y, (byte)entry.Tier, (byte)entry.Category, (byte)entry.Size));
+        }
+
+        for (var i = 0; i < save.Accumulators.Count; i++)
+        {
+            var entry = save.Accumulators[i];
+            var accumulator = new Accumulator(entry.Capacity, entry.RatePerTick);
+            accumulator.Restore(entry.Charge);
+            world.TryPlaceAccumulator(accumulator, new MachinePlacement(
                 entry.X, entry.Y, (byte)entry.Tier, (byte)entry.Category, (byte)entry.Size));
         }
 

@@ -109,6 +109,62 @@ public sealed class Generator
     }
 }
 
+/// Stores energy and gives it back.
+///
+/// Two jobs, and they are why a factory wants one. A burner generator makes
+/// power in the lumps its fuel burns in, and machines draw it smoothly; an
+/// accumulator flattens that. And demand is spiky -- a smelter bank all
+/// starting a cycle at once -- so a store covers the peak without building
+/// generation for the worst second of the day.
+///
+/// Charge and discharge are rate-limited separately from capacity. A large
+/// slow store and a small fast one are different tools, and collapsing them
+/// into one number would make them the same purchase.
+public sealed class Accumulator
+{
+    public readonly int Capacity;
+
+    /// The most that can move in or out in one tick, each way.
+    public readonly int RatePerTick;
+
+    public int Charge { get; private set; }
+
+    public Accumulator(int capacity, int ratePerTick)
+    {
+        if (capacity < 1) throw new ArgumentOutOfRangeException(nameof(capacity));
+        if (ratePerTick < 1) throw new ArgumentOutOfRangeException(nameof(ratePerTick));
+        Capacity = capacity;
+        RatePerTick = ratePerTick;
+    }
+
+    public int Room => Capacity - Charge;
+
+    /// Full, empty, or somewhere between. Reusing MachineState means the
+    /// status colour and the inspection panel need no special case: a full
+    /// store is Blocked (nothing more will fit) and an empty one is Starved.
+    public MachineState State => Charge >= Capacity ? MachineState.Blocked
+        : Charge <= 0 ? MachineState.Starved
+        : MachineState.Working;
+
+    /// Takes in up to `amount`, returning how much actually fit.
+    public int Absorb(int amount)
+    {
+        var taken = Math.Min(Math.Min(Math.Max(0, amount), RatePerTick), Room);
+        Charge += taken;
+        return taken;
+    }
+
+    /// Gives out up to `amount`, returning how much was actually available.
+    public int Release(int amount)
+    {
+        var given = Math.Min(Math.Min(Math.Max(0, amount), RatePerTick), Charge);
+        Charge -= given;
+        return given;
+    }
+
+    public void Restore(int charge) => Charge = Math.Clamp(charge, 0, Capacity);
+}
+
 /// Poles, generators, and who is connected to whom.
 ///
 /// A network is a connected component of poles. Anything standing inside some
@@ -123,6 +179,9 @@ public sealed class PowerGrid
 {
     private readonly List<Pole> _poles = new();
     private readonly List<Generator> _generators = new();
+    private readonly List<Accumulator> _accumulators = new();
+    private readonly List<int> _accumulatorNetwork = new();
+    private readonly List<MachinePlacement> _accumulatorPlacements = new();
 
     /// Which network each pole and generator belongs to; -1 for a generator that
     /// no pole reaches, whose output therefore goes nowhere.
@@ -142,6 +201,8 @@ public sealed class PowerGrid
     public IReadOnlyList<Pole> Poles => _poles;
     public IReadOnlyList<Generator> Generators => _generators;
     public IReadOnlyList<MachinePlacement> GeneratorPlacements => _generatorPlacements;
+    public IReadOnlyList<Accumulator> Accumulators => _accumulators;
+    public IReadOnlyList<MachinePlacement> AccumulatorPlacements => _accumulatorPlacements;
 
     public int NetworkCount
     {
@@ -183,6 +244,22 @@ public sealed class PowerGrid
     {
         Rebuild();
         return _generatorNetwork[index];
+    }
+
+    public int AddAccumulator(Accumulator accumulator, in MachinePlacement placement)
+    {
+        _accumulators.Add(accumulator);
+        _accumulatorPlacements.Add(placement);
+        _accumulatorNetwork.Add(-1);
+        _dirty = true;
+        Version++;
+        return _accumulators.Count - 1;
+    }
+
+    public int NetworkOfAccumulator(int index)
+    {
+        Rebuild();
+        return _accumulatorNetwork[index];
     }
 
     /// Connected components of poles, by wire reach.
@@ -231,16 +308,18 @@ public sealed class PowerGrid
         _networkCount = ids.Count;
 
         for (var i = 0; i < _generators.Count; i++)
-        {
-            var placement = _generatorPlacements[i];
-            _generatorNetwork[i] = -1;
+            _generatorNetwork[i] = CoveringNetwork(_generatorPlacements[i]);
 
-            for (var p = 0; p < _poles.Count; p++)
-                if (_poles[p].Supplies(placement.X, placement.Y))
-                {
-                    _generatorNetwork[i] = _poleNetwork[p];
-                    break;
-                }
-        }
+        for (var i = 0; i < _accumulators.Count; i++)
+            _accumulatorNetwork[i] = CoveringNetwork(_accumulatorPlacements[i]);
+    }
+
+    private int CoveringNetwork(in MachinePlacement placement)
+    {
+        for (var p = 0; p < _poles.Count; p++)
+            if (_poles[p].Supplies(placement.X, placement.Y))
+                return _poleNetwork[p];
+
+        return -1;
     }
 }

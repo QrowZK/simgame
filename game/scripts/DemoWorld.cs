@@ -90,6 +90,13 @@ public static class DemoWorld
                 world.TryPlaceGenerator(generator, new MachinePlacement(x + 1, y + 1, 1, 6, 1));
             }
 
+        // A bank of accumulators on the same grid, so the placeholder factory
+        // exercises storage as well -- and so the renderer has some to draw.
+        for (var y = 0; y <= side * MaxFootprint; y += 24)
+            for (var x = 0; x <= side * MaxFootprint; x += 24)
+                world.TryPlaceAccumulator(new Accumulator(capacity: 100_000, ratePerTick: 200),
+                                          new MachinePlacement(x + 3, y + 1, 1, 7, 1));
+
         // A pipe run with a tank and a pump on it, so the placeholder factory
         // exercises the plumbing as well as the grid.
         for (var x = 0; x <= side * MaxFootprint; x++)

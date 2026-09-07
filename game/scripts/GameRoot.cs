@@ -172,9 +172,18 @@ public sealed partial class GameRoot : Node3D
                 : $"   power {supply}/{demand}" +
                   (demand > supply ? " BROWNOUT" : "");
 
+            // Stored energy as a percentage, which is the one case where a
+            // percentage is the right reading: a player watching a bank wants
+            // to know how much buffer is left, not its absolute joules.
+            var capacity = _world.StorageCapacity;
+            var stored = capacity == 0
+                ? ""
+                : $"   stored {_world.StoredEnergy * 100 / capacity}%" +
+                  $" ({_world.StoredEnergy}/{capacity})";
+
             _hud.Text = $"machines {_world.MachineCount}   tick {_world.TickCount}   " +
                         $"batches {_renderer.BatchCount}   fps {Engine.GetFramesPerSecond():0}" +
-                        power + "\n" +
+                        power + stored + "\n" +
                         "WASD pan   Q/E rotate   wheel zoom   click a machine to inspect   " +
                         "F5 save   F9 load   F1 script   Esc menu" +
                         (_toastFrames > 0 ? "\n" + _toast : "");
@@ -275,6 +284,12 @@ public sealed partial class GameRoot : Node3D
             var d = _world.Logistics.Drones[0];
             GD.Print($"drone 0         at {d.X},{d.Y} cargo={d.CargoCount} task={d.Task}");
         }
+
+        // Accumulators go through the machine renderer's hull pools, so the
+        // instance count above already covers them. What that count cannot say
+        // is whether they are on a grid and taking charge, so say it here.
+        GD.Print($"accumulators    {_world.Power.Accumulators.Count} " +
+                 $"stored={_world.StoredEnergy}/{_world.StorageCapacity}");
 
         GD.Print($"controllers     {_world.Controllers.Count} " +
                  $"error={(_world.Controllers.Count > 0 ? _world.Controllers[0].Error ?? "none" : "n/a")}");

@@ -185,6 +185,22 @@
     "parallelism": 1
   },
   {
+    "id": "accumulator",
+    "name": "Accumulator",
+    "tiers": [
+      "STM",
+      "VLT",
+      "ARC",
+      "PLS",
+      "FUS",
+      "QNT",
+      "SNG"
+    ],
+    "min_tier": "STM",
+    "size": 1,
+    "parallelism": 1
+  },
+  {
     "id": "washer",
     "name": "Ore Washer",
     "tiers": [

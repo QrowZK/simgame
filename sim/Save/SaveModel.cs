@@ -27,7 +27,9 @@ public sealed class SaveFile
     /// an older file has no poles, so every powered machine would go dark.
     /// 4 replaced declared fluid networks with placed pipes, tanks and pumps.
     /// 5 added drones, haul tasks and controller programs.
-    public const int CurrentVersion = 5;
+    /// 6 added accumulators; an older file has none, so a factory that was
+    /// riding out its nights on stored power would reload with no buffer.
+    public const int CurrentVersion = 6;
 
     public int Version { get; set; } = CurrentVersion;
     public int Seed { get; set; }
@@ -48,6 +50,7 @@ public sealed class SaveFile
     public List<DepletionSave> Depletion { get; set; } = new();
     public List<PoleSave> Poles { get; set; } = new();
     public List<GeneratorSave> Generators { get; set; } = new();
+    public List<AccumulatorSave> Accumulators { get; set; } = new();
     public List<FluidNodeSave> FluidNodes { get; set; } = new();
     public List<ExtractorSave> Extractors { get; set; } = new();
     public List<DroneSave> Drones { get; set; } = new();
@@ -123,6 +126,22 @@ public sealed class PoleSave
     public int Y { get; set; }
     public int SupplyRadius { get; set; }
     public int WireRadius { get; set; }
+}
+
+public sealed class AccumulatorSave
+{
+    public int Capacity { get; set; }
+    public int RatePerTick { get; set; }
+
+    /// What it is holding. Dropping this would either hand the player a free
+    /// full bank or wipe one they spent a night's surplus filling.
+    public int Charge { get; set; }
+
+    public int X { get; set; }
+    public int Y { get; set; }
+    public int Tier { get; set; }
+    public int Category { get; set; }
+    public int Size { get; set; } = 1;
 }
 
 public sealed class GeneratorSave

@@ -74,6 +74,47 @@ public sealed class World
     private int[] _supply = Array.Empty<int>();
     private int[] _demand = Array.Empty<int>();
     private long[] _carry = Array.Empty<long>();
+    private long[] _storeCarry = Array.Empty<long>();
+    private int[] _storeTotal = Array.Empty<int>();
+    private int[] _storeMove = Array.Empty<int>();
+
+    /// Energy held across every accumulator, and the most they could hold.
+    /// A player fixing a brownout wants both: a bank at zero and a bank at
+    /// capacity are different problems.
+    public int StoredEnergy
+    {
+        get
+        {
+            var total = 0;
+            foreach (var accumulator in Power.Accumulators) total += accumulator.Charge;
+            return total;
+        }
+    }
+
+    public int StorageCapacity
+    {
+        get
+        {
+            var total = 0;
+            foreach (var accumulator in Power.Accumulators) total += accumulator.Capacity;
+            return total;
+        }
+    }
+
+    /// Builds an accumulator on the grid.
+    public Accumulator? TryPlaceAccumulator(Accumulator accumulator, in MachinePlacement placement)
+    {
+        if (!CanPlace(placement))
+            return null;
+
+        Power.AddAccumulator(accumulator, placement);
+
+        for (var dy = 0; dy < placement.Size; dy++)
+            for (var dx = 0; dx < placement.Size; dx++)
+                _occupancy[Key(placement.X + dx, placement.Y + dy)] = GeneratorIndexBase;
+
+        return accumulator;
+    }
 
     /// Which network each machine and miner sits on, cached.
     ///
@@ -269,6 +310,9 @@ public sealed class World
             Array.Resize(ref _supply, Math.Max(4, networks));
             Array.Resize(ref _demand, Math.Max(4, networks));
             Array.Resize(ref _carry, Math.Max(4, networks));
+            Array.Resize(ref _storeCarry, Math.Max(4, networks));
+            Array.Resize(ref _storeTotal, Math.Max(4, networks));
+            Array.Resize(ref _storeMove, Math.Max(4, networks));
         }
 
         Array.Clear(_supply);
@@ -308,6 +352,10 @@ public sealed class World
             if (network >= 0) _demand[network] += _extractors[i].PowerDraw;
         }
 
+        // Storage covers the gap before anything is handed out, so a machine
+        // on a network with a charged accumulator never sees the shortfall.
+        DischargeStorage();
+
         for (var i = 0; i < _machines.Count; i++)
         {
             var network = _machineNetwork[i];
@@ -328,6 +376,109 @@ public sealed class World
             var network = Power.NetworkAt(_extractorPlacements[i].X, _extractorPlacements[i].Y);
             if (network >= 0)
                 _extractors[i].SupplyEnergy(Share(network, _extractors[i].PowerDraw));
+        }
+
+        ChargeStorage();
+    }
+
+    /// Tops up the supply from stored energy, but only as far as demand.
+    ///
+    /// Accumulators are drawn down in proportion to what each is holding, so a
+    /// bank empties evenly and reads as one number rather than as a row of
+    /// stores at unrelated levels. The same exact-integer carry the consumer
+    /// allocator uses, for the same reason: no floats, no drift.
+    private void DischargeStorage()
+    {
+        var accumulators = Power.Accumulators;
+        if (accumulators.Count == 0) return;
+
+        Array.Clear(_storeCarry, 0, _storeCarry.Length);
+        Array.Clear(_storeTotal, 0, _storeTotal.Length);
+        Array.Clear(_storeMove, 0, _storeMove.Length);
+
+        for (var i = 0; i < accumulators.Count; i++)
+        {
+            var network = Power.NetworkOfAccumulator(i);
+            if (network < 0) continue;
+            _storeTotal[network] += Math.Min(accumulators[i].Charge, accumulators[i].RatePerTick);
+        }
+
+        // Settle how much each network draws before moving any of it. Releasing
+        // energy raises the supply, so a shortfall read inside the loop shrinks
+        // as we go and the first accumulators would carry the whole load.
+        for (var n = 0; n < _storeTotal.Length; n++)
+        {
+            var shortfall = _demand[n] - _supply[n];
+            _storeMove[n] = shortfall <= 0 ? 0 : Math.Min(shortfall, _storeTotal[n]);
+        }
+
+        // Rotated by tick. The carry hands the division's remainder to whoever
+        // is processed last, so a fixed order would give the same accumulator
+        // the extra unit every tick and the bank would drift apart despite the
+        // total being exact. TickCount keeps the rotation deterministic.
+        var offset = (int)(TickCount % accumulators.Count);
+        for (var k = 0; k < accumulators.Count; k++)
+        {
+            var i = (k + offset) % accumulators.Count;
+            var network = Power.NetworkOfAccumulator(i);
+            if (network < 0 || _storeMove[network] <= 0) continue;
+
+            var available = Math.Min(accumulators[i].Charge, accumulators[i].RatePerTick);
+            _storeCarry[network] += (long)_storeMove[network] * available;
+            var want = (int)(_storeCarry[network] / _storeTotal[network]);
+            _storeCarry[network] -= (long)want * _storeTotal[network];
+
+            _supply[network] += accumulators[i].Release(want);
+        }
+    }
+
+    /// Puts genuine surplus into storage.
+    ///
+    /// Machines are paid first and accumulators take what is left, which is why
+    /// charging never competes with production: a factory does not brown out
+    /// because its batteries were filling.
+    private void ChargeStorage()
+    {
+        var accumulators = Power.Accumulators;
+        if (accumulators.Count == 0) return;
+
+        Array.Clear(_storeCarry, 0, _storeCarry.Length);
+        Array.Clear(_storeTotal, 0, _storeTotal.Length);
+        Array.Clear(_storeMove, 0, _storeMove.Length);
+
+        for (var i = 0; i < accumulators.Count; i++)
+        {
+            var network = Power.NetworkOfAccumulator(i);
+            if (network < 0) continue;
+            _storeTotal[network] += Math.Min(accumulators[i].Room, accumulators[i].RatePerTick);
+        }
+
+        // As in DischargeStorage: fix the amount first, then share it out. The
+        // surplus falls as each accumulator absorbs, so reading it per
+        // accumulator would fill the first of a bank and starve the rest.
+        for (var n = 0; n < _storeTotal.Length; n++)
+        {
+            var surplus = _supply[n] - _demand[n];
+            _storeMove[n] = surplus <= 0 ? 0 : Math.Min(surplus, _storeTotal[n]);
+        }
+
+        // Rotated by tick. The carry hands the division's remainder to whoever
+        // is processed last, so a fixed order would give the same accumulator
+        // the extra unit every tick and the bank would drift apart despite the
+        // total being exact. TickCount keeps the rotation deterministic.
+        var offset = (int)(TickCount % accumulators.Count);
+        for (var k = 0; k < accumulators.Count; k++)
+        {
+            var i = (k + offset) % accumulators.Count;
+            var network = Power.NetworkOfAccumulator(i);
+            if (network < 0 || _storeMove[network] <= 0) continue;
+
+            var room = Math.Min(accumulators[i].Room, accumulators[i].RatePerTick);
+            _storeCarry[network] += (long)_storeMove[network] * room;
+            var want = (int)(_storeCarry[network] / _storeTotal[network]);
+            _storeCarry[network] -= (long)want * _storeTotal[network];
+
+            _supply[network] -= accumulators[i].Absorb(want);
         }
     }
 

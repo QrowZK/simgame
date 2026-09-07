@@ -4163,6 +4163,69 @@
     "tags": []
   },
   {
+    "id": "stm_accumulator",
+    "name": "Steam Accumulator",
+    "category": "machine",
+    "tier": "STM",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "vlt_accumulator",
+    "name": "Voltaic Accumulator",
+    "category": "machine",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "arc_accumulator",
+    "name": "Arc Accumulator",
+    "category": "machine",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "pls_accumulator",
+    "name": "Plasma Accumulator",
+    "category": "machine",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "fus_accumulator",
+    "name": "Fusion Accumulator",
+    "category": "machine",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "qnt_accumulator",
+    "name": "Quantum Accumulator",
+    "category": "machine",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "sng_accumulator",
+    "name": "Singularity Accumulator",
+    "category": "machine",
+    "tier": "SNG",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
     "id": "vlt_washer",
     "name": "Voltaic Ore Washer",
     "category": "machine",

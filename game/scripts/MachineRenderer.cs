@@ -74,6 +74,7 @@ public sealed partial class MachineRenderer : Node3D
         var states = world.MachineStates;
         var miners = world.MinerPlacements;
         var generators = world.Power.GeneratorPlacements;
+        var accumulators = world.Power.AccumulatorPlacements;
 
         System.Array.Clear(_hullCounts);
         System.Array.Clear(_attachCounts);
@@ -98,6 +99,14 @@ public sealed partial class MachineRenderer : Node3D
             _attachCounts[Clamp(generators[i].Category, MeshKit.CategoryCount)]++;
         }
 
+        // Accumulators too: same hull kit as machines and miners. Their own
+        // pool would cost a draw batch for one more silhouette.
+        for (var i = 0; i < accumulators.Count; i++)
+        {
+            _hullCounts[Clamp(accumulators[i].Tier, MeshKit.TierCount)]++;
+            _attachCounts[Clamp(accumulators[i].Category, MeshKit.CategoryCount)]++;
+        }
+
         // MultiMesh.Buffer must be exactly InstanceCount * stride long, so buffers
         // are resized only when a count actually changes -- normally never.
         for (var tier = 0; tier < MeshKit.TierCount; tier++)
@@ -117,6 +126,19 @@ public sealed partial class MachineRenderer : Node3D
         for (var i = 0; i < generators.Count; i++)
             WriteOne(generators[i], world.Power.Generators[i].State);
 
+        // An accumulator is tinted by how full it is rather than by machine
+        // state. Working/Blocked/Starved would only say "charging, full,
+        // empty", and the question a player has standing in front of a bank is
+        // how much is left in it -- so the cell reads as a gauge.
+        for (var i = 0; i < accumulators.Count; i++)
+        {
+            var accumulator = world.Power.Accumulators[i];
+            var level = accumulator.Capacity <= 0
+                ? 0f
+                : (float)accumulator.Charge / accumulator.Capacity;
+            WriteOne(accumulators[i], ChargeColor(level));
+        }
+
         for (var tier = 0; tier < MeshKit.TierCount; tier++)
             Upload(_hullPools[tier], _hullBuffers[tier]!, _hullCounts[tier]);
         for (var category = 0; category < MeshKit.CategoryCount; category++)
@@ -125,7 +147,27 @@ public sealed partial class MachineRenderer : Node3D
 
     /// Places one hull and its attachment. Machines and miners both come
     /// through here, so their sizing and seating can never drift apart.
-    private void WriteOne(in MachinePlacement placement, MachineState state)
+    /// A fuel gauge: red empty, amber half, green full.
+    ///
+    /// A single dark-to-bright ramp was tried first and could not be read at
+    /// play distance -- a bank at 20% and one at 80% both looked green-ish on a
+    /// cylinder that is a few pixels wide. Two segments through amber gives
+    /// each third its own hue, which survives the zoom.
+    private static Color ChargeColor(float level)
+    {
+        level = Mathf.Clamp(level, 0f, 1f);
+        var empty = new Color(0.85f, 0.20f, 0.16f);
+        var half = new Color(0.95f, 0.72f, 0.15f);
+        var full = new Color(0.35f, 0.90f, 0.32f);
+        return level < 0.5f
+            ? empty.Lerp(half, level * 2f)
+            : half.Lerp(full, (level - 0.5f) * 2f);
+    }
+
+    private void WriteOne(in MachinePlacement placement, MachineState state) =>
+        WriteOne(placement, MeshKit.StateColor(state));
+
+    private void WriteOne(in MachinePlacement placement, Color attachment)
     {
         var tier = Clamp(placement.Tier, MeshKit.TierCount);
         var category = Clamp(placement.Category, MeshKit.CategoryCount);
@@ -148,7 +190,7 @@ public sealed partial class MachineRenderer : Node3D
         // scale a 3x3's drum is taller than the body it sits on and overhangs.
         Write(_attachBuffers[category]!, _attachCursor[category]++,
               x, MeshKit.DeckHeight(tier) * lift, z,
-              MeshKit.StateColor(state), plan, lift);
+              attachment, plan, lift);
     }
 
     /// Writes one instance: an axis-aligned, axis-scaled transform plus colour.

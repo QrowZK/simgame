@@ -68,6 +68,11 @@ public sealed partial class Boot : Node
         var world = GameSession.DemoFactory(seed: 777, machineCount: 64);
         world.Tick(300);
 
+        // Storage has to be genuinely part-full before the save, or a save
+        // that dropped the charge would round-trip an empty bank unnoticed.
+        GD.Print($"storage         {world.StoredEnergy}/{world.StorageCapacity} " +
+                 $"part-full: {world.StoredEnergy > 0 && world.StoredEnergy < world.StorageCapacity}");
+
         var before = Sim.Save.SaveGame.ToJson(Sim.Save.SaveGame.Capture(world));
         GameSession.Save("session test");
 
@@ -169,6 +174,11 @@ public sealed partial class Boot : Node
         generator.AddFuel(20);
         world.TryPlaceGenerator(generator, new Sim.MachinePlacement(oreX + 12, oreY, 1, 6, 1));
 
+        // Storage on the same grid. Reported below so the smoke test says
+        // whether energy actually reached it, rather than only that it exists.
+        world.TryPlaceAccumulator(new Sim.Accumulator(capacity: 4000, ratePerTick: 40),
+                                  new Sim.MachinePlacement(oreX + 11, oreY + 1, 1, 7, 1));
+
         world.Tick(120);
         var supply = 0;
         var demand = 0;
@@ -178,6 +188,7 @@ public sealed partial class Boot : Node
         GD.Print($"networks        {world.Power.NetworkCount}");
         GD.Print($"grid            supply={supply} demand={demand}");
         GD.Print($"powered         state={machine.State}");
+        GD.Print($"stored          {world.StoredEnergy}/{world.StorageCapacity}");
         GD.Print($"produced        {machine.GetOutputCount(catalogue.Item("chalcopyrite_crushed"))}");
         GD.Print($"burning         {generator.IsBurning}");
         GD.Print("--- power ok ---");

@@ -134,6 +134,13 @@ public class SaveGameTests
         generator.AddFuel(4);
         world.TryPlaceGenerator(generator, new MachinePlacement(patch.X + 5, patch.Y + 5, 1, 2, 1));
 
+        // An accumulator on the same grid, seeded part-full. Part-full is the
+        // point: a save that dropped the charge would round-trip an empty one
+        // and an empty one unnoticed.
+        var accumulator = new Accumulator(capacity: 5000, ratePerTick: 20);
+        accumulator.Restore(1700);
+        world.TryPlaceAccumulator(accumulator, new MachinePlacement(patch.X + 2, patch.Y + 3, 1, 5, 1));
+
         // A machine actually inside the pole's reach, drawing far more than the
         // grid can spare. The others sit at the origin, far off-grid, so
         // without this one no machine ever holds a partial energy buffer and a
@@ -242,6 +249,22 @@ public class SaveGameTests
               .Append(" stock=").Append(generator.FuelStock)
               .Append(" burn=").Append(generator.BurnTicksLeft)
               .Append(" network=").Append(world.Power.NetworkOfGenerator(i))
+              .Append('\n');
+        }
+
+        for (var i = 0; i < world.Power.Accumulators.Count; i++)
+        {
+            var accumulator = world.Power.Accumulators[i];
+            var placement = world.Power.AccumulatorPlacements[i];
+            sb.Append("accumulator ").Append(i)
+              .Append(" at ").Append(placement.X).Append(',').Append(placement.Y)
+              .Append(" size=").Append(placement.Size)
+              .Append(" tier=").Append(placement.Tier)
+              .Append(" cat=").Append(placement.Category)
+              .Append(" capacity=").Append(accumulator.Capacity)
+              .Append(" rate=").Append(accumulator.RatePerTick)
+              .Append(" charge=").Append(accumulator.Charge)
+              .Append(" network=").Append(world.Power.NetworkOfAccumulator(i))
               .Append('\n');
         }
 
@@ -411,6 +434,10 @@ public class SaveGameTests
         Assert.NotEmpty(world.Ground.Depletion);
         Assert.True(world.Miners[0].Buffered > 0 || world.Miners[0].RawTicksRemaining > 0,
                     "the miner is doing nothing, so its state is not being covered");
+
+        Assert.NotEmpty(world.Power.Accumulators);
+        Assert.True(world.StoredEnergy > 0 && world.StoredEnergy < world.StorageCapacity,
+                    "storage is at an extreme, so a dropped charge could round-trip unnoticed");
 
         Assert.NotEmpty(world.Logistics.Drones);
         Assert.NotEmpty(world.Logistics.Tasks);
