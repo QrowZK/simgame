@@ -10776,6 +10776,198 @@
     "unlocked_by": "tech_qnt_fabrication"
   },
   {
+    "id": "build_stm_pole",
+    "machine": "manual_crafting",
+    "tier": "MAN",
+    "duration_ticks": 400,
+    "power_draw": 0,
+    "inputs": [
+      {
+        "item": "stm_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "stm_cable",
+        "count": 6
+      }
+    ],
+    "outputs": [
+      {
+        "item": "stm_pole",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_man_fabrication"
+  },
+  {
+    "id": "build_vlt_pole",
+    "machine": "assembler",
+    "tier": "ARC",
+    "duration_ticks": 400,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "vlt_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "vlt_circuit",
+        "count": 2
+      },
+      {
+        "item": "vlt_cable",
+        "count": 6
+      }
+    ],
+    "outputs": [
+      {
+        "item": "vlt_pole",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_fabrication"
+  },
+  {
+    "id": "build_arc_pole",
+    "machine": "assembler",
+    "tier": "ARC",
+    "duration_ticks": 400,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "arc_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "arc_circuit",
+        "count": 2
+      },
+      {
+        "item": "arc_cable",
+        "count": 6
+      }
+    ],
+    "outputs": [
+      {
+        "item": "arc_pole",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_fabrication"
+  },
+  {
+    "id": "build_pls_pole",
+    "machine": "assembler",
+    "tier": "ARC",
+    "duration_ticks": 400,
+    "power_draw": 128,
+    "inputs": [
+      {
+        "item": "pls_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "pls_circuit",
+        "count": 2
+      },
+      {
+        "item": "pls_cable",
+        "count": 6
+      }
+    ],
+    "outputs": [
+      {
+        "item": "pls_pole",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_arc_fabrication"
+  },
+  {
+    "id": "build_fus_pole",
+    "machine": "assembler",
+    "tier": "PLS",
+    "duration_ticks": 400,
+    "power_draw": 512,
+    "inputs": [
+      {
+        "item": "fus_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "fus_circuit",
+        "count": 2
+      },
+      {
+        "item": "fus_cable",
+        "count": 6
+      }
+    ],
+    "outputs": [
+      {
+        "item": "fus_pole",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_pls_fabrication"
+  },
+  {
+    "id": "build_qnt_pole",
+    "machine": "assembler",
+    "tier": "FUS",
+    "duration_ticks": 400,
+    "power_draw": 2048,
+    "inputs": [
+      {
+        "item": "qnt_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "qnt_circuit",
+        "count": 2
+      },
+      {
+        "item": "qnt_cable",
+        "count": 6
+      }
+    ],
+    "outputs": [
+      {
+        "item": "qnt_pole",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_fus_fabrication"
+  },
+  {
+    "id": "build_sng_pole",
+    "machine": "assembler",
+    "tier": "QNT",
+    "duration_ticks": 400,
+    "power_draw": 8192,
+    "inputs": [
+      {
+        "item": "sng_machine_hull",
+        "count": 1
+      },
+      {
+        "item": "sng_circuit",
+        "count": 2
+      },
+      {
+        "item": "sng_cable",
+        "count": 6
+      }
+    ],
+    "outputs": [
+      {
+        "item": "sng_pole",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_qnt_fabrication"
+  },
+  {
     "id": "build_vlt_washer",
     "machine": "assembler",
     "tier": "ARC",

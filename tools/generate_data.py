@@ -270,6 +270,11 @@ def main():
         machines.append({
             "id": mach_spec["id"],
             "name": mach_spec["name"],
+            # Which function attachment represents this machine. Authored,
+            # because "does a washer look like a separator or a fluid unit" is
+            # a judgement about the machine, not something derivable from its
+            # recipes.
+            "category": int(mach_spec["category"]),
             "tiers": mach_spec["tiers"],
             "min_tier": mach_spec["tiers"][0],
             "size": size,

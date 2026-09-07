@@ -638,6 +638,116 @@ public sealed class World
 
     /// Whether a footprint is clear. Every tile is checked, so a large machine
     /// cannot be slid over a small one by anchoring it one tile away.
+    /// Builds one thing from the player's inventory.
+    ///
+    /// This is the whole build interaction in one call, deliberately: the item
+    /// is only taken once the placement has succeeded, so a refused build can
+    /// never cost the player the machine. Every refusal is a distinct reason,
+    /// because the UI has to say which one.
+    ///
+    /// `recipe` is required for machines and ignored by everything else. A
+    /// machine has to know what it makes before it exists -- changing a placed
+    /// machine's recipe would mean evicting whatever is already inside it,
+    /// which is its own decision and is not made here.
+    public BuildResult TryBuild(BuildCatalogue catalogue, ItemId item, int x, int y,
+                                Recipe? recipe = null)
+    {
+        if (!catalogue.TryGet(item, out var buildable))
+            return BuildResult.NotBuildable;
+
+        if (buildable.Kind == BuildKind.NotPlaceable)
+            return BuildResult.NotPlaceableYet;
+
+        if (PlayerInventory.Count(item) <= 0)
+            return BuildResult.NoneCarried;
+
+        var placement = buildable.PlacementAt(x, y);
+
+        if (!CanPlace(placement) || CoversFluidNode(placement))
+            return BuildResult.Blocked;
+
+        if (buildable.Kind == BuildKind.Machine && (recipe is null || !catalogue.CanRun(buildable, recipe)))
+            return BuildResult.NeedsRecipe;
+
+        var built = buildable.Kind switch
+        {
+            BuildKind.Machine =>
+                TryPlaceMachine(recipe!, placement) is not null,
+
+            BuildKind.Miner =>
+                TryPlaceMiner(placement, powerDraw: buildable.TierPower) is not null,
+
+            BuildKind.Generator =>
+                TryPlaceGenerator(
+                    new Generator(FuelFor(), buildable.GeneratorOutput,
+                                  Buildable.GeneratorTicksPerFuel),
+                    placement) is not null,
+
+            BuildKind.Accumulator =>
+                TryPlaceAccumulator(
+                    new Accumulator(buildable.AccumulatorCapacity, buildable.AccumulatorRate),
+                    placement) is not null,
+
+            BuildKind.Pole =>
+                AddBuiltPole(buildable, placement),
+
+            BuildKind.Pump =>
+                TryPlaceExtractor(placement, WaterItem(), powerDraw: buildable.TierPower) is not null,
+
+            BuildKind.Pipe => Fluids.AddPipe(x, y),
+            BuildKind.Tank => Fluids.AddTank(x, y),
+
+            _ => false,
+        };
+
+        if (!built)
+            return buildable.Kind switch
+            {
+                // The placement checks above already cleared the footprint, so
+                // a refusal here is the thing under the tile, not the tile.
+                BuildKind.Miner => BuildResult.NoResource,
+                BuildKind.Pump => BuildResult.NoFluid,
+                _ => BuildResult.Blocked,
+            };
+
+        PlayerInventory.Take(item, 1);
+        return BuildResult.Ok;
+    }
+
+    /// Pipes and machines are tracked by separate systems, so neither knows
+    /// about the other's tiles. Nothing stops code layering them and existing
+    /// worlds do; what a player builds by hand should not overlap, so the rule
+    /// lives here at the build boundary rather than inside either system.
+    public bool CoversFluidNode(in MachinePlacement placement)
+    {
+        for (var dy = 0; dy < placement.Size; dy++)
+            for (var dx = 0; dx < placement.Size; dx++)
+                if (Fluids.HasNodeAt(placement.X + dx, placement.Y + dy))
+                    return true;
+        return false;
+    }
+
+    private bool AddBuiltPole(Buildable buildable, in MachinePlacement placement)
+    {
+        Power.AddPole(new Pole(placement.X, placement.Y,
+                               buildable.PoleSupplyRadius, buildable.PoleWireRadius));
+
+        for (var dy = 0; dy < placement.Size; dy++)
+            for (var dx = 0; dx < placement.Size; dx++)
+                _occupancy[Key(placement.X + dx, placement.Y + dy)] = GeneratorIndexBase;
+
+        return true;
+    }
+
+    /// What a newly built generator expects to burn. Coal if the data has it,
+    /// which it does; a generator with no fuel item would simply sit idle
+    /// rather than fail to build.
+    private ItemId FuelFor()
+        => Items.TryGetId("coal_deposit", out var coal) ? coal : default;
+
+    private ItemId WaterItem()
+        => Items.TryGetId("water", out var water) ? water : default;
+
     public bool CanPlace(in MachinePlacement placement)
     {
         for (var dy = 0; dy < placement.Size; dy++)

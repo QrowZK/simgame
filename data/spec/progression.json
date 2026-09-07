@@ -1649,6 +1649,7 @@
     {
       "id": "furnace",
       "name": "Furnace",
+      "category": 0,
       "tiers": [
         "MAN",
         "STM",
@@ -1663,6 +1664,7 @@
     {
       "id": "manual_crafting",
       "name": "Manual Crafting",
+      "category": 6,
       "tiers": [
         "MAN"
       ],
@@ -1673,6 +1675,7 @@
     {
       "id": "alloy_smelter",
       "name": "Alloy Smelter",
+      "category": 0,
       "tiers": [
         "MAN",
         "STM",
@@ -1687,6 +1690,7 @@
     {
       "id": "crusher",
       "name": "Crusher",
+      "category": 1,
       "tiers": [
         "STM",
         "VLT",
@@ -1706,6 +1710,7 @@
     {
       "id": "macerator",
       "name": "Macerator",
+      "category": 1,
       "tiers": [
         "STM",
         "VLT",
@@ -1725,6 +1730,7 @@
     {
       "id": "sifter",
       "name": "Sifter",
+      "category": 2,
       "tiers": [
         "STM",
         "VLT",
@@ -1741,6 +1747,7 @@
     {
       "id": "bender",
       "name": "Bender",
+      "category": 5,
       "tiers": [
         "STM",
         "VLT",
@@ -1764,6 +1771,7 @@
     {
       "id": "lathe",
       "name": "Lathe",
+      "category": 5,
       "tiers": [
         "STM",
         "VLT",
@@ -1783,6 +1791,7 @@
     {
       "id": "assembler",
       "name": "Assembler",
+      "category": 6,
       "tiers": [
         "STM",
         "VLT",
@@ -1807,6 +1816,7 @@
     {
       "id": "boiler",
       "name": "Boiler",
+      "category": 0,
       "tiers": [
         "STM"
       ],
@@ -1821,6 +1831,7 @@
     {
       "id": "miner",
       "name": "Miner",
+      "category": 8,
       "tiers": [
         "STM",
         "VLT",
@@ -1845,6 +1856,7 @@
     {
       "id": "pump_station",
       "name": "Pump Station",
+      "category": 4,
       "tiers": [
         "STM",
         "VLT",
@@ -1864,6 +1876,7 @@
     {
       "id": "generator",
       "name": "Generator",
+      "category": 7,
       "tiers": [
         "STM",
         "VLT",
@@ -1884,6 +1897,7 @@
     {
       "id": "accumulator",
       "name": "Accumulator",
+      "category": 7,
       "tiers": [
         "STM",
         "VLT",
@@ -1902,8 +1916,30 @@
       "size": 1
     },
     {
+      "id": "pole",
+      "name": "Power Pole",
+      "category": 7,
+      "tiers": [
+        "STM",
+        "VLT",
+        "ARC",
+        "PLS",
+        "FUS",
+        "QNT",
+        "SNG"
+      ],
+      "parts": [
+        {
+          "component": "cable",
+          "count": 2
+        }
+      ],
+      "size": 1
+    },
+    {
       "id": "washer",
       "name": "Ore Washer",
+      "category": 2,
       "tiers": [
         "VLT",
         "ARC",
@@ -1922,6 +1958,7 @@
     {
       "id": "wire_mill",
       "name": "Wire Mill",
+      "category": 5,
       "tiers": [
         "STM",
         "VLT",
@@ -1941,6 +1978,7 @@
     {
       "id": "mixer",
       "name": "Mixer",
+      "category": 3,
       "tiers": [
         "VLT",
         "ARC",
@@ -1958,6 +1996,7 @@
     {
       "id": "chemical_reactor",
       "name": "Chemical Reactor",
+      "category": 3,
       "tiers": [
         "STM",
         "VLT",
@@ -1982,6 +2021,7 @@
     {
       "id": "electrolyzer",
       "name": "Electrolyzer",
+      "category": 3,
       "tiers": [
         "VLT",
         "ARC",
@@ -2001,6 +2041,7 @@
     {
       "id": "cutter",
       "name": "Cutter",
+      "category": 5,
       "tiers": [
         "VLT",
         "ARC",
@@ -2021,6 +2062,7 @@
     {
       "id": "centrifuge",
       "name": "Centrifuge",
+      "category": 2,
       "tiers": [
         "ARC",
         "PLS",
@@ -2039,6 +2081,7 @@
     {
       "id": "distillery",
       "name": "Distillery",
+      "category": 2,
       "tiers": [
         "STM",
         "VLT",
@@ -2058,6 +2101,7 @@
     {
       "id": "arc_furnace",
       "name": "Arc Furnace",
+      "category": 0,
       "tiers": [
         "ARC",
         "PLS",
@@ -2074,6 +2118,7 @@
     {
       "id": "chemical_bath",
       "name": "Chemical Bath",
+      "category": 2,
       "tiers": [
         "PLS",
         "FUS",
@@ -2090,6 +2135,7 @@
     {
       "id": "vacuum_freezer",
       "name": "Vacuum Freezer",
+      "category": 4,
       "tiers": [
         "PLS",
         "FUS",
@@ -2111,6 +2157,7 @@
     {
       "id": "fusion_reactor",
       "name": "Fusion Reactor",
+      "category": 7,
       "tiers": [
         "FUS",
         "QNT",
@@ -2131,6 +2178,7 @@
     {
       "id": "replicator",
       "name": "Matter Replicator",
+      "category": 9,
       "tiers": [
         "SNG"
       ],
@@ -2149,6 +2197,7 @@
     {
       "id": "vacuum_distillation",
       "name": "Vacuum Distillation",
+      "category": 2,
       "tiers": [
         "ARC",
         "PLS",
@@ -2166,6 +2215,7 @@
     {
       "id": "steam_cracker",
       "name": "Steam Cracker",
+      "category": 3,
       "tiers": [
         "VLT",
         "ARC",
@@ -2188,6 +2238,7 @@
     {
       "id": "catalytic_reformer",
       "name": "Catalytic Reformer",
+      "category": 3,
       "tiers": [
         "ARC",
         "PLS",
@@ -2209,6 +2260,7 @@
     {
       "id": "fcc_unit",
       "name": "Catalytic Cracker",
+      "category": 3,
       "tiers": [
         "PLS",
         "FUS",
@@ -2229,6 +2281,7 @@
     {
       "id": "hydrotreater",
       "name": "Hydrotreater",
+      "category": 3,
       "tiers": [
         "ARC",
         "PLS",
@@ -2246,6 +2299,7 @@
     {
       "id": "claus_unit",
       "name": "Claus Sulfur Unit",
+      "category": 3,
       "tiers": [
         "ARC",
         "PLS",
@@ -2262,6 +2316,7 @@
     {
       "id": "coker",
       "name": "Delayed Coker",
+      "category": 3,
       "tiers": [
         "PLS",
         "FUS",
@@ -2282,6 +2337,7 @@
     {
       "id": "gasifier",
       "name": "Gasifier",
+      "category": 3,
       "tiers": [
         "STM",
         "VLT",
@@ -2299,6 +2355,7 @@
     {
       "id": "polymerizer",
       "name": "Polymerization Reactor",
+      "category": 3,
       "tiers": [
         "STM",
         "VLT",
@@ -2323,6 +2380,7 @@
     {
       "id": "spinneret",
       "name": "Fibre Spinneret",
+      "category": 5,
       "tiers": [
         "PLS",
         "FUS",
@@ -2344,6 +2402,7 @@
     {
       "id": "transport_belt",
       "name": "Transport Belt",
+      "category": 6,
       "tiers": [
         "STM",
         "VLT",
@@ -2363,6 +2422,7 @@
     {
       "id": "underground_belt",
       "name": "Underground Belt",
+      "category": 6,
       "tiers": [
         "VLT",
         "ARC",
@@ -2381,6 +2441,7 @@
     {
       "id": "splitter",
       "name": "Splitter",
+      "category": 6,
       "tiers": [
         "VLT",
         "ARC",
@@ -2403,6 +2464,7 @@
     {
       "id": "inserter",
       "name": "Inserter",
+      "category": 6,
       "tiers": [
         "STM",
         "VLT",
@@ -2422,6 +2484,7 @@
     {
       "id": "stack_inserter",
       "name": "Stack Inserter",
+      "category": 6,
       "tiers": [
         "ARC",
         "PLS",
@@ -2443,6 +2506,7 @@
     {
       "id": "pipe",
       "name": "Pipe",
+      "category": 4,
       "tiers": [
         "STM",
         "VLT",
@@ -2457,6 +2521,7 @@
     {
       "id": "inline_pump",
       "name": "Inline Pump",
+      "category": 4,
       "tiers": [
         "VLT",
         "ARC",
@@ -2479,6 +2544,7 @@
     {
       "id": "storage_tank",
       "name": "Storage Tank",
+      "category": 4,
       "tiers": [
         "VLT",
         "ARC",
@@ -2497,6 +2563,7 @@
     {
       "id": "prospector",
       "name": "Prospector",
+      "category": 8,
       "tiers": [
         "MAN",
         "STM",
@@ -2511,6 +2578,7 @@
     {
       "id": "oil_derrick",
       "name": "Oil Derrick",
+      "category": 8,
       "tiers": [
         "STM",
         "VLT",
