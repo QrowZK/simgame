@@ -24,6 +24,7 @@ public sealed partial class GameRoot : Node3D
 
     private World _world = null!;
     private MachineRenderer _renderer = null!;
+    private TerrainRenderer _terrain = null!;
     private CameraRig _rig = null!;
     private Label _hud = null!;
     private MachinePanel _panel = null!;
@@ -42,6 +43,9 @@ public sealed partial class GameRoot : Node3D
         _rig = new CameraRig { Name = "CameraRig" };
         AddChild(_rig);
 
+        _terrain = new TerrainRenderer { Name = "TerrainRenderer" };
+        AddChild(_terrain);
+
         _renderer = new MachineRenderer { Name = "MachineRenderer" };
         AddChild(_renderer);
 
@@ -50,13 +54,29 @@ public sealed partial class GameRoot : Node3D
         _panel = BuildPanel();
         _pause = BuildPauseMenu();
 
-        // Frame the factory.
-        var side = Mathf.CeilToInt(Mathf.Sqrt(machineCount));
-        _rig.Position = new Vector3(side * 0.5f, 0f, side * 0.5f);
-        _rig.ZoomLevel = Mathf.Clamp(side * 1.4f, 8f, 160f);
+        // Frame whatever there is to look at. A new game has no factory, so the
+        // camera sits on the landing site at a zoom where the ground around it
+        // reads as terrain rather than as a texture.
+        if (machineCount == 0)
+        {
+            _rig.Position = new Vector3(NewGame.SpawnX, 0f, NewGame.SpawnY);
+
+            // Wide enough to see the lie of the land and the nearest ore --
+            // the first decision a new game asks for -- but inside the drawn
+            // tile field, so the player never sees its edge.
+            _rig.ZoomLevel = 78f;
+        }
+        else
+        {
+            var side = Mathf.CeilToInt(Mathf.Sqrt(machineCount));
+            _rig.Position = new Vector3(side * 0.5f, 0f, side * 0.5f);
+            _rig.ZoomLevel = Mathf.Clamp(side * 1.4f, 8f, 160f);
+        }
+
         _rig.Apply();
 
         _renderer.Sync(_world);
+        _terrain.Sync(_world, _rig.Position);
 
         if (AllArgs().Contains("--smoke"))
             CallDeferred(nameof(RunSmokeTest));
@@ -75,6 +95,7 @@ public sealed partial class GameRoot : Node3D
         if (_pause is { Visible: true })
         {
             _renderer.Sync(_world);
+            _terrain.Sync(_world, _rig.Position);
             return;
         }
 
@@ -92,6 +113,7 @@ public sealed partial class GameRoot : Node3D
             _accumulator = 0;
 
         _renderer.Sync(_world);
+        _terrain.Sync(_world, _rig.Position);
 
         // Open the inspection panel just before the capture, so a screenshot
         // shows the GUI rather than only proving the world draws. It has to
@@ -281,6 +303,9 @@ public sealed partial class GameRoot : Node3D
 
         if (_world.TryMachineAt(tileX, tileY, out var machine, out var index))
             _panel.Show(machine, _world.PlacementOf(index));
+        else if (_world.TryMinerAt(tileX, tileY, out var miner, out var minerIndex))
+            _panel.Show(miner, _world.MinerPlacements[minerIndex],
+                        _world.Ground.RemainingAt(tileX, tileY));
         else
             _panel.Close();
     }

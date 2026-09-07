@@ -33,7 +33,13 @@ public sealed partial class Boot : Node
 
         if (Cli.WantsHeadlessRun())
         {
-            StartGame(GameSession.NewGame(seed: 1234, Cli.ReadInt("--machines", GameSession.DefaultMachineCount)));
+            // --start-shot renders a real new game; the other headless runs want
+            // the dense placeholder factory, because they exist to measure the
+            // renderer rather than to play the game.
+            StartGame(Cli.Has("--start-shot")
+                ? GameSession.NewGame(Cli.ReadInt("--seed", 20260907))
+                : GameSession.DemoFactory(
+                    seed: 1234, Cli.ReadInt("--machines", GameSession.DefaultMachineCount)));
             return;
         }
 
@@ -59,7 +65,7 @@ public sealed partial class Boot : Node
     {
         GD.Print("=== SESSION ===");
 
-        var world = GameSession.NewGame(seed: 777, machineCount: 64);
+        var world = GameSession.DemoFactory(seed: 777, machineCount: 64);
         world.Tick(300);
 
         var before = Sim.Save.SaveGame.ToJson(Sim.Save.SaveGame.Capture(world));
@@ -84,9 +90,51 @@ public sealed partial class Boot : Node
 
         GameSession.Delete(GameSession.PathFor("session test"));
         GD.Print($"deleted         {!GameSession.List().Any(s => s.Name == "session test")}");
+
+        RunStartFlow();
         GD.Print("=== SESSION OK ===");
 
         GetTree().Quit();
+    }
+
+    /// The first ten minutes of a real new game, headlessly: land with a starter
+    /// kit and no factory, prospect, walk to ore, dig by hand, build a miner on
+    /// the patch, and watch the ground go down. If any of that is broken the
+    /// game is unplayable no matter what the unit tests say.
+    private void RunStartFlow()
+    {
+        GD.Print("--- start flow ---");
+
+        var world = GameSession.NewGame(seed: 20260907);
+        GD.Print($"machines        {world.MachineCount} (a new game must have none)");
+        GD.Print($"miners          {world.Miners.Count}");
+        GD.Print($"carrying        {world.PlayerInventory.Contents.Count} kinds");
+
+        var hits = new Sim.Prospector(radius: 400).Scan(world.Ground.Gen, 0, 0);
+        GD.Print($"prospected      {hits.Count} resources within 400 tiles");
+        if (hits.Count == 0)
+        {
+            GD.Print("start flow      FAILED: nothing to mine near spawn");
+            return;
+        }
+
+        var hit = hits[0];
+        var name = world.Items.GetName(hit.Item);
+        var before = world.Ground.RemainingAt(hit.X, hit.Y);
+
+        var dug = Sim.HandOps.Mine(world.Ground, hit.X, hit.Y, world.PlayerInventory, 25);
+        GD.Print($"nearest ore     {name} at {hit.X},{hit.Y} ({hit.Distance} tiles), {before} units");
+        GD.Print($"hand mined      {dug}");
+
+        var miner = world.TryPlaceMiner(
+            new Sim.MachinePlacement(hit.X, hit.Y, 0, 0, 1), cycleTicks: 30);
+        GD.Print($"miner built     {miner is not null}");
+
+        world.Tick(600);
+        var after = world.Ground.RemainingAt(hit.X, hit.Y);
+        GD.Print($"after 600       buffered={miner?.Buffered} ground={after}");
+        GD.Print($"ground fell     {after < before - dug}");
+        GD.Print("--- start flow ok ---");
     }
 
     private void ShowMenu()
@@ -145,7 +193,7 @@ public static class Cli
     public static bool Has(string flag) => All().Any(a => a == flag || a.StartsWith(flag + "="));
 
     public static bool WantsHeadlessRun() =>
-        Has("--smoke") || Has("--screenshot") || Has("--machines");
+        Has("--smoke") || Has("--screenshot") || Has("--machines") || Has("--start-shot");
 
     public static int ReadInt(string name, int fallback)
     {

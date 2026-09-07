@@ -22,6 +22,7 @@ public sealed partial class MachinePanel : PanelContainer
     private Label _carrying = null!;
 
     private Machine? _machine;
+    private Miner? _miner;
     private MachinePlacement _placement;
     private ItemDatabase _names = null!;
     private Inventory _bag = null!;
@@ -52,27 +53,49 @@ public sealed partial class MachinePanel : PanelContainer
     public void Show(Machine machine, in MachinePlacement placement)
     {
         _machine = machine;
+        _miner = null;
         _placement = placement;
         Visible = true;
         Refresh();
     }
 
+    /// Miners get the same panel. A player should not have to learn two
+    /// different readouts for "what is this building doing".
+    public void Show(Miner miner, in MachinePlacement placement, int remainingInPatch)
+    {
+        _miner = miner;
+        _machine = null;
+        _placement = placement;
+        _patchRemaining = remainingInPatch;
+        Visible = true;
+        Refresh();
+    }
+
+    private int _patchRemaining;
+
     public void Close()
     {
         _machine = null;
+        _miner = null;
         Visible = false;
     }
 
-    public bool IsShowing => _machine is not null;
+    public bool IsShowing => _machine is not null || _miner is not null;
 
     public override void _Process(double delta)
     {
-        if (_machine is not null)
+        if (IsShowing)
             Refresh();
     }
 
     private void Refresh()
     {
+        if (_miner is not null)
+        {
+            RefreshMiner(_miner);
+            return;
+        }
+
         var machine = _machine!;
 
         _title.Text = $"{machine.Recipe.Id}   [{_placement.Size}x{_placement.Size}]";
@@ -102,6 +125,29 @@ public sealed partial class MachinePanel : PanelContainer
         _carrying.Text = "Carrying: " + Describe(_bag.Contents);
     }
 
+    /// A miner's readout. It reports what is left in the ground, because that is
+    /// the number that decides whether to keep building here or move on -- and
+    /// it is the only number the machine panel cannot infer.
+    private void RefreshMiner(Miner miner)
+    {
+        _title.Text = $"Mining {ItemName(miner.Item)}   [{_placement.Size}x{_placement.Size}]";
+        _subtitle.Text = $"{miner.YieldPerCycle} per {miner.CycleTicks} ticks   " +
+                         $"({_patchRemaining} left in this patch)";
+
+        _progress.Value = miner.Progress;
+        _status.Text = miner.State switch
+        {
+            MachineState.Working => $"Mining -- {miner.TicksRemaining} ticks left",
+            MachineState.Blocked => "Full -- nothing is taking the ore away",
+            MachineState.Depleted => "Worked out -- this patch is finished",
+            _ => "Idle",
+        };
+
+        _inputs.Text = "In:  the ground";
+        _outputs.Text = $"Out: {miner.Buffered} {ItemName(miner.Item)}";
+        _carrying.Text = "Carrying: " + Describe(_bag.Contents);
+    }
+
     private string Missing(Machine machine)
     {
         var short_ = machine.Recipe.Inputs
@@ -127,7 +173,7 @@ public sealed partial class MachinePanel : PanelContainer
     /// bar move exactly once so the machine's behaviour is legible.
     private void LoadOneCycle()
     {
-        if (_machine is null) return;
+        if (_machine is null) return;      // nothing to hand-load into a miner
 
         foreach (var input in _machine.Recipe.Inputs)
         {
@@ -141,5 +187,13 @@ public sealed partial class MachinePanel : PanelContainer
     {
         if (_machine is not null)
             HandOps.ExtractAll(_machine, _bag);
+
+        // Emptying a miner by hand is how the first ore moves, before there is
+        // an inserter to do it.
+        if (_miner is not null)
+        {
+            var taken = _miner.Pull(int.MaxValue);
+            if (taken > 0) _bag.Add(_miner.Item, taken);
+        }
     }
 }

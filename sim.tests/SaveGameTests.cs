@@ -23,7 +23,12 @@ public class SaveGameTests
         var gear = db.Register("iron_gear");
         var water = db.Register("water");
 
-        var world = new World(4242, db);
+        // Real terrain, so the ground and a miner are part of what gets saved.
+        var gen = new WorldGen(4242, new List<OreSpec>
+        {
+            new(db.Register("magnetite"), minRing: 0, patchRadius: 8, baseAmount: 900),
+        });
+        var world = new World(4242, db, gen);
 
         var smelt = new Recipe("smelt_iron_plate", 192,
             new[] { new RecipeInput(ore, 1) },
@@ -88,8 +93,17 @@ public class SaveGameTests
         world.PlayerInventory.Add(ore, 250);
         world.PlayerInventory.Add(plate, 40);
 
+        // A miner mid-cycle on a patch that has already been dug into: both the
+        // machine and the hole in the ground are state a save has to carry.
+        var patch = gen.PatchesInRegion(0, 0).First();
+        HandOps.Mine(world.Ground, patch.X, patch.Y, world.PlayerInventory, 137);
+        world.TryPlaceMiner(new MachinePlacement(patch.X, patch.Y, 2, 4, 2), cycleTicks: 40);
+
         return world;
     }
+
+    /// The generator a load has to be given: a save stores the seed, not the map.
+    private static WorldGen GenFor(World world) => world.Ground.Gen;
 
     private static Dictionary<string, Recipe> Recipes(World world)
     {
@@ -125,6 +139,25 @@ public class SaveGameTests
               .Append(" out=").Append(Stacks(world, machine.OutputContents))
               .Append('\n');
         }
+
+        for (var i = 0; i < world.Miners.Count; i++)
+        {
+            var miner = world.Miners[i];
+            var placement = world.MinerPlacements[i];
+            sb.Append("miner ").Append(i).Append(' ').Append(world.Items.GetName(miner.Item))
+              .Append(" at ").Append(placement.X).Append(',').Append(placement.Y)
+              .Append(" size=").Append(placement.Size)
+              .Append(" tier=").Append(placement.Tier)
+              .Append(" cat=").Append(placement.Category)
+              .Append(" cycle=").Append(miner.CycleTicks)
+              .Append(" state=").Append(miner.State)
+              .Append(" ticks=").Append(miner.RawTicksRemaining)
+              .Append(" buffered=").Append(miner.Buffered)
+              .Append('\n');
+        }
+
+        foreach (var (x, y, taken) in world.Ground.Depletion)
+            sb.Append("dug ").Append(x).Append(',').Append(y).Append('=').Append(taken).Append('\n');
 
         for (var s = 0; s < world.Belts.Segments.Count; s++)
         {
@@ -215,6 +248,11 @@ public class SaveGameTests
         Assert.Contains(gaps, g => g > 0);
         Assert.Contains(world.Belts.Splitters, s => s.Buffered > 0);
         Assert.True(world.Fluids.Networks[0].Amount > 0, "no fluid stored, so fluids are not covered");
+
+        Assert.NotEmpty(world.Miners);
+        Assert.NotEmpty(world.Ground.Depletion);
+        Assert.True(world.Miners[0].Buffered > 0 || world.Miners[0].RawTicksRemaining > 0,
+                    "the miner is doing nothing, so its state is not being covered");
     }
 
     [Fact]
@@ -225,7 +263,7 @@ public class SaveGameTests
         AssertMidFlight(original);
 
         var json = SaveGame.ToJson(SaveGame.Capture(original));
-        var loaded = SaveGame.Restore(SaveGame.FromJson(json), Recipes(original));
+        var loaded = SaveGame.Restore(SaveGame.FromJson(json), Recipes(original), GenFor(original));
 
         Assert.Equal(Fingerprint(original), Fingerprint(loaded));
     }
@@ -242,7 +280,7 @@ public class SaveGameTests
         var startedAt = original.TickCount;
 
         var loaded = SaveGame.Restore(SaveGame.FromJson(SaveGame.ToJson(SaveGame.Capture(original))),
-                                      Recipes(original));
+                                      Recipes(original), GenFor(original));
 
         original.Tick(10_000);
         loaded.Tick(10_000);
@@ -279,7 +317,7 @@ public class SaveGameTests
         // things in, the save's own table is what resolves its references.
         Assert.Equal("iron_ore", save.Items[0]);
 
-        var loaded = SaveGame.Restore(save, Recipes(world));
+        var loaded = SaveGame.Restore(save, Recipes(world), GenFor(world));
         Assert.Equal(world.PlayerInventory.Count(world.Items.GetId("iron_ore")),
                      loaded.PlayerInventory.Count(loaded.Items.GetId("iron_ore")));
     }
@@ -291,7 +329,7 @@ public class SaveGameTests
         var save = SaveGame.Capture(world);
         save.Version = SaveFile.CurrentVersion + 1;
 
-        var error = Assert.Throws<SaveLoadException>(() => SaveGame.Restore(save, Recipes(world)));
+        var error = Assert.Throws<SaveLoadException>(() => SaveGame.Restore(save, Recipes(world), GenFor(world)));
         Assert.Contains("version", error.Message);
     }
 
@@ -306,7 +344,7 @@ public class SaveGameTests
         var recipes = Recipes(world);
         recipes.Remove("assemble_iron_gear");
 
-        var error = Assert.Throws<SaveLoadException>(() => SaveGame.Restore(save, recipes));
+        var error = Assert.Throws<SaveLoadException>(() => SaveGame.Restore(save, recipes, GenFor(world)));
         Assert.Contains("assemble_iron_gear", error.Message);
     }
 
@@ -327,7 +365,7 @@ public class SaveGameTests
         try
         {
             SaveGame.Write(world, path);
-            var loaded = SaveGame.Read(path, Recipes(world));
+            var loaded = SaveGame.Read(path, Recipes(world), GenFor(world));
             Assert.Equal(Fingerprint(world), Fingerprint(loaded));
         }
         finally

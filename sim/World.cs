@@ -5,6 +5,8 @@ namespace Sim;
 public sealed class World
 {
     private readonly List<Machine> _machines = new();
+    private readonly List<Miner> _miners = new();
+    private readonly List<MachinePlacement> _minerPlacements = new();
     private MachinePlacement[] _placements = new MachinePlacement[64];
     private MachineState[] _states = new MachineState[64];
     private bool[] _placed = new bool[64];
@@ -33,10 +35,81 @@ public sealed class World
 
     public long TickCount { get; private set; }
 
-    public World(int seed, ItemDatabase? items = null)
+    public World(int seed, ItemDatabase? items = null, WorldGen? gen = null)
     {
         Seed = seed;
         Items = items ?? new ItemDatabase();
+        Ground = new Ground(gen ?? new WorldGen(seed, Array.Empty<OreSpec>()));
+    }
+
+    /// The terrain and its ore, with everything already dug out of it. A world
+    /// built without a WorldGen gets an empty one rather than null, so nothing
+    /// downstream has to null-check the map.
+    public Ground Ground { get; }
+
+    public IReadOnlyList<Miner> Miners => _miners;
+    public IReadOnlyList<MachinePlacement> MinerPlacements => _minerPlacements;
+
+    /// Builds a miner on the patch under a tile. Returns null when the footprint
+    /// is taken or there is nothing to mine -- placing a miner on bare rock is a
+    /// mistake worth refusing rather than a machine that never runs.
+    public Miner? TryPlaceMiner(in MachinePlacement placement, int cycleTicks = Miner.DefaultCycleTicks)
+    {
+        if (!CanPlace(placement))
+            return null;
+
+        if (!Ground.TryResourceAt(placement.X, placement.Y, out var item, out _))
+            return null;
+
+        var miner = new Miner(item, placement.Area, cycleTicks);
+        var index = _miners.Count;
+        _miners.Add(miner);
+        _minerPlacements.Add(placement);
+
+        // Miners share the machine occupancy grid, so nothing can be built on
+        // top of one. Their indices are offset past the machines, which is how
+        // one grid addresses two lists.
+        for (var dy = 0; dy < placement.Size; dy++)
+            for (var dx = 0; dx < placement.Size; dx++)
+                _occupancy[Key(placement.X + dx, placement.Y + dy)] = MinerIndexBase + index;
+
+        return miner;
+    }
+
+    /// Occupancy values at or above this are miners, not machines. A single
+    /// grid answers "is this tile free" for both without a second lookup.
+    public const int MinerIndexBase = 1 << 24;
+
+    /// The miner covering a tile, if any.
+    public bool TryMinerAt(int x, int y, out Miner miner, out int index)
+    {
+        if (_occupancy.TryGetValue(Key(x, y), out var slot) && slot >= MinerIndexBase)
+        {
+            index = slot - MinerIndexBase;
+            miner = _miners[index];
+            return true;
+        }
+
+        miner = null!;
+        index = -1;
+        return false;
+    }
+
+    /// Restores a miner from a save, bypassing the "must be on ore" check --
+    /// a patch that was worked out since the save must still load its miner,
+    /// which then reports itself Depleted rather than vanishing.
+    public Miner AddSavedMiner(ItemId item, in MachinePlacement placement, int cycleTicks)
+    {
+        var miner = new Miner(item, placement.Area, cycleTicks);
+        var index = _miners.Count;
+        _miners.Add(miner);
+        _minerPlacements.Add(placement);
+
+        for (var dy = 0; dy < placement.Size; dy++)
+            for (var dx = 0; dx < placement.Size; dx++)
+                _occupancy[Key(placement.X + dx, placement.Y + dy)] = MinerIndexBase + index;
+
+        return miner;
     }
 
     /// The seed this world was generated from. Terrain and ore are pure
@@ -67,7 +140,7 @@ public sealed class World
     /// The machine covering a tile, if any. This is what a click resolves to.
     public bool TryMachineAt(int x, int y, out Machine machine, out int index)
     {
-        if (_occupancy.TryGetValue(Key(x, y), out index))
+        if (_occupancy.TryGetValue(Key(x, y), out index) && index < MinerIndexBase)
         {
             machine = _machines[index];
             return true;
@@ -132,6 +205,14 @@ public sealed class World
 
     public void Tick()
     {
+        // Miners first: ore enters the world at the top of the tick, so the
+        // transport phase below can already move what was just dug.
+        for (var i = 0; i < _miners.Count; i++)
+        {
+            var placement = _minerPlacements[i];
+            _miners[i].Tick(Ground, placement.X, placement.Y);
+        }
+
         for (var i = 0; i < _machines.Count; i++)
         {
             var machine = _machines[i];
@@ -139,9 +220,9 @@ public sealed class World
             _states[i] = machine.State;
         }
 
-        // Machines first, then transport: fixed order, so the tick is reproducible.
+        // Then transport. Fixed order, so the tick is reproducible.
         Fluids.Tick();
-        Belts.Tick(_machines);
+        Belts.Tick(_machines, _miners);
 
         TickCount++;
     }

@@ -14,34 +14,18 @@ public static class DemoWorld
     /// Grid stride. Machines are square and at most this many tiles per side.
     private const int MaxFootprint = 3;
 
-    /// The recipes this world's machines run, by id.
-    ///
-    /// Loading a save needs the game's recipe set, and until the game reads
-    /// `/data` at runtime this is that set. When it does, this becomes a lookup
-    /// into the loaded recipe table and nothing else about saving changes.
-    public static IReadOnlyDictionary<string, Recipe> Recipes { get; private set; } =
-        new Dictionary<string, Recipe>();
-
     public static World Build(int machineCount, int seed)
     {
-        var db = new ItemDatabase();
-        var ore = db.Register("iron_ore");
-        var plate = db.Register("iron_plate");
-        var gear = db.Register("iron_gear");
+        // Real recipes from /data, not invented ones. A placeholder factory
+        // whose recipes do not exist in the catalogue cannot have its own save
+        // loaded back -- which is exactly the bug this replaced.
+        var catalogue = Sim.Data.Catalogue.Instance;
+        var db = catalogue.Items;
 
-        var smelt = new Recipe("smelt_iron_plate", 192,
-            new[] { new RecipeInput(ore, 1) },
-            new[] { new RecipeOutput(plate, 1) });
-
-        var assemble = new Recipe("assemble_iron_gear", 120,
-            new[] { new RecipeInput(plate, 2) },
-            new[] { new RecipeOutput(gear, 1) });
-
-        Recipes = new Dictionary<string, Recipe>
-        {
-            [smelt.Id] = smelt,
-            [assemble.Id] = assemble,
-        };
+        var smelt = catalogue.Recipe("smelt_chalcopyrite");
+        var assemble = catalogue.Recipe("form_copper_plate");
+        var ore = catalogue.Item("chalcopyrite");
+        var plate = catalogue.Item("copper_ingot");
 
         var world = new World(seed, db);
         var side = (int)System.Math.Ceiling(System.Math.Sqrt(machineCount));

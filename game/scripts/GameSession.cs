@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Godot;
 using Sim;
+using Sim.Data;
 using Sim.Save;
 
 namespace Game;
@@ -21,16 +22,28 @@ public static class GameSession
 
     public static World? World { get; private set; }
 
-    /// How many machines a new demo world is built with. The real game will
-    /// start from an empty world and a landing site; until worldgen is wired to
-    /// the machine graph, a new game is the demo factory.
-    public const int DefaultMachineCount = 4096;
+    /// The game's real item and recipe graph, read from `/data` at startup.
+    /// Loading it parses five JSON files and registers 600 items, so it is
+    /// built once and shared.
+    public static Catalogue Catalogue => Sim.Data.Catalogue.Instance;
 
-    public static World NewGame(int seed, int machineCount = DefaultMachineCount)
+    /// A new game: a landing site, a starter kit, and no factory. The player
+    /// builds everything from here.
+    public static World NewGame(int seed)
+    {
+        World = Sim.NewGame.Create(seed, Catalogue);
+        return World;
+    }
+
+    /// The old placeholder factory, kept for the renderer's performance runs.
+    /// It is not what a player gets.
+    public static World DemoFactory(int seed, int machineCount)
     {
         World = DemoWorld.Build(machineCount, seed);
         return World;
     }
+
+    public const int DefaultMachineCount = 4096;
 
     public static void Adopt(World world) => World = world;
 
@@ -97,13 +110,12 @@ public static class GameSession
     {
         var save = SaveGame.FromJson(ReadAllText(path));
 
-        // The recipe set has to exist before the save is restored against it.
-        // Building a throwaway world is how the demo publishes its recipes;
-        // when the game reads /data at runtime this goes away.
-        if (DemoWorld.Recipes.Count == 0)
-            DemoWorld.Build(1, save.Seed);
+        // A save stores the seed, not the map, so the generator is rebuilt from
+        // it here. Recipes come from the current data files rather than the
+        // file, which is what lets a balance patch reach an existing world.
+        var gen = new WorldGen(save.Seed, Sim.NewGame.OreSpecs(Catalogue));
 
-        World = SaveGame.Restore(save, DemoWorld.Recipes);
+        World = SaveGame.Restore(save, Catalogue.Recipes, gen);
         return World;
     }
 

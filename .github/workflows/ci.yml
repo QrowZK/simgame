@@ -103,3 +103,8 @@ jobs:
           grep -q "=== SESSION OK ===" session.log
           grep -q "round trip      identical: True" session.log
           grep -q "after 2000      identical: True" session.log
+          # Starting a game with nothing and mining your way up is the opening
+          # loop; if it breaks, the game is unplayable whatever the units say.
+          grep -q -- "--- start flow ok ---" session.log
+          grep -q "miner built     True" session.log
+          grep -q "ground fell     True" session.log

@@ -1,5 +1,7 @@
 using Sim;
 
+using Sim.Data;
+
 namespace Data.Tests;
 
 /// World generation has to place the resources the recipe graph actually needs.
@@ -9,28 +11,14 @@ public class WorldGenDataTests
 {
     private static readonly GameData Data = GameData.Instance;
 
-    /// Scarcity follows the tier ladder: a resource first needed at Plasma is
-    /// further out than one needed at Steam.
+    /// The ore list the game actually ships with. This deliberately calls the
+    /// shipping derivation rather than repeating it: a test that builds its own
+    /// specs proves those specs work, not the ones players get.
     private static List<OreSpec> RealOres(out ItemDatabase db)
     {
-        var database = new ItemDatabase();
-        foreach (var item in Data.Items) database.Register(item.Id);
-        db = database;
-
-        var tierIndex = Data.Tiers.ToDictionary(t => t.Id, t => t.Index);
-        var specs = new List<OreSpec>();
-
-        foreach (var item in Data.Items.Where(i => i.Raw && i.Category == "raw_ore"))
-        {
-            var ring = Math.Max(0, tierIndex[item.Tier] - 1);
-            // Further out means a longer haul, so patches out there hold more --
-            // the trip has to be worth making.
-            specs.Add(new OreSpec(database.GetId(item.Id), ring,
-                                  patchRadius: 6 + Math.Min(5, ring),
-                                  baseAmount: 4000 + ring * 3000));
-        }
-
-        return specs;
+        var catalogue = Catalogue.Instance;
+        db = catalogue.Items;
+        return NewGame.OreSpecs(catalogue);
     }
 
     [Fact]

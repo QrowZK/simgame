@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Data.Tests;
+namespace Sim.Data;
 
 public sealed class TierDef
 {

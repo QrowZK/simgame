@@ -72,6 +72,7 @@ public sealed partial class MachineRenderer : Node3D
     {
         var placements = world.Placements;
         var states = world.MachineStates;
+        var miners = world.MinerPlacements;
 
         System.Array.Clear(_hullCounts);
         System.Array.Clear(_attachCounts);
@@ -79,6 +80,15 @@ public sealed partial class MachineRenderer : Node3D
         {
             _hullCounts[Clamp(placements[i].Tier, MeshKit.TierCount)]++;
             _attachCounts[Clamp(placements[i].Category, MeshKit.CategoryCount)]++;
+        }
+
+        // Miners draw from the same mesh kit as machines -- they are machines as
+        // far as the renderer is concerned, and giving them their own pools
+        // would double the batch count for one more silhouette.
+        for (var i = 0; i < miners.Count; i++)
+        {
+            _hullCounts[Clamp(miners[i].Tier, MeshKit.TierCount)]++;
+            _attachCounts[Clamp(miners[i].Category, MeshKit.CategoryCount)]++;
         }
 
         // MultiMesh.Buffer must be exactly InstanceCount * stride long, so buffers
@@ -92,36 +102,43 @@ public sealed partial class MachineRenderer : Node3D
         System.Array.Clear(_attachCursor);
 
         for (var i = 0; i < placements.Length; i++)
-        {
-            var placement = placements[i];
-            var tier = Clamp(placement.Tier, MeshKit.TierCount);
-            var category = Clamp(placement.Category, MeshKit.CategoryCount);
+            WriteOne(placements[i], states[i]);
 
-            // Placements anchor on the footprint's corner; meshes are centred
-            // on theirs. The -0.5f keeps a 1x1 exactly where it always sat.
-            var x = (placement.CentreX - 0.5f) * TileSize;
-            var z = (placement.CentreY - 0.5f) * TileSize;
-
-            // Footprint scales the plan fully; height grows at half that rate.
-            // A 3x3 raised to three times the height reads as a tower rather
-            // than as a bigger machine, and buries its neighbours in shadow.
-            var plan = placement.Size;
-            var lift = 1f + (placement.Size - 1) * 0.5f;
-
-            Write(_hullBuffers[tier]!, _hullCursor[tier]++, x, 0f, z,
-                  MeshKit.TierColor(tier), plan, lift);
-            Write(_attachBuffers[category]!, _attachCursor[category]++,
-                  x, MeshKit.DeckHeight(tier) * lift, z,
-                  // The attachment lifts with its hull, not with its plan: at
-                  // full plan scale a 3x3's drum is taller than the body it sits
-                  // on and overhangs the edge.
-                  MeshKit.StateColor(states[i]), plan, lift);
-        }
+        for (var i = 0; i < miners.Count; i++)
+            WriteOne(miners[i], world.Miners[i].State);
 
         for (var tier = 0; tier < MeshKit.TierCount; tier++)
             Upload(_hullPools[tier], _hullBuffers[tier]!, _hullCounts[tier]);
         for (var category = 0; category < MeshKit.CategoryCount; category++)
             Upload(_attachPools[category], _attachBuffers[category]!, _attachCounts[category]);
+    }
+
+    /// Places one hull and its attachment. Machines and miners both come
+    /// through here, so their sizing and seating can never drift apart.
+    private void WriteOne(in MachinePlacement placement, MachineState state)
+    {
+        var tier = Clamp(placement.Tier, MeshKit.TierCount);
+        var category = Clamp(placement.Category, MeshKit.CategoryCount);
+
+        // Placements anchor on the footprint's corner; meshes are centred on
+        // theirs. The -0.5f keeps a 1x1 exactly where it always sat.
+        var x = (placement.CentreX - 0.5f) * TileSize;
+        var z = (placement.CentreY - 0.5f) * TileSize;
+
+        // Footprint scales the plan fully; height grows at half that rate. A
+        // 3x3 raised to three times the height reads as a tower rather than as
+        // a bigger machine, and buries its neighbours in shadow.
+        var plan = placement.Size;
+        var lift = 1f + (placement.Size - 1) * 0.5f;
+
+        Write(_hullBuffers[tier]!, _hullCursor[tier]++, x, 0f, z,
+              MeshKit.TierColor(tier), plan, lift);
+
+        // The attachment lifts with its hull, not with its plan: at full plan
+        // scale a 3x3's drum is taller than the body it sits on and overhangs.
+        Write(_attachBuffers[category]!, _attachCursor[category]++,
+              x, MeshKit.DeckHeight(tier) * lift, z,
+              MeshKit.StateColor(state), plan, lift);
     }
 
     /// Writes one instance: an axis-aligned, axis-scaled transform plus colour.

@@ -1,5 +1,7 @@
 using Sim;
 
+using Sim.Data;
+
 namespace Data.Tests;
 
 /// Graph reachability says a chain *connects*. These tests say it actually

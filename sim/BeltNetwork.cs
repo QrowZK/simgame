@@ -6,6 +6,10 @@ public enum EndpointKind
     Belt,
     Machine,
     Splitter,
+
+    /// A miner's output buffer. Appended last so existing saves keep their
+    /// numbering.
+    Miner,
 }
 
 /// Where a lane hands its items on to.
@@ -26,6 +30,7 @@ public readonly struct Endpoint
     public static Endpoint Belt(int segment, int lane) => new(EndpointKind.Belt, segment, lane);
     public static Endpoint Machine(int machine) => new(EndpointKind.Machine, machine, 0);
     public static Endpoint Splitter(int splitter) => new(EndpointKind.Splitter, splitter, 0);
+    public static Endpoint Miner(int miner) => new(EndpointKind.Miner, miner, 0);
 }
 
 /// Two lanes in, two lanes out, alternating. Round-robin rather than random, so
@@ -125,6 +130,10 @@ public sealed class Inserter
     }
 
     public void Tick(BeltNetwork network, IReadOnlyList<Machine> machines)
+        => Tick(network, machines, Array.Empty<Miner>());
+
+    public void Tick(BeltNetwork network, IReadOnlyList<Machine> machines,
+                     IReadOnlyList<Miner> miners)
     {
         if (_cooldown > 0)
         {
@@ -134,7 +143,7 @@ public sealed class Inserter
 
         if (_held == 0)
         {
-            if (network.TryTake(Source, machines, StackSize, out _heldItem, out _held) && _held > 0)
+            if (network.TryTake(Source, machines, miners, StackSize, out _heldItem, out _held) && _held > 0)
                 _cooldown = SwingTicks;
             return;
         }
@@ -210,7 +219,9 @@ public sealed class BeltNetwork
     public Endpoint OutputOf(int segment, int lane) =>
         _laneOutputs[segment * BeltSegment.LaneCount + lane];
 
-    public void Tick(IReadOnlyList<Machine> machines)
+    public void Tick(IReadOnlyList<Machine> machines) => Tick(machines, Array.Empty<Miner>());
+
+    public void Tick(IReadOnlyList<Machine> machines, IReadOnlyList<Miner> miners)
     {
         // Phase 1 -- everything slides forward. O(1) per lane.
         for (var i = 0; i < _segments.Count; i++)
@@ -240,13 +251,14 @@ public sealed class BeltNetwork
 
         // Phase 4 -- inserters.
         for (var i = 0; i < _inserters.Count; i++)
-            _inserters[i].Tick(this, machines);
+            _inserters[i].Tick(this, machines, miners);
     }
 
     /// Hands one item to an endpoint. Returns false when it will not fit, which
     /// is how backpressure travels back up the line.
     public bool TryGive(Endpoint endpoint, IReadOnlyList<Machine> machines, ItemId item)
     {
+        // Nothing gives TO a miner: ore only ever leaves one.
         switch (endpoint.Kind)
         {
             case EndpointKind.Belt:
@@ -270,6 +282,10 @@ public sealed class BeltNetwork
     /// Takes up to `max` of a single item type from an endpoint.
     public bool TryTake(Endpoint endpoint, IReadOnlyList<Machine> machines, int max,
                         out ItemId item, out int taken)
+        => TryTake(endpoint, machines, Array.Empty<Miner>(), max, out item, out taken);
+
+    public bool TryTake(Endpoint endpoint, IReadOnlyList<Machine> machines,
+                        IReadOnlyList<Miner> miners, int max, out ItemId item, out int taken)
     {
         item = default;
         taken = 0;
@@ -298,6 +314,16 @@ public sealed class BeltNetwork
                 }
 
                 return false;
+            }
+
+            case EndpointKind.Miner:
+            {
+                var miner = miners[endpoint.Index];
+                var got = miner.Pull(max);
+                if (got <= 0) return false;
+                item = miner.Item;
+                taken = got;
+                return true;
             }
 
             default:

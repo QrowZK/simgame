@@ -46,6 +46,28 @@ public static class SaveGame
         for (var i = 0; i < world.MachineCount; i++)
             save.Machines.Add(CaptureMachine(world, i));
 
+        for (var i = 0; i < world.Miners.Count; i++)
+        {
+            var miner = world.Miners[i];
+            var placement = world.MinerPlacements[i];
+            save.Miners.Add(new MinerSave
+            {
+                Item = miner.Item.Value,
+                X = placement.X,
+                Y = placement.Y,
+                Tier = placement.Tier,
+                Category = placement.Category,
+                Size = placement.Size,
+                CycleTicks = miner.CycleTicks,
+                TicksRemaining = miner.RawTicksRemaining,
+                Buffered = miner.Buffered,
+                State = miner.State,
+            });
+        }
+
+        foreach (var (x, y, taken) in world.Ground.Depletion)
+            save.Depletion.Add(new DepletionSave { X = x, Y = y, Taken = taken });
+
         save.Belts = CaptureBelts(world.Belts);
 
         foreach (var network in world.Fluids.Networks)
@@ -145,6 +167,14 @@ public static class SaveGame
     /// Rebuilds a World. `recipes` is the running game's recipe set, keyed by
     /// recipe id.
     public static World Restore(SaveFile save, IReadOnlyDictionary<string, Recipe> recipes)
+        => Restore(save, recipes, null);
+
+    /// `gen` is the world generator to restore against. Passing null gives a
+    /// world with no terrain, which is right for tests that only care about
+    /// machines and wrong for a real load -- a save stores the seed, not the
+    /// map, so the caller has to supply the generator built from it.
+    public static World Restore(SaveFile save, IReadOnlyDictionary<string, Recipe> recipes,
+                                WorldGen? gen)
     {
         if (save.Version != SaveFile.CurrentVersion)
             throw new SaveLoadException(
@@ -158,13 +188,23 @@ public static class SaveGame
         foreach (var name in save.Items)
             items.Register(name);
 
-        var world = new World(save.Seed, items);
+        var world = new World(save.Seed, items, gen);
         world.RestoreTick(save.Tick);
+
+        world.Ground.Restore(save.Depletion.Select(d => (d.X, d.Y, d.Taken)));
 
         world.PlayerInventory.Restore(save.Player.Select(s => (Item(s.Item, save), s.Count)).ToList());
 
         foreach (var entry in save.Machines)
             RestoreMachine(world, entry, recipes, save);
+
+        foreach (var entry in save.Miners)
+        {
+            var placement = new MachinePlacement(entry.X, entry.Y, (byte)entry.Tier,
+                                                 (byte)entry.Category, (byte)entry.Size);
+            var miner = world.AddSavedMiner(Item(entry.Item, save), placement, entry.CycleTicks);
+            miner.Restore(entry.State, entry.TicksRemaining, entry.Buffered);
+        }
 
         RestoreBelts(world.Belts, save.Belts, save);
 
@@ -278,10 +318,11 @@ public static class SaveGame
     public static void Write(World world, string path) =>
         File.WriteAllText(path, ToJson(Capture(world)));
 
-    public static World Read(string path, IReadOnlyDictionary<string, Recipe> recipes)
+    public static World Read(string path, IReadOnlyDictionary<string, Recipe> recipes,
+                             WorldGen? gen = null)
     {
         if (!File.Exists(path))
             throw new SaveLoadException($"there is no save file at {path}");
-        return Restore(FromJson(File.ReadAllText(path)), recipes);
+        return Restore(FromJson(File.ReadAllText(path)), recipes, gen);
     }
 }

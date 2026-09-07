@@ -6,6 +6,11 @@ public enum MachineState
     Working,
     Starved,
     Blocked,
+
+    /// A miner whose patch is worked out. Distinct from Starved: no belt or
+    /// inserter will ever fix this one, so the UI has to say something else.
+    /// Appended last so existing save files keep their numbering.
+    Depleted,
 }
 
 public sealed class Machine

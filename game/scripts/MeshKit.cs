@@ -180,6 +180,12 @@ public static class MeshKit
         Sim.MachineState.Working => new Color(0.35f, 0.85f, 0.40f),
         Sim.MachineState.Starved => new Color(0.90f, 0.75f, 0.25f),
         Sim.MachineState.Blocked => new Color(0.90f, 0.35f, 0.30f),
+
+        // Worked out. Deliberately not the red of Blocked: a blocked machine is
+        // a problem to solve on the spot, a depleted one is a reason to go and
+        // find more ore, and they should not look like the same failure.
+        Sim.MachineState.Depleted => new Color(0.45f, 0.38f, 0.55f),
+
         _ => new Color(0.55f, 0.55f, 0.58f),
     };
 }

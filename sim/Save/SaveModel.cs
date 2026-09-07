@@ -21,7 +21,10 @@ public sealed class SaveFile
     /// Bumped whenever the shape below changes incompatibly. A loader that does
     /// not recognise a version refuses the file rather than guessing at it: a
     /// half-understood save is worse than no save.
-    public const int CurrentVersion = 1;
+    /// 2 added mined-out ore and miners. Bumped rather than defaulted, because
+    /// a version-1 save has no record of what was dug and would silently
+    /// refill every patch the player had emptied.
+    public const int CurrentVersion = 2;
 
     public int Version { get; set; } = CurrentVersion;
     public int Seed { get; set; }
@@ -34,6 +37,12 @@ public sealed class SaveFile
 
     public List<StackSave> Player { get; set; } = new();
     public List<MachineSave> Machines { get; set; } = new();
+    public List<MinerSave> Miners { get; set; } = new();
+
+    /// Only patches that have actually been mined. An untouched world writes
+    /// nothing here, which is the point of storing depletion as an overlay
+    /// rather than storing the map.
+    public List<DepletionSave> Depletion { get; set; } = new();
     public BeltNetworkSave Belts { get; set; } = new();
     public List<FluidNetworkSave> Fluids { get; set; } = new();
 }
@@ -70,6 +79,31 @@ public sealed class MachineSave
     public MachineState State { get; set; }
     public List<StackSave> Inputs { get; set; } = new();
     public List<StackSave> Outputs { get; set; } = new();
+}
+
+public sealed class MinerSave
+{
+    /// What this miner was built to extract. Stored rather than re-read from
+    /// the ground, so a miner on a worked-out patch still loads and reports
+    /// itself depleted instead of vanishing from the factory.
+    public int Item { get; set; }
+
+    public int X { get; set; }
+    public int Y { get; set; }
+    public int Tier { get; set; }
+    public int Category { get; set; }
+    public int Size { get; set; } = 1;
+    public int CycleTicks { get; set; }
+    public int TicksRemaining { get; set; }
+    public int Buffered { get; set; }
+    public MachineState State { get; set; }
+}
+
+public sealed class DepletionSave
+{
+    public int X { get; set; }
+    public int Y { get; set; }
+    public int Taken { get; set; }
 }
 
 public sealed class BeltNetworkSave
