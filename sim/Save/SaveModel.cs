@@ -21,10 +21,11 @@ public sealed class SaveFile
     /// Bumped whenever the shape below changes incompatibly. A loader that does
     /// not recognise a version refuses the file rather than guessing at it: a
     /// half-understood save is worse than no save.
-    /// 2 added mined-out ore and miners. Bumped rather than defaulted, because
-    /// a version-1 save has no record of what was dug and would silently
-    /// refill every patch the player had emptied.
-    public const int CurrentVersion = 2;
+    /// 2 added mined-out ore and miners. 3 added power: poles, generators and
+    /// the energy in flight. Bumped rather than defaulted each time, because a
+    /// save that silently lost this state would look loadable and be wrong --
+    /// an older file has no poles, so every powered machine would go dark.
+    public const int CurrentVersion = 3;
 
     public int Version { get; set; } = CurrentVersion;
     public int Seed { get; set; }
@@ -43,6 +44,8 @@ public sealed class SaveFile
     /// nothing here, which is the point of storing depletion as an overlay
     /// rather than storing the map.
     public List<DepletionSave> Depletion { get; set; } = new();
+    public List<PoleSave> Poles { get; set; } = new();
+    public List<GeneratorSave> Generators { get; set; } = new();
     public BeltNetworkSave Belts { get; set; } = new();
     public List<FluidNetworkSave> Fluids { get; set; } = new();
 }
@@ -76,6 +79,12 @@ public sealed class MachineSave
     public bool Placed { get; set; }
 
     public int TicksRemaining { get; set; }
+
+    /// Energy banked toward the next tick. Under a brownout a machine can be
+    /// carrying most of a tick's worth, and losing it on every load would make
+    /// a struggling factory quietly slower each time it is reopened.
+    public int Energy { get; set; }
+
     public MachineState State { get; set; }
     public List<StackSave> Inputs { get; set; } = new();
     public List<StackSave> Outputs { get; set; } = new();
@@ -96,7 +105,35 @@ public sealed class MinerSave
     public int CycleTicks { get; set; }
     public int TicksRemaining { get; set; }
     public int Buffered { get; set; }
+    public int Energy { get; set; }
+    public int PowerDraw { get; set; }
     public MachineState State { get; set; }
+}
+
+public sealed class PoleSave
+{
+    public int X { get; set; }
+    public int Y { get; set; }
+    public int SupplyRadius { get; set; }
+    public int WireRadius { get; set; }
+}
+
+public sealed class GeneratorSave
+{
+    public int Fuel { get; set; }
+    public int OutputPerTick { get; set; }
+    public int TicksPerFuel { get; set; }
+    public int FuelStock { get; set; }
+
+    /// How far through the current unit of fuel. Dropping it would hand the
+    /// player a free partial burn on every load.
+    public int BurnTicksLeft { get; set; }
+
+    public int X { get; set; }
+    public int Y { get; set; }
+    public int Tier { get; set; }
+    public int Category { get; set; }
+    public int Size { get; set; } = 1;
 }
 
 public sealed class DepletionSave

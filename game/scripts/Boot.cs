@@ -134,7 +134,52 @@ public sealed partial class Boot : Node
         var after = world.Ground.RemainingAt(hit.X, hit.Y);
         GD.Print($"after 600       buffered={miner?.Buffered} ground={after}");
         GD.Print($"ground fell     {after < before - dug}");
+
+        RunPowerFlow(world, hit.X, hit.Y);
         GD.Print("--- start flow ok ---");
+    }
+
+    /// The power loop, end to end: a machine that needs electricity sits dark
+    /// until a pole reaches it and a fuelled generator feeds the network.
+    private void RunPowerFlow(Sim.World world, int oreX, int oreY)
+    {
+        GD.Print("--- power ---");
+
+        var catalogue = GameSession.Catalogue;
+        var recipe = catalogue.Recipe("crush_chalcopyrite");
+
+        var machine = world.TryPlaceMachine(recipe,
+            new Sim.MachinePlacement(oreX + 10, oreY, 1, 3, 1), outputCapacityPerItem: 100);
+
+        if (machine is null)
+        {
+            GD.Print("power           FAILED: could not place the machine");
+            return;
+        }
+
+        machine.PushInput(catalogue.Item("chalcopyrite"), 100);
+        world.Tick(120);
+        GD.Print($"unpowered       state={machine.State} draw={machine.PowerDraw}/tick");
+
+        world.Power.AddPole(new Sim.Pole(oreX + 10, oreY, supplyRadius: 6, wireRadius: 9));
+
+        var generator = new Sim.Generator(catalogue.Item("coal_deposit"),
+                                          outputPerTick: 20, ticksPerFuel: 400);
+        generator.AddFuel(20);
+        world.TryPlaceGenerator(generator, new Sim.MachinePlacement(oreX + 12, oreY, 1, 6, 1));
+
+        world.Tick(120);
+        var supply = 0;
+        var demand = 0;
+        foreach (var n in world.NetworkSupply) supply += n;
+        foreach (var n in world.NetworkDemand) demand += n;
+
+        GD.Print($"networks        {world.Power.NetworkCount}");
+        GD.Print($"grid            supply={supply} demand={demand}");
+        GD.Print($"powered         state={machine.State}");
+        GD.Print($"produced        {machine.GetOutputCount(catalogue.Item("chalcopyrite_crushed"))}");
+        GD.Print($"burning         {generator.IsBurning}");
+        GD.Print("--- power ok ---");
     }
 
     private void ShowMenu()

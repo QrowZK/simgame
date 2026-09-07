@@ -73,6 +73,7 @@ public sealed partial class MachineRenderer : Node3D
         var placements = world.Placements;
         var states = world.MachineStates;
         var miners = world.MinerPlacements;
+        var generators = world.Power.GeneratorPlacements;
 
         System.Array.Clear(_hullCounts);
         System.Array.Clear(_attachCounts);
@@ -91,6 +92,12 @@ public sealed partial class MachineRenderer : Node3D
             _attachCounts[Clamp(miners[i].Category, MeshKit.CategoryCount)]++;
         }
 
+        for (var i = 0; i < generators.Count; i++)
+        {
+            _hullCounts[Clamp(generators[i].Tier, MeshKit.TierCount)]++;
+            _attachCounts[Clamp(generators[i].Category, MeshKit.CategoryCount)]++;
+        }
+
         // MultiMesh.Buffer must be exactly InstanceCount * stride long, so buffers
         // are resized only when a count actually changes -- normally never.
         for (var tier = 0; tier < MeshKit.TierCount; tier++)
@@ -106,6 +113,9 @@ public sealed partial class MachineRenderer : Node3D
 
         for (var i = 0; i < miners.Count; i++)
             WriteOne(miners[i], world.Miners[i].State);
+
+        for (var i = 0; i < generators.Count; i++)
+            WriteOne(generators[i], world.Power.Generators[i].State);
 
         for (var tier = 0; tier < MeshKit.TierCount; tier++)
             Upload(_hullPools[tier], _hullBuffers[tier]!, _hullCounts[tier]);

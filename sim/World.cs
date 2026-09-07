@@ -47,13 +47,166 @@ public sealed class World
     /// downstream has to null-check the map.
     public Ground Ground { get; }
 
+    /// Poles, generators and networks. Power is a world-level concern because a
+    /// network spans machines that know nothing about each other.
+    public PowerGrid Power { get; } = new();
+
+    private int[] _supply = Array.Empty<int>();
+    private int[] _demand = Array.Empty<int>();
+    private long[] _carry = Array.Empty<long>();
+
+    /// Which network each machine and miner sits on, cached.
+    ///
+    /// Resolving this means scanning the poles, which is fine when something is
+    /// built and ruinous every tick: doing it live cost more per tick than the
+    /// entire rest of the simulation. The cache is rebuilt when the grid
+    /// changes or something is placed, both of which are rare.
+    private int[] _machineNetwork = Array.Empty<int>();
+    private int[] _minerNetwork = Array.Empty<int>();
+    private int _cachedGridVersion = -1;
+    private int _cachedMachines = -1;
+    private int _cachedMiners = -1;
+
+    private void RefreshNetworkCache()
+    {
+        if (_cachedGridVersion == Power.Version &&
+            _cachedMachines == _machines.Count &&
+            _cachedMiners == _miners.Count)
+            return;
+
+        _cachedGridVersion = Power.Version;
+        _cachedMachines = _machines.Count;
+        _cachedMiners = _miners.Count;
+
+        if (_machineNetwork.Length < _machines.Count)
+            Array.Resize(ref _machineNetwork, Math.Max(64, _machines.Count));
+        if (_minerNetwork.Length < _miners.Count)
+            Array.Resize(ref _minerNetwork, Math.Max(64, _miners.Count));
+
+        for (var i = 0; i < _machines.Count; i++)
+            _machineNetwork[i] = Power.NetworkAt(_placements[i].X, _placements[i].Y);
+        for (var i = 0; i < _miners.Count; i++)
+            _minerNetwork[i] = Power.NetworkAt(_minerPlacements[i].X, _minerPlacements[i].Y);
+    }
+
+    /// Energy generated on each network last tick.
+    public ReadOnlySpan<int> NetworkSupply => _supply.AsSpan(0, Power.NetworkCount);
+
+    /// Energy asked for on each network last tick. Greater than supply means a
+    /// brownout: everything on that network runs proportionally slower.
+    public ReadOnlySpan<int> NetworkDemand => _demand.AsSpan(0, Power.NetworkCount);
+
+    /// Builds a generator on the grid, refusing an occupied footprint the same
+    /// way machines and miners do.
+    public Generator? TryPlaceGenerator(Generator generator, in MachinePlacement placement)
+    {
+        if (!CanPlace(placement))
+            return null;
+
+        Power.AddGenerator(generator, placement);
+
+        for (var dy = 0; dy < placement.Size; dy++)
+            for (var dx = 0; dx < placement.Size; dx++)
+                _occupancy[Key(placement.X + dx, placement.Y + dy)] = GeneratorIndexBase;
+
+        return generator;
+    }
+
+    /// Occupancy marker for generators. They are not addressed by index through
+    /// the grid the way machines and miners are -- nothing clicks through to a
+    /// generator yet -- so one marker is enough to keep their tiles reserved.
+    public const int GeneratorIndexBase = 1 << 25;
+
+    /// Distributes each network's generated energy across everything drawing on
+    /// it.
+    ///
+    /// Shortfall is a proportional brownout rather than a cull: every machine on
+    /// a half-fed network runs at half speed, instead of an arbitrary half of
+    /// them stopping dead. Which half would be arbitrary is the problem --
+    /// index order would mean the same machines always lose, for a reason
+    /// invisible on screen.
+    ///
+    /// The split is exact integer arithmetic. Each consumer takes
+    /// floor of its running share, and the remainder carries to the next one, so
+    /// the shares sum to exactly the supply with no drift and no floats.
+    private void TickPower()
+    {
+        var networks = Power.NetworkCount;
+        if (_supply.Length < networks)
+        {
+            Array.Resize(ref _supply, Math.Max(4, networks));
+            Array.Resize(ref _demand, Math.Max(4, networks));
+            Array.Resize(ref _carry, Math.Max(4, networks));
+        }
+
+        Array.Clear(_supply);
+        Array.Clear(_demand);
+        Array.Clear(_carry);
+
+        RefreshNetworkCache();
+
+        for (var i = 0; i < Power.Generators.Count; i++)
+        {
+            var made = Power.Generators[i].Tick();
+            var network = Power.NetworkOfGenerator(i);
+
+            // A generator no pole reaches still burns its fuel. It is running;
+            // it is just wired to nothing, which is a mistake the player should
+            // see costing them coal.
+            if (network >= 0 && made > 0)
+                _supply[network] += made;
+        }
+
+        for (var i = 0; i < _machines.Count; i++)
+        {
+            var network = _machineNetwork[i];
+            if (network >= 0 && _machines[i].WantsPower) _demand[network] += _machines[i].PowerDraw;
+        }
+
+        for (var i = 0; i < _miners.Count; i++)
+        {
+            var network = _minerNetwork[i];
+            if (network >= 0 && _miners[i].WantsPower) _demand[network] += _miners[i].PowerDraw;
+        }
+
+        for (var i = 0; i < _machines.Count; i++)
+        {
+            var network = _machineNetwork[i];
+            if (network >= 0 && _machines[i].WantsPower)
+                _machines[i].SupplyEnergy(Share(network, _machines[i].PowerDraw));
+        }
+
+        for (var i = 0; i < _miners.Count; i++)
+        {
+            var network = _minerNetwork[i];
+            if (network >= 0 && _miners[i].WantsPower)
+                _miners[i].SupplyEnergy(Share(network, _miners[i].PowerDraw));
+        }
+    }
+
+    private int Share(int network, int draw)
+    {
+        var demand = _demand[network];
+        if (demand <= 0) return 0;
+
+        _carry[network] += (long)_supply[network] * draw;
+        var give = (int)Math.Min(int.MaxValue, _carry[network] / demand);
+        _carry[network] -= (long)give * demand;
+
+        // Never more than one tick's worth. A machine cannot spend faster than
+        // that, and handing it more would let a surplus network bank energy in
+        // machine buffers -- storage the game does not have yet.
+        return Math.Min(draw, give);
+    }
+
     public IReadOnlyList<Miner> Miners => _miners;
     public IReadOnlyList<MachinePlacement> MinerPlacements => _minerPlacements;
 
     /// Builds a miner on the patch under a tile. Returns null when the footprint
     /// is taken or there is nothing to mine -- placing a miner on bare rock is a
     /// mistake worth refusing rather than a machine that never runs.
-    public Miner? TryPlaceMiner(in MachinePlacement placement, int cycleTicks = Miner.DefaultCycleTicks)
+    public Miner? TryPlaceMiner(in MachinePlacement placement,
+                                int cycleTicks = Miner.DefaultCycleTicks, int powerDraw = 0)
     {
         if (!CanPlace(placement))
             return null;
@@ -61,7 +214,7 @@ public sealed class World
         if (!Ground.TryResourceAt(placement.X, placement.Y, out var item, out _))
             return null;
 
-        var miner = new Miner(item, placement.Area, cycleTicks);
+        var miner = new Miner(item, placement.Area, cycleTicks, powerDraw: powerDraw);
         var index = _miners.Count;
         _miners.Add(miner);
         _minerPlacements.Add(placement);
@@ -98,9 +251,10 @@ public sealed class World
     /// Restores a miner from a save, bypassing the "must be on ore" check --
     /// a patch that was worked out since the save must still load its miner,
     /// which then reports itself Depleted rather than vanishing.
-    public Miner AddSavedMiner(ItemId item, in MachinePlacement placement, int cycleTicks)
+    public Miner AddSavedMiner(ItemId item, in MachinePlacement placement, int cycleTicks,
+                               int powerDraw = 0)
     {
-        var miner = new Miner(item, placement.Area, cycleTicks);
+        var miner = new Miner(item, placement.Area, cycleTicks, powerDraw: powerDraw);
         var index = _miners.Count;
         _miners.Add(miner);
         _minerPlacements.Add(placement);
@@ -205,7 +359,12 @@ public sealed class World
 
     public void Tick()
     {
-        // Miners first: ore enters the world at the top of the tick, so the
+        // Power first: generators burn and the networks are shared out before
+        // anything tries to run, so a machine's power state this tick reflects
+        // this tick's generation rather than last tick's.
+        TickPower();
+
+        // Miners next: ore enters the world at the top of the tick, so the
         // transport phase below can already move what was just dug.
         for (var i = 0; i < _miners.Count; i++)
         {

@@ -186,6 +186,11 @@ public static class MeshKit
         // find more ore, and they should not look like the same failure.
         Sim.MachineState.Depleted => new Color(0.45f, 0.38f, 0.55f),
 
+        // No power. Blue reads as "cold" and is nothing like the red of a
+        // blocked machine or the amber of a starved one, so a browning-out
+        // factory is recognisable at a glance without reading a single panel.
+        Sim.MachineState.Unpowered => new Color(0.32f, 0.52f, 0.85f),
+
         _ => new Color(0.55f, 0.55f, 0.58f),
     };
 }

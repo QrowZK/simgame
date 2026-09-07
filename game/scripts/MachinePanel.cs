@@ -113,12 +113,18 @@ public sealed partial class MachinePanel : PanelContainer
         _status.Text = machine.State switch
         {
             MachineState.Working => $"Working -- {machine.TicksRemaining} ticks left",
-            // The two failure states are the whole reason this panel exists, so
+            // The failure states are the whole reason this panel exists, so
             // they say what to do about it rather than naming themselves.
             MachineState.Starved => "Starved -- waiting on " + Missing(machine),
             MachineState.Blocked => "Blocked -- output full, nothing is taking it away",
+            MachineState.Unpowered => machine.Energy > 0
+                ? $"Browning out -- {machine.Energy}/{machine.PowerDraw} charged, needs more supply"
+                : "No power -- not connected to a grid, or the grid has none spare",
             _ => "Idle",
         };
+
+        if (machine.PowerDraw > 0)
+            _subtitle.Text += $"   [{machine.PowerDraw}/tick]";
 
         _inputs.Text = "In:  " + Describe(machine.InputContents);
         _outputs.Text = "Out: " + Describe(machine.OutputContents);
@@ -140,6 +146,9 @@ public sealed partial class MachinePanel : PanelContainer
             MachineState.Working => $"Mining -- {miner.TicksRemaining} ticks left",
             MachineState.Blocked => "Full -- nothing is taking the ore away",
             MachineState.Depleted => "Worked out -- this patch is finished",
+            MachineState.Unpowered => miner.Energy > 0
+                ? $"Browning out -- {miner.Energy}/{miner.PowerDraw} charged"
+                : "No power -- not connected to a grid, or the grid has none spare",
             _ => "Idle",
         };
 

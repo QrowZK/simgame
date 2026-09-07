@@ -32,7 +32,7 @@ public class SaveGameTests
 
         var smelt = new Recipe("smelt_iron_plate", 192,
             new[] { new RecipeInput(ore, 1) },
-            new[] { new RecipeOutput(plate, 1) });
+            new[] { new RecipeOutput(plate, 1) }, powerDraw: 4);
         var assemble = new Recipe("assemble_iron_gear", 120,
             new[] { new RecipeInput(plate, 2) },
             new[] { new RecipeOutput(gear, 1) });
@@ -97,7 +97,31 @@ public class SaveGameTests
         // machine and the hole in the ground are state a save has to carry.
         var patch = gen.PatchesInRegion(0, 0).First();
         HandOps.Mine(world.Ground, patch.X, patch.Y, world.PlayerInventory, 137);
-        world.TryPlaceMiner(new MachinePlacement(patch.X, patch.Y, 2, 4, 2), cycleTicks: 40);
+        world.TryPlaceMiner(new MachinePlacement(patch.X, patch.Y, 2, 4, 2), cycleTicks: 40,
+                            powerDraw: 3);
+
+        // A grid that cannot quite keep up, so machines are mid-brownout when
+        // the world is saved and their energy buffers are not all zero.
+        world.Power.AddPole(new Pole(patch.X, patch.Y, supplyRadius: 12, wireRadius: 9));
+        var coal = db.Register("coal");
+        var generator = new Generator(coal, outputPerTick: 9, ticksPerFuel: 250);
+        generator.AddFuel(4);
+        world.TryPlaceGenerator(generator, new MachinePlacement(patch.X + 5, patch.Y + 5, 1, 2, 1));
+
+        // A machine actually inside the pole's reach, drawing far more than the
+        // grid can spare. The others sit at the origin, far off-grid, so
+        // without this one no machine ever holds a partial energy buffer and a
+        // save that dropped energy would round-trip unnoticed.
+        //
+        // The heavy draw is the point: it spends most ticks part-way to
+        // affording one, which is exactly the state worth saving.
+        var hungry = new Recipe("smelt_slowly", 192,
+            new[] { new RecipeInput(ore, 1) },
+            new[] { new RecipeOutput(plate, 1) }, powerDraw: 40);
+
+        var onGrid = world.TryPlaceMachine(hungry, new MachinePlacement(patch.X + 3, patch.Y, 1, 1, 1),
+                                           outputCapacityPerItem: 40)!;
+        onGrid.PushInput(ore, 900);
 
         return world;
     }
@@ -135,6 +159,8 @@ public class SaveGameTests
               .Append(" cap=").Append(machine.OutputCapacityPerItem)
               .Append(" state=").Append(machine.State)
               .Append(" ticks=").Append(machine.RawTicksRemaining)
+              .Append(" energy=").Append(machine.Energy)
+              .Append(" draw=").Append(machine.PowerDraw)
               .Append(" in=").Append(Stacks(world, machine.InputContents))
               .Append(" out=").Append(Stacks(world, machine.OutputContents))
               .Append('\n');
@@ -153,11 +179,39 @@ public class SaveGameTests
               .Append(" state=").Append(miner.State)
               .Append(" ticks=").Append(miner.RawTicksRemaining)
               .Append(" buffered=").Append(miner.Buffered)
+              .Append(" energy=").Append(miner.Energy)
+              .Append(" draw=").Append(miner.PowerDraw)
               .Append('\n');
         }
 
         foreach (var (x, y, taken) in world.Ground.Depletion)
             sb.Append("dug ").Append(x).Append(',').Append(y).Append('=').Append(taken).Append('\n');
+
+        for (var i = 0; i < world.Power.Poles.Count; i++)
+        {
+            var pole = world.Power.Poles[i];
+            sb.Append("pole ").Append(i).Append(' ').Append(pole.X).Append(',').Append(pole.Y)
+              .Append(" supply=").Append(pole.SupplyRadius)
+              .Append(" wire=").Append(pole.WireRadius).Append('\n');
+        }
+
+        for (var i = 0; i < world.Power.Generators.Count; i++)
+        {
+            var generator = world.Power.Generators[i];
+            var placement = world.Power.GeneratorPlacements[i];
+            sb.Append("generator ").Append(i)
+              .Append(' ').Append(world.Items.GetName(generator.Fuel))
+              .Append(" at ").Append(placement.X).Append(',').Append(placement.Y)
+              .Append(" size=").Append(placement.Size)
+              .Append(" out=").Append(generator.OutputPerTick)
+              .Append(" per=").Append(generator.TicksPerFuel)
+              .Append(" stock=").Append(generator.FuelStock)
+              .Append(" burn=").Append(generator.BurnTicksLeft)
+              .Append(" network=").Append(world.Power.NetworkOfGenerator(i))
+              .Append('\n');
+        }
+
+        sb.Append("networks ").Append(world.Power.NetworkCount).Append('\n');
 
         for (var s = 0; s < world.Belts.Segments.Count; s++)
         {
@@ -253,13 +307,30 @@ public class SaveGameTests
         Assert.NotEmpty(world.Ground.Depletion);
         Assert.True(world.Miners[0].Buffered > 0 || world.Miners[0].RawTicksRemaining > 0,
                     "the miner is doing nothing, so its state is not being covered");
+
+        Assert.NotEmpty(world.Power.Poles);
+        Assert.NotEmpty(world.Power.Generators);
+        Assert.True(world.Power.Generators[0].IsBurning, "the generator is idle, so burn state is uncovered");
+
+        // Under-supplied on purpose: energy buffers are only interesting when
+        // the grid cannot keep up, and a save that dropped them would otherwise
+        // round-trip perfectly.
+        Assert.True(world.NetworkDemand[0] > world.NetworkSupply[0],
+                    "the grid is not under strain, so brownout state is not being covered");
+        Assert.Contains(world.Machines, m => m.State == MachineState.Unpowered);
+
+        // Someone must be part-way to affording a tick. Without this the energy
+        // buffers are all zero at the save point and a save that dropped them
+        // round-trips perfectly -- which is exactly how this test first passed
+        // while covering nothing.
+        Assert.Contains(world.Machines, m => m.Energy > 0);
     }
 
     [Fact]
     public void ASavedWorld_ReloadsToTheIdenticalWorld()
     {
         var original = BuildBusyWorld();
-        original.Tick(60);           // stop mid-cycle, mid-swing, mid-rotation
+        original.Tick(61);           // stop mid-cycle, mid-swing, mid-rotation
         AssertMidFlight(original);
 
         var json = SaveGame.ToJson(SaveGame.Capture(original));
@@ -275,7 +346,7 @@ public class SaveGameTests
         // diverge the moment the sim runs -- a splitter's rotation cursor, an
         // inserter's cooldown, the ticks left in a cycle.
         var original = BuildBusyWorld();
-        original.Tick(60);
+        original.Tick(61);
         AssertMidFlight(original);
         var startedAt = original.TickCount;
 

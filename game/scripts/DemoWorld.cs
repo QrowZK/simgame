@@ -22,10 +22,13 @@ public static class DemoWorld
         var catalogue = Sim.Data.Catalogue.Instance;
         var db = catalogue.Items;
 
-        var smelt = catalogue.Recipe("smelt_chalcopyrite");
+        // A powered recipe, so the placeholder factory exercises the grid at
+        // scale rather than leaving TickPower measuring an empty world.
+        var smelt = catalogue.Recipe("crush_chalcopyrite");
         var assemble = catalogue.Recipe("form_copper_plate");
         var ore = catalogue.Item("chalcopyrite");
         var plate = catalogue.Item("copper_ingot");
+        var coal = catalogue.Item("coal_deposit");
 
         var world = new World(seed, db);
         var side = (int)System.Math.Ceiling(System.Math.Sqrt(machineCount));
@@ -72,6 +75,20 @@ public static class DemoWorld
                     break;
             }
         }
+
+        // A grid over the whole factory: poles on a spacing that keeps one
+        // network, and generators fuelled well past the length of any test run.
+        for (var y = 0; y <= side * MaxFootprint; y += 8)
+            for (var x = 0; x <= side * MaxFootprint; x += 8)
+                world.Power.AddPole(new Pole(x, y, supplyRadius: 6, wireRadius: 9));
+
+        for (var y = 0; y <= side * MaxFootprint; y += 24)
+            for (var x = 0; x <= side * MaxFootprint; x += 24)
+            {
+                var generator = new Generator(coal, outputPerTick: 400, ticksPerFuel: 100_000);
+                generator.AddFuel(1000);
+                world.TryPlaceGenerator(generator, new MachinePlacement(x + 1, y + 1, 1, 6, 1));
+            }
 
         // Something in the player's hands, so the panel's load button has
         // work to do on the starved machines.

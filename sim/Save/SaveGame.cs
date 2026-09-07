@@ -61,12 +61,42 @@ public static class SaveGame
                 CycleTicks = miner.CycleTicks,
                 TicksRemaining = miner.RawTicksRemaining,
                 Buffered = miner.Buffered,
+                Energy = miner.Energy,
+                PowerDraw = miner.PowerDraw / Math.Max(1, placement.Area),
                 State = miner.State,
             });
         }
 
         foreach (var (x, y, taken) in world.Ground.Depletion)
             save.Depletion.Add(new DepletionSave { X = x, Y = y, Taken = taken });
+
+        foreach (var pole in world.Power.Poles)
+            save.Poles.Add(new PoleSave
+            {
+                X = pole.X,
+                Y = pole.Y,
+                SupplyRadius = pole.SupplyRadius,
+                WireRadius = pole.WireRadius,
+            });
+
+        for (var i = 0; i < world.Power.Generators.Count; i++)
+        {
+            var generator = world.Power.Generators[i];
+            var placement = world.Power.GeneratorPlacements[i];
+            save.Generators.Add(new GeneratorSave
+            {
+                Fuel = generator.Fuel.Value,
+                OutputPerTick = generator.OutputPerTick,
+                TicksPerFuel = generator.TicksPerFuel,
+                FuelStock = generator.FuelStock,
+                BurnTicksLeft = generator.BurnTicksLeft,
+                X = placement.X,
+                Y = placement.Y,
+                Tier = placement.Tier,
+                Category = placement.Category,
+                Size = placement.Size,
+            });
+        }
 
         save.Belts = CaptureBelts(world.Belts);
 
@@ -100,6 +130,7 @@ public static class SaveGame
             Size = placement.Size,
             Placed = world.IsPlaced(index),
             TicksRemaining = machine.RawTicksRemaining,
+            Energy = machine.Energy,
             State = machine.State,
         };
 
@@ -202,8 +233,21 @@ public static class SaveGame
         {
             var placement = new MachinePlacement(entry.X, entry.Y, (byte)entry.Tier,
                                                  (byte)entry.Category, (byte)entry.Size);
-            var miner = world.AddSavedMiner(Item(entry.Item, save), placement, entry.CycleTicks);
-            miner.Restore(entry.State, entry.TicksRemaining, entry.Buffered);
+            var miner = world.AddSavedMiner(Item(entry.Item, save), placement, entry.CycleTicks,
+                                            entry.PowerDraw);
+            miner.Restore(entry.State, entry.TicksRemaining, entry.Buffered, entry.Energy);
+        }
+
+        foreach (var entry in save.Poles)
+            world.Power.AddPole(new Pole(entry.X, entry.Y, entry.SupplyRadius, entry.WireRadius));
+
+        foreach (var entry in save.Generators)
+        {
+            var generator = new Generator(Item(entry.Fuel, save), entry.OutputPerTick,
+                                          entry.TicksPerFuel);
+            generator.Restore(entry.FuelStock, entry.BurnTicksLeft);
+            world.TryPlaceGenerator(generator, new MachinePlacement(
+                entry.X, entry.Y, (byte)entry.Tier, (byte)entry.Category, (byte)entry.Size));
         }
 
         RestoreBelts(world.Belts, save.Belts, save);
@@ -239,7 +283,8 @@ public static class SaveGame
 
         machine.Restore(entry.State, entry.TicksRemaining,
                         entry.Inputs.Select(s => (Item(s.Item, save), s.Count)).ToList(),
-                        entry.Outputs.Select(s => (Item(s.Item, save), s.Count)).ToList());
+                        entry.Outputs.Select(s => (Item(s.Item, save), s.Count)).ToList(),
+                        entry.Energy);
     }
 
     private static void RestoreBelts(BeltNetwork belts, BeltNetworkSave save, SaveFile file)

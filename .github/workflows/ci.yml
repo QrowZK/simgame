@@ -108,3 +108,8 @@ jobs:
           grep -q -- "--- start flow ok ---" session.log
           grep -q "miner built     True" session.log
           grep -q "ground fell     True" session.log
+          # Power: a machine that needs electricity is dark until a pole reaches
+          # it and a fuelled generator feeds the network.
+          grep -q -- "--- power ok ---" session.log
+          grep -q "unpowered       state=Unpowered" session.log
+          grep -q "powered         state=Working" session.log

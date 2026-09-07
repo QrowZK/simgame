@@ -37,7 +37,8 @@ public sealed class Catalogue
             // an unknown id here means the files disagree with each other.
             var inputs = def.Inputs.Select(i => new RecipeInput(Id(i.Item, def.Id), i.Count)).ToArray();
             var outputs = def.Outputs.Select(o => new RecipeOutput(Id(o.Item, def.Id), o.Count)).ToArray();
-            _recipes[def.Id] = new Recipe(def.Id, Math.Max(1, def.DurationTicks), inputs, outputs);
+            _recipes[def.Id] = new Recipe(def.Id, Math.Max(1, def.DurationTicks), inputs, outputs,
+                                          def.PowerDraw);
         }
 
         RawSolids = data.Items

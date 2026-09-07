@@ -25,6 +25,7 @@ public sealed partial class GameRoot : Node3D
     private World _world = null!;
     private MachineRenderer _renderer = null!;
     private TerrainRenderer _terrain = null!;
+    private PoleRenderer _poles = null!;
     private CameraRig _rig = null!;
     private Label _hud = null!;
     private MachinePanel _panel = null!;
@@ -48,6 +49,9 @@ public sealed partial class GameRoot : Node3D
 
         _renderer = new MachineRenderer { Name = "MachineRenderer" };
         AddChild(_renderer);
+
+        _poles = new PoleRenderer { Name = "PoleRenderer" };
+        AddChild(_poles);
 
         AddChild(BuildLighting());
         _hud = BuildHud();
@@ -77,6 +81,7 @@ public sealed partial class GameRoot : Node3D
 
         _renderer.Sync(_world);
         _terrain.Sync(_world, _rig.Position);
+        _poles.Sync(_world);
 
         if (AllArgs().Contains("--smoke"))
             CallDeferred(nameof(RunSmokeTest));
@@ -96,6 +101,7 @@ public sealed partial class GameRoot : Node3D
         {
             _renderer.Sync(_world);
             _terrain.Sync(_world, _rig.Position);
+        _poles.Sync(_world);
             return;
         }
 
@@ -114,6 +120,7 @@ public sealed partial class GameRoot : Node3D
 
         _renderer.Sync(_world);
         _terrain.Sync(_world, _rig.Position);
+        _poles.Sync(_world);
 
         // Open the inspection panel just before the capture, so a screenshot
         // shows the GUI rather than only proving the world draws. It has to
@@ -133,11 +140,27 @@ public sealed partial class GameRoot : Node3D
         if (_toastFrames > 0) _toastFrames--;
 
         if (_hud is not null)
+        {
+            var supply = 0;
+            var demand = 0;
+            foreach (var n in _world.NetworkSupply) supply += n;
+            foreach (var n in _world.NetworkDemand) demand += n;
+
+            // Shown as supply/demand rather than a percentage: a player fixing
+            // a brownout needs to know how much more generation to build, and
+            // "68%" does not say that.
+            var power = _world.Power.NetworkCount == 0
+                ? ""
+                : $"   power {supply}/{demand}" +
+                  (demand > supply ? " BROWNOUT" : "");
+
             _hud.Text = $"machines {_world.MachineCount}   tick {_world.TickCount}   " +
-                        $"batches {_renderer.BatchCount}   fps {Engine.GetFramesPerSecond():0}\n" +
+                        $"batches {_renderer.BatchCount}   fps {Engine.GetFramesPerSecond():0}" +
+                        power + "\n" +
                         "WASD pan   Q/E rotate   wheel zoom   click a machine to inspect   " +
                         "F5 save   F9 load   Esc menu" +
                         (_toastFrames > 0 ? "\n" + _toast : "");
+        }
     }
 
     /// Headless verification: tick the sim, refill the instance buffers, and
