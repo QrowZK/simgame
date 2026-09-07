@@ -4218,7 +4218,7 @@
   },
   {
     "id": "sng_accumulator",
-    "name": "Singularity Accumulator",
+    "name": "Singular Accumulator",
     "category": "machine",
     "tier": "SNG",
     "form": "solid",

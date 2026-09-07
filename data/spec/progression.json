@@ -1882,6 +1882,26 @@
       "size": 1
     },
     {
+      "id": "accumulator",
+      "name": "Accumulator",
+      "tiers": [
+        "STM",
+        "VLT",
+        "ARC",
+        "PLS",
+        "FUS",
+        "QNT",
+        "SNG"
+      ],
+      "parts": [
+        {
+          "component": "cable",
+          "count": 4
+        }
+      ],
+      "size": 1
+    },
+    {
       "id": "washer",
       "name": "Ore Washer",
       "tiers": [
