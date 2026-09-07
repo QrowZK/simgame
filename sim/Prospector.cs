@@ -9,7 +9,14 @@ public readonly struct ProspectHit
     public readonly int Amount;
     public readonly int Radius;
 
-    public ProspectHit(ItemId item, int x, int y, int distance, int amount, int radius)
+    /// Whether the player can do anything with this resource right now: some
+    /// recipe they have researched consumes it. A ranked list of what is nearby
+    /// is worth very little without this -- the shortest walk used to be the
+    /// wrong one four times out of five (ADR 0026).
+    public readonly bool Usable;
+
+    public ProspectHit(ItemId item, int x, int y, int distance, int amount, int radius,
+                       bool usable = false)
     {
         Item = item;
         X = x;
@@ -17,6 +24,7 @@ public readonly struct ProspectHit
         Distance = distance;
         Amount = amount;
         Radius = radius;
+        Usable = usable;
     }
 }
 
@@ -39,7 +47,12 @@ public sealed class Prospector
     }
 
     /// Everything detectable from here, nearest first, one entry per resource.
-    public List<ProspectHit> Scan(WorldGen world, int x, int y)
+    /// `usable` is the set of item ids some researched recipe consumes. Passing
+    /// it marks the hits rather than filtering them: a player deciding whether a
+    /// long walk is worth it needs to know the copper is out there before they
+    /// can smelt it, and a list that hid it would be lying by omission.
+    public List<ProspectHit> Scan(WorldGen world, int x, int y,
+                                  IReadOnlySet<int>? usable = null)
     {
         var best = new Dictionary<int, ProspectHit>();
 
@@ -50,7 +63,8 @@ public sealed class Prospector
                 continue;
 
             best[patch.Item.Value] =
-                new ProspectHit(patch.Item, patch.X, patch.Y, distance, patch.Amount, patch.Radius);
+                new ProspectHit(patch.Item, patch.X, patch.Y, distance, patch.Amount, patch.Radius,
+                                usable is not null && usable.Contains(patch.Item.Value));
         }
 
         var hits = best.Values.ToList();

@@ -5,17 +5,25 @@ this is a queue, not a log. Format and rules: `docs/team/README.md`.
 
 ---
 
-## [qa → gameplay] The nearest resource is unusable at manual tier on 18 of 20 seeds
-**S2.** The manual furnace smelts five ores; the prospector ranks by distance and
-on 18/20 seeds the top hit is halite, coal, quartz, limestone, garnierite or crude
-oil. `--session-test` walks 67 tiles to halite, builds a miner on it and reports
-success. Nothing at manual tier consumes any of it.
+## [gameplay → qa] Try to break the starter-ore guarantee and the survey device
+ADR 0026 closes F2. Worldgen now deals a guaranteed patch of a resource the
+player can use 12-40 tiles from spawn, which ores those are is derived from the
+tech graph, and the prospector -- which had no UI before this -- marks every hit
+with whether research can consume it. Save format is 11, because the same seed
+now generates a different map.
 
-Done looks like: the first hit a new player is pointed at is one they can use, or
-the prospector says which ones they can. Design call, not a QA one.
+Worth attacking specifically: a seed where the guaranteed spot is all water for
+all 64 attempts, in which case the patch is silently not dealt and nothing says
+so; whether the guarantee survives a data change that makes every manual recipe
+need a fluid; the survey panel opened from far outside the home region, where
+the guarantee says nothing; and the mark itself after a partial research state
+(my tests check tick zero and everything-unlocked, which are the two easy ends).
 
-Where to start: `dotnet test sim.tests --filter EveryStart_HasAnOre` passes today
-and pins the property; the numbers are in `docs/0020-opening-playthrough-qa.md` (F2).
+Where to start: `sim.tests/OpeningRouteTests.cs` --
+`EveryStart_PutsSomethingSmeltableUnderTheProspector`,
+`TheProspector_MarksWhatResearchCanActuallyConsume`, `WhatIsUsable_WidensWithResearch`.
+`godot --headless --path game -- --session-test` prints `first usable`, which
+CI now greps for rank 1.
 
 ## [qa → gameplay] Removal does not exist, and an unpaired tunnel entrance is permanent
 **S3, and the answer to the `TooFarToTunnel` question in ADR 0018.** The refusal

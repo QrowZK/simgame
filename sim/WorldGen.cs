@@ -30,14 +30,26 @@ public readonly struct OreSpec
     /// it is not something a player can pick up -- see `HandOps.Mine`.
     public readonly bool IsFluid;
 
+    /// Whether a new player can actually do something with this resource on the
+    /// day they land: it is an input to a recipe that is unlocked at tick zero.
+    /// Worldgen guarantees one of these near spawn, because a ranked list of
+    /// nearby resources is worthless when the top of it is halite and nothing
+    /// the player can build will touch halite (ADR 0026).
+    ///
+    /// Derived from the recipe and tech data in `NewGame.OreSpecs`, never listed
+    /// here: a data change that gives the manual furnace another ore moves this
+    /// with it.
+    public readonly bool IsStarter;
+
     public OreSpec(ItemId item, int minRing, int patchRadius, int baseAmount,
-                   bool isFluid = false)
+                   bool isFluid = false, bool isStarter = false)
     {
         Item = item;
         MinRing = minRing;
         PatchRadius = patchRadius;
         BaseAmount = baseAmount;
         IsFluid = isFluid;
+        IsStarter = isStarter;
     }
 }
 
@@ -108,6 +120,12 @@ public sealed class WorldGen
     /// seed the player did nothing to deserve.
     private const double AmountJitter = 0.10;
 
+    /// How far from spawn the guaranteed starter patch may be dealt. Inside the
+    /// prospector's 96-tile detection radius by a wide margin, so the device
+    /// answers the opening question rather than reporting that everything it can
+    /// see is useless.
+    public const int StarterPatchRange = 40;
+
     private const int SeaLevel = 96;
     private const int ShoreLevel = 108;
     private const int RockLevel = 168;
@@ -176,6 +194,13 @@ public sealed class WorldGen
                 eligible.Add(_ores[i]);
 
         var patches = new List<OrePatch>();
+
+        // The home region is dealt one guaranteed starter patch before anything
+        // else, so it is placed first and every later patch has to keep its
+        // distance from it rather than the other way round.
+        if (rx == 0 && ry == 0)
+            AddStarterPatch(patches);
+
         if (eligible.Count > 0)
         {
             // Round-robin deal. The ordinal advances with the region, so walking
@@ -237,6 +262,68 @@ public sealed class WorldGen
         var result = patches.ToArray();
         _regionCache[key] = result;
         return result;
+    }
+
+
+    /// Deals the one patch a new game is guaranteed: a resource the player can
+    /// use on the first day, within `StarterPatchRange` tiles of spawn.
+    ///
+    /// Measured before this existed: on 18 of the first 20 seeds the nearest
+    /// resource to spawn was halite, coal, quartz, limestone, garnierite or
+    /// crude oil, and the nearest one the manual furnace could smelt was between
+    /// 56 and 184 tiles away -- often outside the prospector's range entirely.
+    /// The opening was therefore a long walk decided by the seed, which is the
+    /// "explore until lucky" the prospector exists to remove.
+    ///
+    /// Dealt rather than rolled, like the rest of worldgen: a threshold that
+    /// usually works still strands the occasional player, and a stranded player
+    /// cannot tell an unlucky seed from a broken game.
+    ///
+    /// It lands in the +x/+y quadrant because that is the part of the home
+    /// region that spawn sits in the corner of. A patch 30 tiles north-west of
+    /// the origin belongs to a different region, and dealing across a region
+    /// boundary would make a region's contents depend on its neighbours.
+    private void AddStarterPatch(List<OrePatch> patches)
+    {
+        var starters = new List<OreSpec>();
+        for (var i = 0; i < _ores.Length; i++)
+            if (_ores[i].IsStarter && _ores[i].MinRing <= 0)
+                starters.Add(_ores[i]);
+
+        if (starters.Count == 0)
+            return;
+
+        var pick = Noise.Hash(Seed ^ 0x1D57B0C1, 0, 0);
+        var spec = starters[(int)(pick % (uint)starters.Count)];
+
+        // Never right under the player's feet: the first minute is meant to be
+        // a short walk with the survey device, not a patch you are standing on.
+        const int minimum = 12;
+        var span = StarterPatchRange - minimum;
+
+        for (var attempt = 0; attempt < 64; attempt++)
+        {
+            var salt = Noise.Hash(Seed ^ 0x6C1FA33B, attempt, 0);
+            var x = minimum + (int)(salt % (uint)span);
+            var y = minimum + (int)((salt >> 11) % (uint)span);
+
+            if (IsWater(x, y))
+                continue;
+
+            // The range is a distance, not a bounding box. Drawing x and y
+            // independently puts the corner of the square at 55 tiles, and a
+            // guarantee that is really 55 tiles on the diagonal is not the
+            // guarantee the prospector test pins.
+            if (x * x + y * y > StarterPatchRange * StarterPatchRange)
+                continue;
+
+            var wobble = (salt >> 24) / 255.0 * 2.0 - 1.0;
+            var amount = (int)(spec.BaseAmount * (1.0 + AmountJitter * wobble));
+            var radius = Math.Max(2, spec.PatchRadius + (int)Math.Round(wobble));
+
+            patches.Add(new OrePatch(spec.Item, x, y, radius, Math.Max(1, amount), spec.IsFluid));
+            return;
+        }
     }
 
     /// The patch covering a tile, if any. Neighbouring regions are checked too,

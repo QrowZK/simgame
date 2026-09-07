@@ -129,6 +129,29 @@ public sealed class Research
                 Unlock(tech.Id);
     }
 
+    /// Every item some currently unlocked recipe consumes, as item ids.
+    ///
+    /// This is what the survey device marks its hits with: "you can do something
+    /// with this today". It widens as research lands, which is the point --
+    /// walking past a copper field you cannot smelt yet and coming back for it
+    /// is a decision, and the device has to give the player the information to
+    /// make it (ADR 0026).
+    public HashSet<int> ConsumableNow(ItemDatabase items)
+    {
+        var usable = new HashSet<int>();
+
+        foreach (var recipe in _data.Recipes)
+        {
+            if (!IsUnlocked(recipe.Id)) continue;
+
+            foreach (var input in recipe.Inputs)
+                if (items.TryGetId(input.Item, out var id))
+                    usable.Add(id.Value);
+        }
+
+        return usable;
+    }
+
     /// The starting kit, granted once, when the first tech of a line completes.
     ///
     /// The only handout in the game, and it is a ramp smoother rather than a

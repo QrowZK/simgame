@@ -1,0 +1,105 @@
+name: Release
+
+# Tag-driven, because a release is a decision rather than a consequence of a
+# push. `git tag v0.1.0 && git push origin v0.1.0` publishes; nothing else does.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  export:
+    name: Export Linux and Windows
+    runs-on: ubuntu-latest
+    env:
+      GODOT_VERSION: 4.3-stable
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Cache Godot and export templates
+        id: cache-godot
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/godot
+            ~/.local/share/godot/export_templates
+          key: godot-${{ env.GODOT_VERSION }}-mono-linux-with-templates
+
+      # The templates are the half that is easy to forget: an export without
+      # them still exits zero in some Godot versions and leaves a file that
+      # will not start, which is the worst possible way to find out.
+      - name: Download Godot and export templates
+        if: steps.cache-godot.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/godot && cd ~/godot
+          NAME="Godot_v${GODOT_VERSION}_mono_linux_x86_64"
+          curl -sSL -o godot.zip \
+            "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/${NAME}.zip"
+          unzip -q godot.zip
+          chmod +x "${NAME}/Godot_v${GODOT_VERSION}_mono_linux.x86_64"
+
+          curl -sSL -o templates.tpz \
+            "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_mono_export_templates.tpz"
+          unzip -q templates.tpz
+          mkdir -p ~/.local/share/godot/export_templates/${GODOT_VERSION/-/.}.mono
+          mv templates/* ~/.local/share/godot/export_templates/${GODOT_VERSION/-/.}.mono/
+
+      - name: Import assets
+        working-directory: game
+        run: |
+          GODOT=~/godot/Godot_v${GODOT_VERSION}_mono_linux_x86_64/Godot_v${GODOT_VERSION}_mono_linux.x86_64
+          "$GODOT" --headless --import
+
+      - name: Export both platforms
+        run: |
+          export GODOT=~/godot/Godot_v${GODOT_VERSION}_mono_linux_x86_64/Godot_v${GODOT_VERSION}_mono_linux.x86_64
+          ./tools/export.sh
+
+      # A release nobody ran is a release that closes instantly on the first
+      # player's machine. The Linux build is run here directly; the Windows one
+      # cannot be, and export.sh checks its assemblies are present instead.
+      - name: The exported build must actually run
+        run: |
+          cd dist
+          ./simgame.x86_64 --headless -- --smoke | tee smoke.log
+          grep -q "=== SMOKE OK ===" smoke.log
+          ./simgame.x86_64 --headless -- --session-test | tee session.log
+          grep -q "=== SESSION OK ===" session.log
+
+      - name: Package
+        run: |
+          cp dist/README.txt dist/windows/README.txt
+          cd dist
+          zip -qr ../simgame-${{ github.ref_name }}-linux-x86_64.zip \
+            simgame.x86_64 data_Game_linuxbsd_x86_64 README.txt
+          cd windows
+          zip -qr ../../simgame-${{ github.ref_name }}-windows-x86_64.zip \
+            simgame.exe data_Game_windows_x86_64 README.txt
+
+      - name: Publish the release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            simgame-${{ github.ref_name }}-linux-x86_64.zip
+            simgame-${{ github.ref_name }}-windows-x86_64.zip
+          body: |
+            Automation -- a factory game about logistics.
+
+            Two builds, both containing the whole game. Unzip the folder and
+            run the executable **from inside it**: the `data_` folder beside it
+            holds the .NET assemblies, and without it the game exits
+            immediately with no message.
+
+              Linux    simgame.x86_64
+              Windows  simgame.exe
+
+            Press P to survey, B to build, T for objectives. The rest is in
+            README.txt beside the executable.

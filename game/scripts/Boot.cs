@@ -115,8 +115,22 @@ public sealed partial class Boot : Node
         GD.Print($"miners          {world.Miners.Count}");
         GD.Print($"carrying        {world.PlayerInventory.Contents.Count} kinds");
 
-        var hits = new Sim.Prospector(radius: 400).Scan(world.Ground.Gen, 0, 0);
+        var usable = world.Research?.ConsumableNow(world.Items);
+        var hits = new Sim.Prospector(radius: 400).Scan(world.Ground.Gen, 0, 0, usable);
         GD.Print($"prospected      {hits.Count} resources within 400 tiles");
+
+        // What the carried device sees, and whether the top of its list is
+        // something the player can act on. This is the line that would have
+        // caught F2: it read "nearest ore halite" and reported success anyway,
+        // because nothing checked that halite was any use (ADR 0026).
+        var carried = new Sim.Prospector().Scan(world.Ground.Gen, 0, 0, usable);
+        var firstUsable = carried.FindIndex(h => h.Usable);
+        GD.Print($"survey          {carried.Count} in prospector range, " +
+                 $"{carried.Count(h => h.Usable)} usable now");
+        GD.Print(firstUsable >= 0
+            ? $"first usable    {world.Items.GetName(carried[firstUsable].Item)} at " +
+              $"{carried[firstUsable].Distance} tiles, rank {firstUsable + 1} of {carried.Count}"
+            : "first usable    NONE -- the opening is a walk in a direction the game never names");
         if (hits.Count == 0)
         {
             GD.Print("start flow      FAILED: nothing to mine near spawn");
@@ -523,7 +537,7 @@ public static class Cli
 
     public static bool WantsHeadlessRun() =>
         Has("--smoke") || Has("--screenshot") || Has("--machines") || Has("--start-shot")
-        || Has("--build-shot") || Has("--belt-shot") || Has("--uplink-shot");
+        || Has("--build-shot") || Has("--survey-shot") || Has("--belt-shot") || Has("--uplink-shot");
 
     public static int ReadInt(string name, int fallback)
     {

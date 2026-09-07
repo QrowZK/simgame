@@ -145,6 +145,11 @@ jobs:
           # loop; if it breaks, the game is unplayable whatever the units say.
           grep -q -- "--- start flow ok ---" session.log
           grep -q "miner built     True" session.log
+          # F2 (ADR 0026): the opening is only playable if the first thing the
+          # survey device points at is something the player can use. "an ore
+          # exists within 400 tiles" was true on every seed while 18 of 20 put
+          # halite nearest, so the rank is what is asserted, not the existence.
+          grep -qE "first usable    [a-z_]+ at [0-9]+ tiles, rank 1 of [0-9]+" session.log
           grep -q "ground fell     True" session.log
           # Power: a machine that needs electricity is dark until a pole reaches
           # it and a fuelled generator feeds the network.

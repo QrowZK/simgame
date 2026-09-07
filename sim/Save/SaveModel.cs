@@ -47,7 +47,13 @@ public sealed class SaveFile
     /// which is not a cosmetic loss -- every recipe past the Manual tier is
     /// gated on it, so a twenty-hour factory would reload unable to build any
     /// of the machines standing on the map.
-    public const int CurrentVersion = 10;
+    /// 11 changed the map. The file format is untouched, but worldgen now deals
+    /// a guaranteed starter patch into the home region (ADR 0026), so the same
+    /// seed produces a different world. A version 10 file holds mined amounts
+    /// keyed to patches at coordinates that no longer hold those patches, and a
+    /// miner standing on ore that has moved out from under it is precisely the
+    /// silent wrongness this number exists to refuse.
+    public const int CurrentVersion = 11;
 
     public int Version { get; set; } = CurrentVersion;
     public int Seed { get; set; }
