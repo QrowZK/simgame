@@ -64,6 +64,20 @@ public static class HandOps
         return moved;
     }
 
+    /// Digs by hand. The whole game before the first miner: you stand on ore
+    /// and take it, slowly. Returns what actually came out, which is less than
+    /// asked when the patch is nearly gone and zero when it is finished.
+    ///
+    /// Hand mining is deliberately not a miner with a different number on it --
+    /// it takes no space, needs no power, and is the only way to bootstrap a
+    /// world where you own nothing.
+    public static int Mine(Ground ground, int x, int y, Inventory into, int amount)
+    {
+        var taken = ground.Extract(x, y, amount, out var item);
+        if (taken > 0) into.Add(item, taken);
+        return taken;
+    }
+
     /// Empties a machine's output into the player's hands.
     public static int Extract(Machine machine, Inventory into, ItemId item, int count)
     {

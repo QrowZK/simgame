@@ -1,6 +1,6 @@
-namespace Data.Tests;
+namespace Sim.Data;
 
-internal static class DataPaths
+public static class DataPaths
 {
     public static string DataDirectory => Find("data");
 

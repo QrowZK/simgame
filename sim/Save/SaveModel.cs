@@ -21,7 +21,15 @@ public sealed class SaveFile
     /// Bumped whenever the shape below changes incompatibly. A loader that does
     /// not recognise a version refuses the file rather than guessing at it: a
     /// half-understood save is worse than no save.
-    public const int CurrentVersion = 1;
+    /// 2 added mined-out ore and miners. 3 added power: poles, generators and
+    /// the energy in flight. Bumped rather than defaulted each time, because a
+    /// save that silently lost this state would look loadable and be wrong --
+    /// an older file has no poles, so every powered machine would go dark.
+    /// 4 replaced declared fluid networks with placed pipes, tanks and pumps.
+    /// 5 added drones, haul tasks and controller programs.
+    /// 6 added accumulators; an older file has none, so a factory that was
+    /// riding out its nights on stored power would reload with no buffer.
+    public const int CurrentVersion = 6;
 
     public int Version { get; set; } = CurrentVersion;
     public int Seed { get; set; }
@@ -34,6 +42,20 @@ public sealed class SaveFile
 
     public List<StackSave> Player { get; set; } = new();
     public List<MachineSave> Machines { get; set; } = new();
+    public List<MinerSave> Miners { get; set; } = new();
+
+    /// Only patches that have actually been mined. An untouched world writes
+    /// nothing here, which is the point of storing depletion as an overlay
+    /// rather than storing the map.
+    public List<DepletionSave> Depletion { get; set; } = new();
+    public List<PoleSave> Poles { get; set; } = new();
+    public List<GeneratorSave> Generators { get; set; } = new();
+    public List<AccumulatorSave> Accumulators { get; set; } = new();
+    public List<FluidNodeSave> FluidNodes { get; set; } = new();
+    public List<ExtractorSave> Extractors { get; set; } = new();
+    public List<DroneSave> Drones { get; set; } = new();
+    public List<HaulTaskSave> Tasks { get; set; } = new();
+    public List<ControllerSave> Controllers { get; set; } = new();
     public BeltNetworkSave Belts { get; set; } = new();
     public List<FluidNetworkSave> Fluids { get; set; } = new();
 }
@@ -67,9 +89,144 @@ public sealed class MachineSave
     public bool Placed { get; set; }
 
     public int TicksRemaining { get; set; }
+
+    /// Energy banked toward the next tick. Under a brownout a machine can be
+    /// carrying most of a tick's worth, and losing it on every load would make
+    /// a struggling factory quietly slower each time it is reopened.
+    public int Energy { get; set; }
+
     public MachineState State { get; set; }
     public List<StackSave> Inputs { get; set; } = new();
     public List<StackSave> Outputs { get; set; } = new();
+}
+
+public sealed class MinerSave
+{
+    /// What this miner was built to extract. Stored rather than re-read from
+    /// the ground, so a miner on a worked-out patch still loads and reports
+    /// itself depleted instead of vanishing from the factory.
+    public int Item { get; set; }
+
+    public int X { get; set; }
+    public int Y { get; set; }
+    public int Tier { get; set; }
+    public int Category { get; set; }
+    public int Size { get; set; } = 1;
+    public int CycleTicks { get; set; }
+    public int TicksRemaining { get; set; }
+    public int Buffered { get; set; }
+    public int Energy { get; set; }
+    public int PowerDraw { get; set; }
+    public MachineState State { get; set; }
+}
+
+public sealed class PoleSave
+{
+    public int X { get; set; }
+    public int Y { get; set; }
+    public int SupplyRadius { get; set; }
+    public int WireRadius { get; set; }
+}
+
+public sealed class AccumulatorSave
+{
+    public int Capacity { get; set; }
+    public int RatePerTick { get; set; }
+
+    /// What it is holding. Dropping this would either hand the player a free
+    /// full bank or wipe one they spent a night's surplus filling.
+    public int Charge { get; set; }
+
+    public int X { get; set; }
+    public int Y { get; set; }
+    public int Tier { get; set; }
+    public int Category { get; set; }
+    public int Size { get; set; } = 1;
+}
+
+public sealed class GeneratorSave
+{
+    public int Fuel { get; set; }
+    public int OutputPerTick { get; set; }
+    public int TicksPerFuel { get; set; }
+    public int FuelStock { get; set; }
+
+    /// How far through the current unit of fuel. Dropping it would hand the
+    /// player a free partial burn on every load.
+    public int BurnTicksLeft { get; set; }
+
+    public int X { get; set; }
+    public int Y { get; set; }
+    public int Tier { get; set; }
+    public int Category { get; set; }
+    public int Size { get; set; } = 1;
+}
+
+public sealed class ExtractorSave
+{
+    public int Fluid { get; set; }
+    public bool Ambient { get; set; }
+    public int X { get; set; }
+    public int Y { get; set; }
+    public int Tier { get; set; }
+    public int Category { get; set; }
+    public int Size { get; set; } = 1;
+    public int CycleTicks { get; set; }
+    public int PowerDraw { get; set; }
+    public int TicksRemaining { get; set; }
+    public int Buffered { get; set; }
+    public int Energy { get; set; }
+    public MachineState State { get; set; }
+}
+
+public sealed class DroneSave
+{
+    public int X { get; set; }
+    public int Y { get; set; }
+    public int Capacity { get; set; }
+    public int Speed { get; set; }
+    public int Cargo { get; set; }
+    public int CargoCount { get; set; }
+    public int Task { get; set; } = -1;
+    public int Progress { get; set; }
+    public int Waiting { get; set; }
+}
+
+public sealed class HaulTaskSave
+{
+    public int Item { get; set; }
+    public int Count { get; set; }
+    public int FromX { get; set; }
+    public int FromY { get; set; }
+    public int ToX { get; set; }
+    public int ToY { get; set; }
+    public HaulState State { get; set; }
+    public int Drone { get; set; } = -1;
+    public int Delivered { get; set; }
+}
+
+/// A controller's program and what it chose to remember.
+///
+/// The interpreter's own stack is deliberately absent: MoonSharp cannot
+/// serialise a suspended coroutine, so the program restarts from the top on
+/// load and `State` is how it carries anything forward. See ADR 0013.
+public sealed class ControllerSave
+{
+    public string Source { get; set; } = "";
+    public List<StateEntry> State { get; set; } = new();
+}
+
+public sealed class StateEntry
+{
+    public string Key { get; set; } = "";
+    public string Value { get; set; } = "";
+}
+
+public sealed class DepletionSave
+{
+    public int X { get; set; }
+    public int Y { get; set; }
+    public int Taken { get; set; }
 }
 
 public sealed class BeltNetworkSave
@@ -124,10 +281,22 @@ public sealed class InserterSave
     public int Cooldown { get; set; }
 }
 
+/// One piece of pipe, tank or pump. Networks are not saved: they are a
+/// consequence of where these sit, and rebuilding them on load is what keeps the
+/// file from disagreeing with the layout it also stores.
+public sealed class FluidNodeSave
+{
+    public int X { get; set; }
+    public int Y { get; set; }
+    public FluidNodeKind Kind { get; set; }
+    public int Capacity { get; set; }
+    public int Throughput { get; set; }
+}
+
+/// What a network was holding. Indexed by the network's position in the
+/// rebuilt list, which is stable because components are numbered in node order.
 public sealed class FluidNetworkSave
 {
-    public int Capacity { get; set; }
-    public int ThroughputPerTick { get; set; }
     public int Fluid { get; set; }
     public int Amount { get; set; }
 }

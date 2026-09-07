@@ -1,3 +1,5 @@
+using Sim.Data;
+
 namespace Data.Tests;
 
 /// The goal item is what ends the game, and the design requires that reaching it

@@ -6,6 +6,16 @@ public enum MachineState
     Working,
     Starved,
     Blocked,
+
+    /// A miner whose patch is worked out. Distinct from Starved: no belt or
+    /// inserter will ever fix this one, so the UI has to say something else.
+    /// Appended last so existing save files keep their numbering.
+    Depleted,
+
+    /// Built, fed, and connected to nothing -- or to a network that cannot
+    /// supply it. Distinct from Starved for the same reason Depleted is: the
+    /// fix is a generator or a pole, not a belt.
+    Unpowered,
 }
 
 public sealed class Machine
@@ -22,6 +32,7 @@ public sealed class Machine
     private readonly Dictionary<ItemId, int> _inputBuffer = new();
     private readonly Dictionary<ItemId, int> _outputBuffer = new();
     private int _ticksRemaining;
+    private int _energy;
 
     public MachineState State { get; private set; } = MachineState.Idle;
 
@@ -74,15 +85,22 @@ public sealed class Machine
     /// placement.
     public void Restore(MachineState state, int ticksRemaining,
                         IReadOnlyList<(ItemId Item, int Count)> inputs,
-                        IReadOnlyList<(ItemId Item, int Count)> outputs)
+                        IReadOnlyList<(ItemId Item, int Count)> outputs, int energy = 0)
     {
+        _energy = energy;
         _inputBuffer.Clear();
         _outputBuffer.Clear();
         foreach (var (item, count) in inputs) _inputBuffer[item] = count;
         foreach (var (item, count) in outputs) _outputBuffer[item] = count;
 
         State = state;
-        _ticksRemaining = state == MachineState.Working ? ticksRemaining : 0;
+
+        // The timer, not the state, is what carries a cycle -- an Unpowered
+        // machine is mid-cycle too, and zeroing it here would silently restart
+        // its work on load and eat its inputs twice.
+        _ticksRemaining = state is MachineState.Working or MachineState.Unpowered
+            ? ticksRemaining
+            : 0;
     }
 
     /// Ticks left in the cycle regardless of state, for saving. TicksRemaining
@@ -112,21 +130,67 @@ public sealed class Machine
         return taken;
     }
 
+    /// Energy on hand. A machine holds at most one tick's worth: hoarding would
+    /// let a factory bank power overnight and run a burst it never generated.
+    public int Energy => _energy;
+
+    public int PowerDraw => Recipe.PowerDraw * Parallelism;
+
+    /// Whether this machine is asking for power this tick.
+    ///
+    /// Starved, Blocked and Depleted machines are not: they cannot run for a
+    /// reason power will not fix, and charging a factory for idle machines
+    /// would make "why is my base browning out" unanswerable.
+    public bool WantsPower => PowerDraw > 0 && State is
+        MachineState.Idle or MachineState.Working or MachineState.Unpowered;
+
+    /// Adds energy to the buffer.
+    ///
+    /// Deliberately uncapped. Capping at one tick's draw looks safe and quietly
+    /// destroys power: a machine drawing 7 that receives 6 a tick can never
+    /// reach 7 if the buffer is clipped to 7 every tick, so it runs at half
+    /// speed on six-sevenths of the energy and the rest vanishes.
+    ///
+    /// It cannot run away either. The buffer only grows while the machine
+    /// cannot afford a tick, and the allocator never hands out more than one
+    /// tick's draw, so the buffer stays below twice the draw by construction.
+    public void SupplyEnergy(int amount)
+    {
+        if (amount < 0) throw new ArgumentOutOfRangeException(nameof(amount));
+        _energy += amount;
+    }
+
     public void Tick()
     {
-        if (State != MachineState.Working)
+        // A cycle in progress is tracked by the timer, not by the state, so a
+        // machine that loses power holds its work rather than restarting it.
+        // Re-entering TryStart mid-cycle would consume the inputs a second time.
+        if (_ticksRemaining <= 0)
             TryStart();
 
-        if (State == MachineState.Working)
+        if (_ticksRemaining <= 0)
+            return;                     // starved or blocked; nothing to power
+
+        if (PowerDraw > 0)
         {
-            _ticksRemaining--;
-            if (_ticksRemaining <= 0)
+            if (_energy < PowerDraw)
             {
-                foreach (var output in Recipe.Outputs)
-                    _outputBuffer[output.Item] =
-                        _outputBuffer.GetValueOrDefault(output.Item) + output.Count * Parallelism;
-                State = MachineState.Idle;
+                State = MachineState.Unpowered;
+                return;
             }
+
+            _energy -= PowerDraw;
+        }
+
+        State = MachineState.Working;
+        _ticksRemaining--;
+
+        if (_ticksRemaining <= 0)
+        {
+            foreach (var output in Recipe.Outputs)
+                _outputBuffer[output.Item] =
+                    _outputBuffer.GetValueOrDefault(output.Item) + output.Count * Parallelism;
+            State = MachineState.Idle;
         }
     }
 

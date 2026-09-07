@@ -22,6 +22,7 @@ public sealed partial class MachinePanel : PanelContainer
     private Label _carrying = null!;
 
     private Machine? _machine;
+    private Miner? _miner;
     private MachinePlacement _placement;
     private ItemDatabase _names = null!;
     private Inventory _bag = null!;
@@ -52,37 +53,62 @@ public sealed partial class MachinePanel : PanelContainer
     public void Show(Machine machine, in MachinePlacement placement)
     {
         _machine = machine;
+        _miner = null;
         _placement = placement;
         Visible = true;
         Refresh();
     }
 
+    /// Miners get the same panel. A player should not have to learn two
+    /// different readouts for "what is this building doing".
+    public void Show(Miner miner, in MachinePlacement placement, int remainingInPatch)
+    {
+        _miner = miner;
+        _machine = null;
+        _placement = placement;
+        _patchRemaining = remainingInPatch;
+        Visible = true;
+        Refresh();
+    }
+
+    private int _patchRemaining;
+
     public void Close()
     {
         _machine = null;
+        _miner = null;
         Visible = false;
     }
 
-    public bool IsShowing => _machine is not null;
+    public bool IsShowing => _machine is not null || _miner is not null;
 
     public override void _Process(double delta)
     {
-        if (_machine is not null)
+        if (IsShowing)
             Refresh();
     }
 
     private void Refresh()
     {
+        if (_miner is not null)
+        {
+            RefreshMiner(_miner);
+            return;
+        }
+
         var machine = _machine!;
 
         _title.Text = $"{machine.Recipe.Id}   [{_placement.Size}x{_placement.Size}]";
 
         // A parallel machine's real per-cycle amounts, not the recipe card's.
         // Showing the card would make the panel lie about the machine it is on.
+        // Fluids are marked, because "why is this starved" has a different
+        // answer for a pipe than for a belt and the player needs to know which
+        // they are looking at.
         var consumes = string.Join(", ", machine.Recipe.Inputs.Select(
-            i => $"{machine.InputPerCycle(i.Item)} {ItemName(i.Item)}"));
+            i => $"{machine.InputPerCycle(i.Item)} {ItemName(i.Item)}{(i.IsFluid ? " (piped)" : "")}"));
         var makes = string.Join(", ", machine.Recipe.Outputs.Select(
-            o => $"{machine.OutputPerCycle(o.Item)} {ItemName(o.Item)}"));
+            o => $"{machine.OutputPerCycle(o.Item)} {ItemName(o.Item)}{(o.IsFluid ? " (piped)" : "")}"));
 
         _subtitle.Text = $"{consumes}  ->  {makes}   ({machine.Recipe.DurationTicks} ticks)";
 
@@ -90,15 +116,47 @@ public sealed partial class MachinePanel : PanelContainer
         _status.Text = machine.State switch
         {
             MachineState.Working => $"Working -- {machine.TicksRemaining} ticks left",
-            // The two failure states are the whole reason this panel exists, so
+            // The failure states are the whole reason this panel exists, so
             // they say what to do about it rather than naming themselves.
             MachineState.Starved => "Starved -- waiting on " + Missing(machine),
             MachineState.Blocked => "Blocked -- output full, nothing is taking it away",
+            MachineState.Unpowered => machine.Energy > 0
+                ? $"Browning out -- {machine.Energy}/{machine.PowerDraw} charged, needs more supply"
+                : "No power -- not connected to a grid, or the grid has none spare",
             _ => "Idle",
         };
 
+        if (machine.PowerDraw > 0)
+            _subtitle.Text += $"   [{machine.PowerDraw}/tick]";
+
         _inputs.Text = "In:  " + Describe(machine.InputContents);
         _outputs.Text = "Out: " + Describe(machine.OutputContents);
+        _carrying.Text = "Carrying: " + Describe(_bag.Contents);
+    }
+
+    /// A miner's readout. It reports what is left in the ground, because that is
+    /// the number that decides whether to keep building here or move on -- and
+    /// it is the only number the machine panel cannot infer.
+    private void RefreshMiner(Miner miner)
+    {
+        _title.Text = $"Mining {ItemName(miner.Item)}   [{_placement.Size}x{_placement.Size}]";
+        _subtitle.Text = $"{miner.YieldPerCycle} per {miner.CycleTicks} ticks   " +
+                         $"({_patchRemaining} left in this patch)";
+
+        _progress.Value = miner.Progress;
+        _status.Text = miner.State switch
+        {
+            MachineState.Working => $"Mining -- {miner.TicksRemaining} ticks left",
+            MachineState.Blocked => "Full -- nothing is taking the ore away",
+            MachineState.Depleted => "Worked out -- this patch is finished",
+            MachineState.Unpowered => miner.Energy > 0
+                ? $"Browning out -- {miner.Energy}/{miner.PowerDraw} charged"
+                : "No power -- not connected to a grid, or the grid has none spare",
+            _ => "Idle",
+        };
+
+        _inputs.Text = "In:  the ground";
+        _outputs.Text = $"Out: {miner.Buffered} {ItemName(miner.Item)}";
         _carrying.Text = "Carrying: " + Describe(_bag.Contents);
     }
 
@@ -127,7 +185,7 @@ public sealed partial class MachinePanel : PanelContainer
     /// bar move exactly once so the machine's behaviour is legible.
     private void LoadOneCycle()
     {
-        if (_machine is null) return;
+        if (_machine is null) return;      // nothing to hand-load into a miner
 
         foreach (var input in _machine.Recipe.Inputs)
         {
@@ -141,5 +199,13 @@ public sealed partial class MachinePanel : PanelContainer
     {
         if (_machine is not null)
             HandOps.ExtractAll(_machine, _bag);
+
+        // Emptying a miner by hand is how the first ore moves, before there is
+        // an inserter to do it.
+        if (_miner is not null)
+        {
+            var taken = _miner.Pull(int.MaxValue);
+            if (taken > 0) _bag.Add(_miner.Item, taken);
+        }
     }
 }

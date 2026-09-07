@@ -270,6 +270,11 @@ def main():
         machines.append({
             "id": mach_spec["id"],
             "name": mach_spec["name"],
+            # Which function attachment represents this machine. Authored,
+            # because "does a washer look like a separator or a fluid unit" is
+            # a judgement about the machine, not something derivable from its
+            # recipes.
+            "category": int(mach_spec["category"]),
             "tiers": mach_spec["tiers"],
             "min_tier": mach_spec["tiers"][0],
             "size": size,
@@ -297,7 +302,16 @@ def main():
                     ins.append({"item": "%s_circuit" % lo, "count": 2})
                 ins.append({"item": "%s_cable" % lo, "count": 4})
                 for part in mach_spec["parts"]:
-                    ins.append({"item": "%s_%s" % (lo, part["component"]), "count": part["count"]})
+                    # Merged, not appended: a machine whose parts include a
+                    # component the base recipe already lists (an accumulator
+                    # is mostly cable) would otherwise name that item twice in
+                    # one recipe, which no consumer of this data expects.
+                    pid = "%s_%s" % (lo, part["component"])
+                    existing = next((i for i in ins if i["item"] == pid), None)
+                    if existing:
+                        existing["count"] += part["count"]
+                    else:
+                        ins.append({"item": pid, "count": part["count"]})
                 # A bigger machine is bigger to build. Without this, footprint
                 # would be free throughput and every plant would be 3x3.
                 if area > 1:

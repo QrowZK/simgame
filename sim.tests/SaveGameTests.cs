@@ -23,11 +23,16 @@ public class SaveGameTests
         var gear = db.Register("iron_gear");
         var water = db.Register("water");
 
-        var world = new World(4242, db);
+        // Real terrain, so the ground and a miner are part of what gets saved.
+        var gen = new WorldGen(4242, new List<OreSpec>
+        {
+            new(db.Register("magnetite"), minRing: 0, patchRadius: 8, baseAmount: 900),
+        });
+        var world = new World(4242, db, gen);
 
         var smelt = new Recipe("smelt_iron_plate", 192,
             new[] { new RecipeInput(ore, 1) },
-            new[] { new RecipeOutput(plate, 1) });
+            new[] { new RecipeOutput(plate, 1) }, powerDraw: 4);
         var assemble = new Recipe("assemble_iron_gear", 120,
             new[] { new RecipeInput(plate, 2) },
             new[] { new RecipeOutput(gear, 1) });
@@ -81,15 +86,81 @@ public class SaveGameTests
         world.Belts.AddInserter(Endpoint.Belt(belt, 1), Endpoint.Machine(2),
                                 swingTicks: 20, stackSize: 2);
 
-        var pipes = world.Fluids.AddNetwork(tiles: 12, throughputPerTick: FluidNetwork.ThroughputLarge);
+        // A real run of pipe with a tank and a pump on it, so the save has to
+        // carry the layout as well as what is in it.
+        for (var x = 0; x < 10; x++)
+            world.Fluids.AddPipe(200 + x, 200, FluidNetwork.ThroughputLarge);
+        world.Fluids.AddTank(210, 200);
+        world.Fluids.AddPump(211, 200);
+
+        var pipes = world.Fluids.NetworkAt(200, 200);
         world.Fluids.Network(pipes).BeginTick();
         world.Fluids.Network(pipes).TryInsert(water, 300);
+
+        // A pump mid-cycle, plumbed into its own short run. Ambient rather than
+        // on a patch, so it keeps running for the length of the test instead of
+        // reporting itself depleted the moment it is placed on bare ground.
+        world.Fluids.AddPipe(300, 300, FluidNetwork.ThroughputLarge);
+        var pump = new FluidExtractor(water, ambient: true, parallelism: 1, cycleTicks: 25);
+        pump.Restore(MachineState.Working, 9, 40, 0);
+        world.AddSavedExtractor(pump, new MachinePlacement(300, 301, 3, 5, 1));
 
         world.PlayerInventory.Add(ore, 250);
         world.PlayerInventory.Add(plate, 40);
 
+        // Drones mid-haul and a controller that has remembered something, so
+        // the save has to carry both the fleet and the program's state.
+        world.Logistics.AddDrone(new Drone(3, 4, capacity: 40, speed: 25));
+        world.Logistics.AddDrone(new Drone(9, 1, capacity: 40, speed: 25));
+        world.Logistics.AddTask(new HaulTask(ore, 60, 0, 0, 10, 0));
+        world.AddController(@"
+            local n = tonumber(state.get('runs')) or 0
+            state.set('runs', tostring(n + 1))
+            while true do world.sleep(4) end
+        ");
+
+        // A miner mid-cycle on a patch that has already been dug into: both the
+        // machine and the hole in the ground are state a save has to carry.
+        var patch = gen.PatchesInRegion(0, 0).First();
+        HandOps.Mine(world.Ground, patch.X, patch.Y, world.PlayerInventory, 137);
+        world.TryPlaceMiner(new MachinePlacement(patch.X, patch.Y, 2, 4, 2), cycleTicks: 40,
+                            powerDraw: 3);
+
+        // A grid that cannot quite keep up, so machines are mid-brownout when
+        // the world is saved and their energy buffers are not all zero.
+        world.Power.AddPole(new Pole(patch.X, patch.Y, supplyRadius: 12, wireRadius: 9));
+        var coal = db.Register("coal");
+        var generator = new Generator(coal, outputPerTick: 9, ticksPerFuel: 250);
+        generator.AddFuel(4);
+        world.TryPlaceGenerator(generator, new MachinePlacement(patch.X + 5, patch.Y + 5, 1, 2, 1));
+
+        // An accumulator on the same grid, seeded part-full. Part-full is the
+        // point: a save that dropped the charge would round-trip an empty one
+        // and an empty one unnoticed.
+        var accumulator = new Accumulator(capacity: 5000, ratePerTick: 20);
+        accumulator.Restore(1700);
+        world.TryPlaceAccumulator(accumulator, new MachinePlacement(patch.X + 2, patch.Y + 3, 1, 5, 1));
+
+        // A machine actually inside the pole's reach, drawing far more than the
+        // grid can spare. The others sit at the origin, far off-grid, so
+        // without this one no machine ever holds a partial energy buffer and a
+        // save that dropped energy would round-trip unnoticed.
+        //
+        // The heavy draw is the point: it spends most ticks part-way to
+        // affording one, which is exactly the state worth saving.
+        var hungry = new Recipe("smelt_slowly", 192,
+            new[] { new RecipeInput(ore, 1) },
+            new[] { new RecipeOutput(plate, 1) }, powerDraw: 40);
+
+        var onGrid = world.TryPlaceMachine(hungry, new MachinePlacement(patch.X + 3, patch.Y, 1, 1, 1),
+                                           outputCapacityPerItem: 40)!;
+        onGrid.PushInput(ore, 900);
+
         return world;
     }
+
+    /// The generator a load has to be given: a save stores the seed, not the map.
+    private static WorldGen GenFor(World world) => world.Ground.Gen;
 
     private static Dictionary<string, Recipe> Recipes(World world)
     {
@@ -102,7 +173,15 @@ public class SaveGameTests
     /// Every piece of mutable state in the world, as a string. This is the
     /// assertion: if the save drops a field, two worlds that should be identical
     /// will not be.
-    private static string Fingerprint(World world)
+    private static string Fingerprint(World world) => Fingerprint(world, true);
+
+    /// `includeControllerState` exists for one honest reason. A controller's
+    /// program restarts from the top on load (ADR 0013), so after both copies
+    /// run on, the reloaded one has executed its opening lines a second time
+    /// and its `state` legitimately differs. Everything else in the world still
+    /// has to match exactly. The restart itself is asserted separately, below,
+    /// so excluding it here hides nothing.
+    private static string Fingerprint(World world, bool includeControllerState)
     {
         var sb = new StringBuilder();
         sb.Append("seed=").Append(world.Seed).Append(" tick=").Append(world.TickCount).Append('\n');
@@ -121,9 +200,117 @@ public class SaveGameTests
               .Append(" cap=").Append(machine.OutputCapacityPerItem)
               .Append(" state=").Append(machine.State)
               .Append(" ticks=").Append(machine.RawTicksRemaining)
+              .Append(" energy=").Append(machine.Energy)
+              .Append(" draw=").Append(machine.PowerDraw)
               .Append(" in=").Append(Stacks(world, machine.InputContents))
               .Append(" out=").Append(Stacks(world, machine.OutputContents))
               .Append('\n');
+        }
+
+        for (var i = 0; i < world.Miners.Count; i++)
+        {
+            var miner = world.Miners[i];
+            var placement = world.MinerPlacements[i];
+            sb.Append("miner ").Append(i).Append(' ').Append(world.Items.GetName(miner.Item))
+              .Append(" at ").Append(placement.X).Append(',').Append(placement.Y)
+              .Append(" size=").Append(placement.Size)
+              .Append(" tier=").Append(placement.Tier)
+              .Append(" cat=").Append(placement.Category)
+              .Append(" cycle=").Append(miner.CycleTicks)
+              .Append(" state=").Append(miner.State)
+              .Append(" ticks=").Append(miner.RawTicksRemaining)
+              .Append(" buffered=").Append(miner.Buffered)
+              .Append(" energy=").Append(miner.Energy)
+              .Append(" draw=").Append(miner.PowerDraw)
+              .Append('\n');
+        }
+
+        foreach (var (x, y, taken) in world.Ground.Depletion)
+            sb.Append("dug ").Append(x).Append(',').Append(y).Append('=').Append(taken).Append('\n');
+
+        for (var i = 0; i < world.Power.Poles.Count; i++)
+        {
+            var pole = world.Power.Poles[i];
+            sb.Append("pole ").Append(i).Append(' ').Append(pole.X).Append(',').Append(pole.Y)
+              .Append(" supply=").Append(pole.SupplyRadius)
+              .Append(" wire=").Append(pole.WireRadius).Append('\n');
+        }
+
+        for (var i = 0; i < world.Power.Generators.Count; i++)
+        {
+            var generator = world.Power.Generators[i];
+            var placement = world.Power.GeneratorPlacements[i];
+            sb.Append("generator ").Append(i)
+              .Append(' ').Append(world.Items.GetName(generator.Fuel))
+              .Append(" at ").Append(placement.X).Append(',').Append(placement.Y)
+              .Append(" size=").Append(placement.Size)
+              .Append(" out=").Append(generator.OutputPerTick)
+              .Append(" per=").Append(generator.TicksPerFuel)
+              .Append(" stock=").Append(generator.FuelStock)
+              .Append(" burn=").Append(generator.BurnTicksLeft)
+              .Append(" network=").Append(world.Power.NetworkOfGenerator(i))
+              .Append('\n');
+        }
+
+        for (var i = 0; i < world.Power.Accumulators.Count; i++)
+        {
+            var accumulator = world.Power.Accumulators[i];
+            var placement = world.Power.AccumulatorPlacements[i];
+            sb.Append("accumulator ").Append(i)
+              .Append(" at ").Append(placement.X).Append(',').Append(placement.Y)
+              .Append(" size=").Append(placement.Size)
+              .Append(" tier=").Append(placement.Tier)
+              .Append(" cat=").Append(placement.Category)
+              .Append(" capacity=").Append(accumulator.Capacity)
+              .Append(" rate=").Append(accumulator.RatePerTick)
+              .Append(" charge=").Append(accumulator.Charge)
+              .Append(" network=").Append(world.Power.NetworkOfAccumulator(i))
+              .Append('\n');
+        }
+
+        sb.Append("networks ").Append(world.Power.NetworkCount).Append('\n');
+
+        for (var i = 0; i < world.Logistics.Drones.Count; i++)
+        {
+            var drone = world.Logistics.Drones[i];
+            sb.Append("drone ").Append(i)
+              .Append(' ').Append(drone.X).Append(',').Append(drone.Y)
+              .Append(" cap=").Append(drone.Capacity)
+              .Append(" speed=").Append(drone.Speed)
+              .Append(" cargo=").Append(drone.CargoCount)
+              .Append(' ').Append(world.Items.GetName(drone.Cargo))
+              .Append(" task=").Append(drone.Task)
+              .Append(" progress=").Append(drone.Progress)
+              .Append(" waiting=").Append(drone.Waiting)
+              .Append('\n');
+        }
+
+        for (var i = 0; i < world.Logistics.Tasks.Count; i++)
+        {
+            var task = world.Logistics.Tasks[i];
+            sb.Append("task ").Append(i)
+              .Append(' ').Append(world.Items.GetName(task.Item))
+              .Append(' ').Append(task.Count)
+              .Append(" from ").Append(task.FromX).Append(',').Append(task.FromY)
+              .Append(" to ").Append(task.ToX).Append(',').Append(task.ToY)
+              .Append(' ').Append(task.State)
+              .Append(" drone=").Append(task.Drone)
+              .Append(" delivered=").Append(task.Delivered)
+              .Append('\n');
+        }
+
+        for (var i = 0; i < world.Controllers.Count; i++)
+        {
+            var controller = world.Controllers[i];
+            sb.Append("controller ").Append(i)
+              .Append(" chars=").Append(controller.Source.Length)
+              .Append(" error=").Append(controller.Error ?? "none");
+
+            if (includeControllerState)
+                foreach (var (key, value) in controller.State.OrderBy(kv => kv.Key, StringComparer.Ordinal))
+                    sb.Append(' ').Append(key).Append('=').Append(value);
+
+            sb.Append('\n');
         }
 
         for (var s = 0; s < world.Belts.Segments.Count; s++)
@@ -168,6 +355,33 @@ public class SaveGameTests
               .Append(" held=").Append(inserter.Held)
               .Append(' ').Append(world.Items.GetName(inserter.HeldItem))
               .Append(" cooldown=").Append(inserter.Cooldown).Append('\n');
+        }
+
+        for (var i = 0; i < world.Fluids.Nodes.Count; i++)
+        {
+            var node = world.Fluids.Nodes[i];
+            sb.Append("node ").Append(i).Append(' ').Append(node.Kind)
+              .Append(' ').Append(node.X).Append(',').Append(node.Y)
+              .Append(" cap=").Append(node.Capacity)
+              .Append(" rate=").Append(node.Throughput).Append('\n');
+        }
+
+        for (var i = 0; i < world.Extractors.Count; i++)
+        {
+            var extractor = world.Extractors[i];
+            var placement = world.ExtractorPlacements[i];
+            sb.Append("extractor ").Append(i)
+              .Append(' ').Append(world.Items.GetName(extractor.Fluid))
+              .Append(" ambient=").Append(extractor.Ambient)
+              .Append(" at ").Append(placement.X).Append(',').Append(placement.Y)
+              .Append(" size=").Append(placement.Size)
+              .Append(" cycle=").Append(extractor.CycleTicks)
+              .Append(" draw=").Append(extractor.PowerDraw)
+              .Append(" state=").Append(extractor.State)
+              .Append(" ticks=").Append(extractor.RawTicksRemaining)
+              .Append(" buffered=").Append(extractor.Buffered)
+              .Append(" energy=").Append(extractor.Energy)
+              .Append('\n');
         }
 
         for (var i = 0; i < world.Fluids.Networks.Count; i++)
@@ -215,17 +429,55 @@ public class SaveGameTests
         Assert.Contains(gaps, g => g > 0);
         Assert.Contains(world.Belts.Splitters, s => s.Buffered > 0);
         Assert.True(world.Fluids.Networks[0].Amount > 0, "no fluid stored, so fluids are not covered");
+
+        Assert.NotEmpty(world.Miners);
+        Assert.NotEmpty(world.Ground.Depletion);
+        Assert.True(world.Miners[0].Buffered > 0 || world.Miners[0].RawTicksRemaining > 0,
+                    "the miner is doing nothing, so its state is not being covered");
+
+        Assert.NotEmpty(world.Power.Accumulators);
+        Assert.True(world.StoredEnergy > 0 && world.StoredEnergy < world.StorageCapacity,
+                    "storage is at an extreme, so a dropped charge could round-trip unnoticed");
+
+        Assert.NotEmpty(world.Logistics.Drones);
+        Assert.NotEmpty(world.Logistics.Tasks);
+        Assert.NotEmpty(world.Controllers);
+        Assert.Contains(world.Controllers, c => c.State.Count > 0);
+        Assert.Contains(world.Logistics.Drones, d => d.Task >= 0);
+
+        Assert.NotEmpty(world.Fluids.Nodes);
+        Assert.NotEmpty(world.Extractors);
+        Assert.True(world.Fluids.TotalFluid() > 0, "no fluid stored, so pipe contents are uncovered");
+        Assert.True(world.Extractors[0].Buffered > 0 || world.Extractors[0].RawTicksRemaining > 0,
+                    "the derrick is idle, so its state is not being covered");
+
+        Assert.NotEmpty(world.Power.Poles);
+        Assert.NotEmpty(world.Power.Generators);
+        Assert.True(world.Power.Generators[0].IsBurning, "the generator is idle, so burn state is uncovered");
+
+        // Under-supplied on purpose: energy buffers are only interesting when
+        // the grid cannot keep up, and a save that dropped them would otherwise
+        // round-trip perfectly.
+        Assert.True(world.NetworkDemand[0] > world.NetworkSupply[0],
+                    "the grid is not under strain, so brownout state is not being covered");
+        Assert.Contains(world.Machines, m => m.State == MachineState.Unpowered);
+
+        // Someone must be part-way to affording a tick. Without this the energy
+        // buffers are all zero at the save point and a save that dropped them
+        // round-trips perfectly -- which is exactly how this test first passed
+        // while covering nothing.
+        Assert.Contains(world.Machines, m => m.Energy > 0);
     }
 
     [Fact]
     public void ASavedWorld_ReloadsToTheIdenticalWorld()
     {
         var original = BuildBusyWorld();
-        original.Tick(60);           // stop mid-cycle, mid-swing, mid-rotation
+        original.Tick(61);           // stop mid-cycle, mid-swing, mid-rotation
         AssertMidFlight(original);
 
         var json = SaveGame.ToJson(SaveGame.Capture(original));
-        var loaded = SaveGame.Restore(SaveGame.FromJson(json), Recipes(original));
+        var loaded = SaveGame.Restore(SaveGame.FromJson(json), Recipes(original), GenFor(original));
 
         Assert.Equal(Fingerprint(original), Fingerprint(loaded));
     }
@@ -237,22 +489,55 @@ public class SaveGameTests
         // diverge the moment the sim runs -- a splitter's rotation cursor, an
         // inserter's cooldown, the ticks left in a cycle.
         var original = BuildBusyWorld();
-        original.Tick(60);
+        original.Tick(61);
         AssertMidFlight(original);
         var startedAt = original.TickCount;
 
         var loaded = SaveGame.Restore(SaveGame.FromJson(SaveGame.ToJson(SaveGame.Capture(original))),
-                                      Recipes(original));
+                                      Recipes(original), GenFor(original));
 
         original.Tick(10_000);
         loaded.Tick(10_000);
 
-        Assert.Equal(Fingerprint(original), Fingerprint(loaded));
+        Assert.Equal(Fingerprint(original, includeControllerState: false),
+                     Fingerprint(loaded, includeControllerState: false));
 
         // Sanity: the run actually did something, rather than two idle worlds
         // agreeing about nothing.
         Assert.Equal(startedAt + 10_000, original.TickCount);
         Assert.Contains("iron_plate", Fingerprint(original));
+    }
+
+    [Fact]
+    public void AControllersMemorySurvives_AndItsProgramRestartsFromTheTop()
+    {
+        // The one thing that does not round-trip identically, made explicit.
+        //
+        // MoonSharp cannot serialise a suspended coroutine, so a program picks
+        // up from its first line rather than where it was parked. That is why
+        // `state` exists, and why a program that keeps progress in a local
+        // instead will redo work. Both halves are asserted here so neither can
+        // change silently.
+        var original = BuildBusyWorld();
+        original.Tick(61);
+
+        var runsBefore = original.Controllers[0].State["runs"];
+        Assert.Equal("1", runsBefore);
+
+        var loaded = SaveGame.Restore(SaveGame.FromJson(SaveGame.ToJson(SaveGame.Capture(original))),
+                                      Recipes(original), GenFor(original));
+
+        // Memory survives the trip untouched...
+        Assert.Equal("1", loaded.Controllers[0].State["runs"]);
+
+        // ...and the program then starts again from its first line, which runs
+        // the opening increment a second time.
+        loaded.Tick(1);
+        Assert.Equal("2", loaded.Controllers[0].State["runs"]);
+
+        // The original, still parked in its loop, does not.
+        original.Tick(1);
+        Assert.Equal("1", original.Controllers[0].State["runs"]);
     }
 
     [Fact]
@@ -279,7 +564,7 @@ public class SaveGameTests
         // things in, the save's own table is what resolves its references.
         Assert.Equal("iron_ore", save.Items[0]);
 
-        var loaded = SaveGame.Restore(save, Recipes(world));
+        var loaded = SaveGame.Restore(save, Recipes(world), GenFor(world));
         Assert.Equal(world.PlayerInventory.Count(world.Items.GetId("iron_ore")),
                      loaded.PlayerInventory.Count(loaded.Items.GetId("iron_ore")));
     }
@@ -291,7 +576,7 @@ public class SaveGameTests
         var save = SaveGame.Capture(world);
         save.Version = SaveFile.CurrentVersion + 1;
 
-        var error = Assert.Throws<SaveLoadException>(() => SaveGame.Restore(save, Recipes(world)));
+        var error = Assert.Throws<SaveLoadException>(() => SaveGame.Restore(save, Recipes(world), GenFor(world)));
         Assert.Contains("version", error.Message);
     }
 
@@ -306,7 +591,7 @@ public class SaveGameTests
         var recipes = Recipes(world);
         recipes.Remove("assemble_iron_gear");
 
-        var error = Assert.Throws<SaveLoadException>(() => SaveGame.Restore(save, recipes));
+        var error = Assert.Throws<SaveLoadException>(() => SaveGame.Restore(save, recipes, GenFor(world)));
         Assert.Contains("assemble_iron_gear", error.Message);
     }
 
@@ -327,7 +612,7 @@ public class SaveGameTests
         try
         {
             SaveGame.Write(world, path);
-            var loaded = SaveGame.Read(path, Recipes(world));
+            var loaded = SaveGame.Read(path, Recipes(world), GenFor(world));
             Assert.Equal(Fingerprint(world), Fingerprint(loaded));
         }
         finally

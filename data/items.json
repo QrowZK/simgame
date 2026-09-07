@@ -3606,7 +3606,7 @@
   },
   {
     "id": "man_manual_crafting",
-    "name": "Manual Manual Crafting",
+    "name": "Manual Crafting Bench",
     "category": "machine",
     "tier": "MAN",
     "form": "solid",
@@ -4156,6 +4156,132 @@
   {
     "id": "sng_generator",
     "name": "Singular Generator",
+    "category": "machine",
+    "tier": "SNG",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "stm_accumulator",
+    "name": "Steam Accumulator",
+    "category": "machine",
+    "tier": "STM",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "vlt_accumulator",
+    "name": "Voltaic Accumulator",
+    "category": "machine",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "arc_accumulator",
+    "name": "Arc Accumulator",
+    "category": "machine",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "pls_accumulator",
+    "name": "Plasma Accumulator",
+    "category": "machine",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "fus_accumulator",
+    "name": "Fusion Accumulator",
+    "category": "machine",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "qnt_accumulator",
+    "name": "Quantum Accumulator",
+    "category": "machine",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "sng_accumulator",
+    "name": "Singular Accumulator",
+    "category": "machine",
+    "tier": "SNG",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "stm_pole",
+    "name": "Steam Power Pole",
+    "category": "machine",
+    "tier": "STM",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "vlt_pole",
+    "name": "Voltaic Power Pole",
+    "category": "machine",
+    "tier": "VLT",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "arc_pole",
+    "name": "Arc Power Pole",
+    "category": "machine",
+    "tier": "ARC",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "pls_pole",
+    "name": "Plasma Power Pole",
+    "category": "machine",
+    "tier": "PLS",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "fus_pole",
+    "name": "Fusion Power Pole",
+    "category": "machine",
+    "tier": "FUS",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "qnt_pole",
+    "name": "Quantum Power Pole",
+    "category": "machine",
+    "tier": "QNT",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
+    "id": "sng_pole",
+    "name": "Singular Power Pole",
     "category": "machine",
     "tier": "SNG",
     "form": "solid",

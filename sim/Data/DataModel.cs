@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Data.Tests;
+namespace Sim.Data;
 
 public sealed class TierDef
 {
@@ -28,6 +28,10 @@ public sealed class MachineDef
 {
     [JsonPropertyName("id")] public string Id { get; set; } = "";
     [JsonPropertyName("name")] public string Name { get; set; } = "";
+
+    /// Which function attachment mesh represents this machine.
+    [JsonPropertyName("category")] public int Category { get; set; }
+
     [JsonPropertyName("tiers")] public List<string> Tiers { get; set; } = new();
     [JsonPropertyName("min_tier")] public string MinTier { get; set; } = "";
     [JsonPropertyName("size")] public int Size { get; set; } = 1;

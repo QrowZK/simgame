@@ -72,6 +72,9 @@ public sealed partial class MachineRenderer : Node3D
     {
         var placements = world.Placements;
         var states = world.MachineStates;
+        var miners = world.MinerPlacements;
+        var generators = world.Power.GeneratorPlacements;
+        var accumulators = world.Power.AccumulatorPlacements;
 
         System.Array.Clear(_hullCounts);
         System.Array.Clear(_attachCounts);
@@ -79,6 +82,29 @@ public sealed partial class MachineRenderer : Node3D
         {
             _hullCounts[Clamp(placements[i].Tier, MeshKit.TierCount)]++;
             _attachCounts[Clamp(placements[i].Category, MeshKit.CategoryCount)]++;
+        }
+
+        // Miners draw from the same mesh kit as machines -- they are machines as
+        // far as the renderer is concerned, and giving them their own pools
+        // would double the batch count for one more silhouette.
+        for (var i = 0; i < miners.Count; i++)
+        {
+            _hullCounts[Clamp(miners[i].Tier, MeshKit.TierCount)]++;
+            _attachCounts[Clamp(miners[i].Category, MeshKit.CategoryCount)]++;
+        }
+
+        for (var i = 0; i < generators.Count; i++)
+        {
+            _hullCounts[Clamp(generators[i].Tier, MeshKit.TierCount)]++;
+            _attachCounts[Clamp(generators[i].Category, MeshKit.CategoryCount)]++;
+        }
+
+        // Accumulators too: same hull kit as machines and miners. Their own
+        // pool would cost a draw batch for one more silhouette.
+        for (var i = 0; i < accumulators.Count; i++)
+        {
+            _hullCounts[Clamp(accumulators[i].Tier, MeshKit.TierCount)]++;
+            _attachCounts[Clamp(accumulators[i].Category, MeshKit.CategoryCount)]++;
         }
 
         // MultiMesh.Buffer must be exactly InstanceCount * stride long, so buffers
@@ -92,36 +118,79 @@ public sealed partial class MachineRenderer : Node3D
         System.Array.Clear(_attachCursor);
 
         for (var i = 0; i < placements.Length; i++)
+            WriteOne(placements[i], states[i]);
+
+        for (var i = 0; i < miners.Count; i++)
+            WriteOne(miners[i], world.Miners[i].State);
+
+        for (var i = 0; i < generators.Count; i++)
+            WriteOne(generators[i], world.Power.Generators[i].State);
+
+        // An accumulator is tinted by how full it is rather than by machine
+        // state. Working/Blocked/Starved would only say "charging, full,
+        // empty", and the question a player has standing in front of a bank is
+        // how much is left in it -- so the cell reads as a gauge.
+        for (var i = 0; i < accumulators.Count; i++)
         {
-            var placement = placements[i];
-            var tier = Clamp(placement.Tier, MeshKit.TierCount);
-            var category = Clamp(placement.Category, MeshKit.CategoryCount);
-
-            // Placements anchor on the footprint's corner; meshes are centred
-            // on theirs. The -0.5f keeps a 1x1 exactly where it always sat.
-            var x = (placement.CentreX - 0.5f) * TileSize;
-            var z = (placement.CentreY - 0.5f) * TileSize;
-
-            // Footprint scales the plan fully; height grows at half that rate.
-            // A 3x3 raised to three times the height reads as a tower rather
-            // than as a bigger machine, and buries its neighbours in shadow.
-            var plan = placement.Size;
-            var lift = 1f + (placement.Size - 1) * 0.5f;
-
-            Write(_hullBuffers[tier]!, _hullCursor[tier]++, x, 0f, z,
-                  MeshKit.TierColor(tier), plan, lift);
-            Write(_attachBuffers[category]!, _attachCursor[category]++,
-                  x, MeshKit.DeckHeight(tier) * lift, z,
-                  // The attachment lifts with its hull, not with its plan: at
-                  // full plan scale a 3x3's drum is taller than the body it sits
-                  // on and overhangs the edge.
-                  MeshKit.StateColor(states[i]), plan, lift);
+            var accumulator = world.Power.Accumulators[i];
+            var level = accumulator.Capacity <= 0
+                ? 0f
+                : (float)accumulator.Charge / accumulator.Capacity;
+            WriteOne(accumulators[i], ChargeColor(level));
         }
 
         for (var tier = 0; tier < MeshKit.TierCount; tier++)
             Upload(_hullPools[tier], _hullBuffers[tier]!, _hullCounts[tier]);
         for (var category = 0; category < MeshKit.CategoryCount; category++)
             Upload(_attachPools[category], _attachBuffers[category]!, _attachCounts[category]);
+    }
+
+    /// Places one hull and its attachment. Machines and miners both come
+    /// through here, so their sizing and seating can never drift apart.
+    /// A fuel gauge: red empty, amber half, green full.
+    ///
+    /// A single dark-to-bright ramp was tried first and could not be read at
+    /// play distance -- a bank at 20% and one at 80% both looked green-ish on a
+    /// cylinder that is a few pixels wide. Two segments through amber gives
+    /// each third its own hue, which survives the zoom.
+    private static Color ChargeColor(float level)
+    {
+        level = Mathf.Clamp(level, 0f, 1f);
+        var empty = new Color(0.85f, 0.20f, 0.16f);
+        var half = new Color(0.95f, 0.72f, 0.15f);
+        var full = new Color(0.35f, 0.90f, 0.32f);
+        return level < 0.5f
+            ? empty.Lerp(half, level * 2f)
+            : half.Lerp(full, (level - 0.5f) * 2f);
+    }
+
+    private void WriteOne(in MachinePlacement placement, MachineState state) =>
+        WriteOne(placement, MeshKit.StateColor(state));
+
+    private void WriteOne(in MachinePlacement placement, Color attachment)
+    {
+        var tier = Clamp(placement.Tier, MeshKit.TierCount);
+        var category = Clamp(placement.Category, MeshKit.CategoryCount);
+
+        // Placements anchor on the footprint's corner; meshes are centred on
+        // theirs. The -0.5f keeps a 1x1 exactly where it always sat.
+        var x = (placement.CentreX - 0.5f) * TileSize;
+        var z = (placement.CentreY - 0.5f) * TileSize;
+
+        // Footprint scales the plan fully; height grows at half that rate. A
+        // 3x3 raised to three times the height reads as a tower rather than as
+        // a bigger machine, and buries its neighbours in shadow.
+        var plan = placement.Size;
+        var lift = 1f + (placement.Size - 1) * 0.5f;
+
+        Write(_hullBuffers[tier]!, _hullCursor[tier]++, x, 0f, z,
+              MeshKit.TierColor(tier), plan, lift);
+
+        // The attachment lifts with its hull, not with its plan: at full plan
+        // scale a 3x3's drum is taller than the body it sits on and overhangs.
+        Write(_attachBuffers[category]!, _attachCursor[category]++,
+              x, MeshKit.DeckHeight(tier) * lift, z,
+              attachment, plan, lift);
     }
 
     /// Writes one instance: an axis-aligned, axis-scaled transform plus colour.

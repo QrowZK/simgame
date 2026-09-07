@@ -46,13 +46,150 @@ public static class SaveGame
         for (var i = 0; i < world.MachineCount; i++)
             save.Machines.Add(CaptureMachine(world, i));
 
+        for (var i = 0; i < world.Miners.Count; i++)
+        {
+            var miner = world.Miners[i];
+            var placement = world.MinerPlacements[i];
+            save.Miners.Add(new MinerSave
+            {
+                Item = miner.Item.Value,
+                X = placement.X,
+                Y = placement.Y,
+                Tier = placement.Tier,
+                Category = placement.Category,
+                Size = placement.Size,
+                CycleTicks = miner.CycleTicks,
+                TicksRemaining = miner.RawTicksRemaining,
+                Buffered = miner.Buffered,
+                Energy = miner.Energy,
+                PowerDraw = miner.PowerDraw / Math.Max(1, placement.Area),
+                State = miner.State,
+            });
+        }
+
+        foreach (var (x, y, taken) in world.Ground.Depletion)
+            save.Depletion.Add(new DepletionSave { X = x, Y = y, Taken = taken });
+
+        foreach (var pole in world.Power.Poles)
+            save.Poles.Add(new PoleSave
+            {
+                X = pole.X,
+                Y = pole.Y,
+                SupplyRadius = pole.SupplyRadius,
+                WireRadius = pole.WireRadius,
+            });
+
+        for (var i = 0; i < world.Power.Accumulators.Count; i++)
+        {
+            var accumulator = world.Power.Accumulators[i];
+            var placement = world.Power.AccumulatorPlacements[i];
+            save.Accumulators.Add(new AccumulatorSave
+            {
+                Capacity = accumulator.Capacity,
+                RatePerTick = accumulator.RatePerTick,
+                Charge = accumulator.Charge,
+                X = placement.X,
+                Y = placement.Y,
+                Tier = placement.Tier,
+                Category = placement.Category,
+                Size = placement.Size,
+            });
+        }
+
+        for (var i = 0; i < world.Power.Generators.Count; i++)
+        {
+            var generator = world.Power.Generators[i];
+            var placement = world.Power.GeneratorPlacements[i];
+            save.Generators.Add(new GeneratorSave
+            {
+                Fuel = generator.Fuel.Value,
+                OutputPerTick = generator.OutputPerTick,
+                TicksPerFuel = generator.TicksPerFuel,
+                FuelStock = generator.FuelStock,
+                BurnTicksLeft = generator.BurnTicksLeft,
+                X = placement.X,
+                Y = placement.Y,
+                Tier = placement.Tier,
+                Category = placement.Category,
+                Size = placement.Size,
+            });
+        }
+
         save.Belts = CaptureBelts(world.Belts);
+
+        for (var i = 0; i < world.Extractors.Count; i++)
+        {
+            var extractor = world.Extractors[i];
+            var placement = world.ExtractorPlacements[i];
+            save.Extractors.Add(new ExtractorSave
+            {
+                Fluid = extractor.Fluid.Value,
+                Ambient = extractor.Ambient,
+                X = placement.X,
+                Y = placement.Y,
+                Tier = placement.Tier,
+                Category = placement.Category,
+                Size = placement.Size,
+                CycleTicks = extractor.CycleTicks,
+                PowerDraw = extractor.PowerDraw / Math.Max(1, placement.Area),
+                TicksRemaining = extractor.RawTicksRemaining,
+                Buffered = extractor.Buffered,
+                Energy = extractor.Energy,
+                State = extractor.State,
+            });
+        }
+
+        foreach (var drone in world.Logistics.Drones)
+            save.Drones.Add(new DroneSave
+            {
+                X = drone.X,
+                Y = drone.Y,
+                Capacity = drone.Capacity,
+                Speed = drone.Speed,
+                Cargo = drone.Cargo.Value,
+                CargoCount = drone.CargoCount,
+                Task = drone.Task,
+                Progress = drone.Progress,
+                Waiting = drone.Waiting,
+            });
+
+        foreach (var task in world.Logistics.Tasks)
+            save.Tasks.Add(new HaulTaskSave
+            {
+                Item = task.Item.Value,
+                Count = task.Count,
+                FromX = task.FromX,
+                FromY = task.FromY,
+                ToX = task.ToX,
+                ToY = task.ToY,
+                State = task.State,
+                Drone = task.Drone,
+                Delivered = task.Delivered,
+            });
+
+        foreach (var controller in world.Controllers)
+            save.Controllers.Add(new ControllerSave
+            {
+                Source = controller.Source,
+                State = controller.State
+                    .OrderBy(kv => kv.Key, StringComparer.Ordinal)
+                    .Select(kv => new StateEntry { Key = kv.Key, Value = kv.Value })
+                    .ToList(),
+            });
+
+        foreach (var node in world.Fluids.Nodes)
+            save.FluidNodes.Add(new FluidNodeSave
+            {
+                X = node.X,
+                Y = node.Y,
+                Kind = node.Kind,
+                Capacity = node.Capacity,
+                Throughput = node.Throughput,
+            });
 
         foreach (var network in world.Fluids.Networks)
             save.Fluids.Add(new FluidNetworkSave
             {
-                Capacity = network.Capacity,
-                ThroughputPerTick = network.ThroughputPerTick,
                 Fluid = network.Fluid.Value,
                 Amount = network.Amount,
             });
@@ -78,6 +215,7 @@ public static class SaveGame
             Size = placement.Size,
             Placed = world.IsPlaced(index),
             TicksRemaining = machine.RawTicksRemaining,
+            Energy = machine.Energy,
             State = machine.State,
         };
 
@@ -145,6 +283,14 @@ public static class SaveGame
     /// Rebuilds a World. `recipes` is the running game's recipe set, keyed by
     /// recipe id.
     public static World Restore(SaveFile save, IReadOnlyDictionary<string, Recipe> recipes)
+        => Restore(save, recipes, null);
+
+    /// `gen` is the world generator to restore against. Passing null gives a
+    /// world with no terrain, which is right for tests that only care about
+    /// machines and wrong for a real load -- a save stores the seed, not the
+    /// map, so the caller has to supply the generator built from it.
+    public static World Restore(SaveFile save, IReadOnlyDictionary<string, Recipe> recipes,
+                                WorldGen? gen)
     {
         if (save.Version != SaveFile.CurrentVersion)
             throw new SaveLoadException(
@@ -158,21 +304,99 @@ public static class SaveGame
         foreach (var name in save.Items)
             items.Register(name);
 
-        var world = new World(save.Seed, items);
+        var world = new World(save.Seed, items, gen);
         world.RestoreTick(save.Tick);
+
+        world.Ground.Restore(save.Depletion.Select(d => (d.X, d.Y, d.Taken)));
 
         world.PlayerInventory.Restore(save.Player.Select(s => (Item(s.Item, save), s.Count)).ToList());
 
         foreach (var entry in save.Machines)
             RestoreMachine(world, entry, recipes, save);
 
+        foreach (var entry in save.Miners)
+        {
+            var placement = new MachinePlacement(entry.X, entry.Y, (byte)entry.Tier,
+                                                 (byte)entry.Category, (byte)entry.Size);
+            var miner = world.AddSavedMiner(Item(entry.Item, save), placement, entry.CycleTicks,
+                                            entry.PowerDraw);
+            miner.Restore(entry.State, entry.TicksRemaining, entry.Buffered, entry.Energy);
+        }
+
+        foreach (var entry in save.Poles)
+            world.Power.AddPole(new Pole(entry.X, entry.Y, entry.SupplyRadius, entry.WireRadius));
+
+        foreach (var entry in save.Generators)
+        {
+            var generator = new Generator(Item(entry.Fuel, save), entry.OutputPerTick,
+                                          entry.TicksPerFuel);
+            generator.Restore(entry.FuelStock, entry.BurnTicksLeft);
+            world.TryPlaceGenerator(generator, new MachinePlacement(
+                entry.X, entry.Y, (byte)entry.Tier, (byte)entry.Category, (byte)entry.Size));
+        }
+
+        for (var i = 0; i < save.Accumulators.Count; i++)
+        {
+            var entry = save.Accumulators[i];
+            var accumulator = new Accumulator(entry.Capacity, entry.RatePerTick);
+            accumulator.Restore(entry.Charge);
+            world.TryPlaceAccumulator(accumulator, new MachinePlacement(
+                entry.X, entry.Y, (byte)entry.Tier, (byte)entry.Category, (byte)entry.Size));
+        }
+
+        foreach (var entry in save.Extractors)
+        {
+            var placement = new MachinePlacement(entry.X, entry.Y, (byte)entry.Tier,
+                                                 (byte)entry.Category, (byte)entry.Size);
+            var extractor = new FluidExtractor(Item(entry.Fluid, save), entry.Ambient,
+                                               placement.Area, entry.CycleTicks, entry.PowerDraw);
+            extractor.Restore(entry.State, entry.TicksRemaining, entry.Buffered, entry.Energy);
+            world.AddSavedExtractor(extractor, placement);
+        }
+
+        // Tasks before drones, because a drone's Task index points into this
+        // list and a drone restored first would point at nothing.
+        foreach (var entry in save.Tasks)
+        {
+            var task = new HaulTask(Item(entry.Item, save), entry.Count,
+                                    entry.FromX, entry.FromY, entry.ToX, entry.ToY);
+            task.Restore(entry.State, entry.Drone, entry.Delivered);
+            world.Logistics.AddTask(task);
+        }
+
+        foreach (var entry in save.Drones)
+        {
+            var drone = new Drone(entry.X, entry.Y, entry.Capacity, entry.Speed);
+            drone.Restore(entry.X, entry.Y, Item(entry.Cargo, save), entry.CargoCount,
+                          entry.Task, entry.Progress, entry.Waiting);
+            world.Logistics.AddDrone(drone);
+        }
+
+        foreach (var entry in save.Controllers)
+        {
+            var controller = world.AddController(entry.Source);
+            controller.RestoreState(entry.State.Select(
+                e => new KeyValuePair<string, string>(e.Key, e.Value)));
+        }
+
         RestoreBelts(world.Belts, save.Belts, save);
 
-        foreach (var entry in save.Fluids)
+        // Nodes first, in file order, so the rebuilt networks are numbered the
+        // same way they were when the file was written.
+        foreach (var node in save.FluidNodes)
+            switch (node.Kind)
+            {
+                case FluidNodeKind.Tank: world.Fluids.AddTank(node.X, node.Y, node.Capacity); break;
+                case FluidNodeKind.Pump: world.Fluids.AddPump(node.X, node.Y, node.Throughput); break;
+                default: world.Fluids.AddPipe(node.X, node.Y, node.Throughput); break;
+            }
+
+        for (var i = 0; i < save.Fluids.Count && i < world.Fluids.NetworkCount; i++)
         {
-            var id = world.Fluids.AddNetwork(1, entry.ThroughputPerTick);
-            world.Fluids.Network(id).Restore(entry.Capacity, entry.ThroughputPerTick,
-                                             Item(entry.Fluid, save), entry.Amount);
+            var network = world.Fluids.Network(i);
+            var entry = save.Fluids[i];
+            network.Restore(network.Capacity, network.ThroughputPerTick,
+                            Item(entry.Fluid, save), entry.Amount);
         }
 
         return world;
@@ -199,7 +423,8 @@ public static class SaveGame
 
         machine.Restore(entry.State, entry.TicksRemaining,
                         entry.Inputs.Select(s => (Item(s.Item, save), s.Count)).ToList(),
-                        entry.Outputs.Select(s => (Item(s.Item, save), s.Count)).ToList());
+                        entry.Outputs.Select(s => (Item(s.Item, save), s.Count)).ToList(),
+                        entry.Energy);
     }
 
     private static void RestoreBelts(BeltNetwork belts, BeltNetworkSave save, SaveFile file)
@@ -278,10 +503,11 @@ public static class SaveGame
     public static void Write(World world, string path) =>
         File.WriteAllText(path, ToJson(Capture(world)));
 
-    public static World Read(string path, IReadOnlyDictionary<string, Recipe> recipes)
+    public static World Read(string path, IReadOnlyDictionary<string, Recipe> recipes,
+                             WorldGen? gen = null)
     {
         if (!File.Exists(path))
             throw new SaveLoadException($"there is no save file at {path}");
-        return Restore(FromJson(File.ReadAllText(path)), recipes);
+        return Restore(FromJson(File.ReadAllText(path)), recipes, gen);
     }
 }

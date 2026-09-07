@@ -14,34 +14,21 @@ public static class DemoWorld
     /// Grid stride. Machines are square and at most this many tiles per side.
     private const int MaxFootprint = 3;
 
-    /// The recipes this world's machines run, by id.
-    ///
-    /// Loading a save needs the game's recipe set, and until the game reads
-    /// `/data` at runtime this is that set. When it does, this becomes a lookup
-    /// into the loaded recipe table and nothing else about saving changes.
-    public static IReadOnlyDictionary<string, Recipe> Recipes { get; private set; } =
-        new Dictionary<string, Recipe>();
-
     public static World Build(int machineCount, int seed)
     {
-        var db = new ItemDatabase();
-        var ore = db.Register("iron_ore");
-        var plate = db.Register("iron_plate");
-        var gear = db.Register("iron_gear");
+        // Real recipes from /data, not invented ones. A placeholder factory
+        // whose recipes do not exist in the catalogue cannot have its own save
+        // loaded back -- which is exactly the bug this replaced.
+        var catalogue = Sim.Data.Catalogue.Instance;
+        var db = catalogue.Items;
 
-        var smelt = new Recipe("smelt_iron_plate", 192,
-            new[] { new RecipeInput(ore, 1) },
-            new[] { new RecipeOutput(plate, 1) });
-
-        var assemble = new Recipe("assemble_iron_gear", 120,
-            new[] { new RecipeInput(plate, 2) },
-            new[] { new RecipeOutput(gear, 1) });
-
-        Recipes = new Dictionary<string, Recipe>
-        {
-            [smelt.Id] = smelt,
-            [assemble.Id] = assemble,
-        };
+        // A powered recipe, so the placeholder factory exercises the grid at
+        // scale rather than leaving TickPower measuring an empty world.
+        var smelt = catalogue.Recipe("crush_chalcopyrite");
+        var assemble = catalogue.Recipe("form_copper_plate");
+        var ore = catalogue.Item("chalcopyrite");
+        var plate = catalogue.Item("copper_ingot");
+        var coal = catalogue.Item("coal_deposit");
 
         var world = new World(seed, db);
         var side = (int)System.Math.Ceiling(System.Math.Sqrt(machineCount));
@@ -88,6 +75,49 @@ public static class DemoWorld
                     break;
             }
         }
+
+        // A grid over the whole factory: poles on a spacing that keeps one
+        // network, and generators fuelled well past the length of any test run.
+        for (var y = 0; y <= side * MaxFootprint; y += 8)
+            for (var x = 0; x <= side * MaxFootprint; x += 8)
+                world.Power.AddPole(new Pole(x, y, supplyRadius: 6, wireRadius: 9));
+
+        for (var y = 0; y <= side * MaxFootprint; y += 24)
+            for (var x = 0; x <= side * MaxFootprint; x += 24)
+            {
+                var generator = new Generator(coal, outputPerTick: 400, ticksPerFuel: 100_000);
+                generator.AddFuel(1000);
+                world.TryPlaceGenerator(generator, new MachinePlacement(x + 1, y + 1, 1, 6, 1));
+            }
+
+        // A bank of accumulators on the same grid, so the placeholder factory
+        // exercises storage as well -- and so the renderer has some to draw.
+        for (var y = 0; y <= side * MaxFootprint; y += 24)
+            for (var x = 0; x <= side * MaxFootprint; x += 24)
+                world.TryPlaceAccumulator(new Accumulator(capacity: 100_000, ratePerTick: 200),
+                                          new MachinePlacement(x + 3, y + 1, 1, 7, 1));
+
+        // A pipe run with a tank and a pump on it, so the placeholder factory
+        // exercises the plumbing as well as the grid.
+        for (var x = 0; x <= side * MaxFootprint; x++)
+            world.Fluids.AddPipe(x, -2, FluidNetwork.ThroughputLarge);
+        world.Fluids.AddTank(-2, -2);
+        world.Fluids.AddPump(-1, -2);
+
+        // A drone fleet and a controller commanding it, so the renderer and the
+        // script editor both have something real to show.
+        for (var i = 0; i < System.Math.Max(4, machineCount / 40); i++)
+            world.Logistics.AddDrone(new Drone(4 + i * 5, 4 + i * 3, capacity: 40, speed: 25));
+
+        world.AddController(@"
+-- Keep the far machines fed from the near ones.
+while true do
+  if queue.pending() < 4 then
+    queue.haul('chalcopyrite', 20, 0, 0, 21, 21)
+  end
+  world.sleep(20)
+end
+");
 
         // Something in the player's hands, so the panel's load button has
         // work to do on the starved machines.

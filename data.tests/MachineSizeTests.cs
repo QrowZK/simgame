@@ -1,5 +1,7 @@
 using Sim;
 
+using Sim.Data;
+
 namespace Data.Tests;
 
 /// Machine size is not decoration. A machine's footprint IS its throughput

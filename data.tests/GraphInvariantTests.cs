@@ -1,3 +1,5 @@
+using Sim.Data;
+
 namespace Data.Tests;
 
 public class GraphInvariantTests
