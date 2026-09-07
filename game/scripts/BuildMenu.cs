@@ -27,6 +27,7 @@ public sealed partial class BuildMenu : PanelContainer
     private Label _hint = null!;
 
     private BuildCatalogue _catalogue = null!;
+    private World _world = null!;
     private Inventory _bag = null!;
     private ItemDatabase _names = null!;
 
@@ -65,10 +66,13 @@ public sealed partial class BuildMenu : PanelContainer
         Visible = false;
     }
 
-    public void Bind(BuildCatalogue catalogue, Inventory bag, ItemDatabase names)
+    /// The menu needs the world, not just the bag, because what may be built
+    /// is now a question of research as well as of inventory (ADR 0023).
+    public void Bind(BuildCatalogue catalogue, World world, ItemDatabase names)
     {
         _catalogue = catalogue;
-        _bag = bag;
+        _world = world;
+        _bag = world.PlayerInventory;
         _names = names;
     }
 
@@ -95,7 +99,7 @@ public sealed partial class BuildMenu : PanelContainer
         _items.Clear();
         _shown.Clear();
 
-        foreach (var buildable in _catalogue.Offerable
+        foreach (var buildable in _catalogue.OfferableWith(_world.Research)
                      .Where(b => _bag.Count(b.Item) > 0)
                      .OrderBy(b => b.Tier)
                      .ThenBy(b => b.Name))
@@ -146,7 +150,7 @@ public sealed partial class BuildMenu : PanelContainer
 
     private Recipe? FirstRecipe(Buildable buildable)
     {
-        var recipes = _catalogue.RecipesFor(buildable);
+        var recipes = _catalogue.RecipesFor(buildable, _world.Research);
         if (recipes.Count == 0) return null;
 
         _recipes.Select(0);
@@ -166,7 +170,7 @@ public sealed partial class BuildMenu : PanelContainer
 
         _recipeTitle.Text = $"{buildable.DisplayName} makes:";
 
-        foreach (var recipe in _catalogue.RecipesFor(buildable))
+        foreach (var recipe in _catalogue.RecipesFor(buildable, _world.Research))
         {
             _shownRecipes.Add(recipe);
 

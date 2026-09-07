@@ -51,6 +51,45 @@ Where to start: `sim.tests/RecipeChangeTests.cs`, and
 which plays the whole route. `godot --headless --path game -- --session-test`
 prints the same route and fails if any link in it breaks.
 
+## [gameplay → art] A machine on real terrain is drawn underneath the ground
+`MachineRenderer.WriteOne` writes every hull at y = 0. `TerrainRenderer` lifts
+each tile by `gen.HeightAt(x, y) / 127.5 - 1`. On any tile whose terrain sits
+above zero, the machine is buried and invisible. The demo world the smoke run
+uses is flat, which is why 4096 machines photograph correctly and one machine on
+a real map does not.
+
+Done looks like: a machine placed on a new game is visible, at the height of the
+tile it stands on. Miners, generators, accumulators and the build ghost all
+share this, so it is one lift, not five.
+
+Where to start: `xvfb-run -a godot --path game --rendering-driver opengl3 --
+--start-shot --uplink-shot` puts one 2x2 Uplink at 0,-4 with the camera on it
+and the panel open. Nothing is drawn. Predates ADR 0023; the capture path is
+what found it.
+
+## [gameplay → qa] Try to break the research gate, and the Uplink
+ADR 0024. Recipes are now gated on delivered research, the Uplink is an ordinary
+machine whose input buffer is drained into `Research` each tick, and the save
+format is 10. I wrote the tests for what I built, which is the half that needs
+somebody else's eyes -- and one mutation already survived my first pass (the
+picker offering what the build path refuses), so assume there are more.
+
+Worth attacking specifically: feeding the Uplink from a **belt or an inserter**
+rather than by hand or by `PushInput` (my tests do the latter two); a **drone**
+hauling to it; delivering a **fluid** item; two Uplinks both fed at once, where
+credit order across machines is not something I asserted; and whether a locked
+recipe can be reached through any path I did not gate -- `Controller` programs
+and `Logistics` both touch machines and neither knows about research.
+
+Also worth a look: the four Manual techs are what keep a new game playable, and
+`Research` unlocks them by testing `RequiresItem is null`. A data change that
+gave a Manual tech a `requires_item` would lock the player out of the game at
+tick zero with no test failing except the reachability closure.
+
+Where to start: `sim.tests/ResearchTests.cs`, and
+`godot --headless --path game -- --session-test`, whose `--- opening route ---`
+now walks the route with the gate switched on.
+
 ## [coordinator → art] One icon legibility question, when convenient
 The rendering QA flagged as unlooked-at **has** been looked at, twice: art
 reported what it saw, and the coordinator independently reviewed `--belt-shot`

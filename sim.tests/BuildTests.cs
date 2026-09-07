@@ -13,7 +13,19 @@ public class BuildTests
     private static readonly Catalogue Data = Catalogue.Instance;
     private static readonly BuildCatalogue Buildables = new(Catalogue.Instance);
 
-    private static World NewWorld() => NewGame.Create(seed: 4242, Data);
+    /// A new game with the whole tech tree already open.
+    ///
+    /// Recipes are gated on research (ADR 0023), and these tests hand
+    /// themselves a Steam furnace rather than earning one -- so they have to
+    /// hand themselves the research that goes with it, or they would be
+    /// asserting the gate rather than the build path. `OpeningRouteTests` is
+    /// where the gate is walked properly, from an ungated Manual tier up.
+    private static World NewWorld()
+    {
+        var world = NewGame.Create(seed: 4242, Data);
+        world.Research!.UnlockAll();
+        return world;
+    }
 
     private static Buildable Get(string itemId)
     {

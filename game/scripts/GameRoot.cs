@@ -34,6 +34,11 @@ public sealed partial class GameRoot : Node3D
     private MachinePanel _panel = null!;
     private PauseMenu _pause = null!;
     private BuildMenu _build = null!;
+    private QuestPanel _quests = null!;
+    /// Whether the win has already been announced. The world stays playable
+    /// after the Seed goes -- there is no reason to take a factory away from
+    /// someone -- so the banner must not re-fire every frame.
+    private bool _seedAnnounced;
     private BuildGhost _ghost = null!;
     private BuildCatalogue _buildables = null!;
     private Buildable? _holding;
@@ -80,7 +85,13 @@ public sealed partial class GameRoot : Node3D
         _belts = new BeltRenderer { Name = "BeltRenderer" };
         AddChild(_belts);
         _pause = BuildPauseMenu();
+        _quests = BuildQuestPanel();
         _editor = BuildScriptEditor();
+
+        // A brand new game, and only a brand new game: the premise is shown at
+        // tick zero on an untouched world, so a loaded save never replays it.
+        if (_world.TickCount == 0 && _world.MachineCount == 0 && _world.Research is not null)
+            _quests.OpenWithPremise();
 
         // Frame whatever there is to look at. A new game has no factory, so the
         // camera sits on the landing site at a zoom where the ground around it
@@ -114,7 +125,7 @@ public sealed partial class GameRoot : Node3D
             CallDeferred(nameof(RunSmokeTest));
 
         if (AllArgs().Contains("--screenshot") || AllArgs().Contains("--build-shot")
-            || AllArgs().Contains("--belt-shot"))
+            || AllArgs().Contains("--belt-shot") || AllArgs().Contains("--uplink-shot"))
         {
             _screenshotCountdown = 12;      // let a few frames draw first
 
@@ -169,6 +180,7 @@ public sealed partial class GameRoot : Node3D
         {
             if (AllArgs().Contains("--build-shot")) OpenBuildForCapture();
             else if (AllArgs().Contains("--belt-shot")) FrameTheBelts();
+            else if (AllArgs().Contains("--uplink-shot")) ShowTheUplink();
             else ShowAnyRunningMachine();
         }
 
@@ -182,6 +194,16 @@ public sealed partial class GameRoot : Node3D
         }
 
         UpdateGhost();
+
+        // The win, announced once. Nothing is taken away and nothing stops: a
+        // factory game whose ending closes the factory has punished the player
+        // for finishing it.
+        if (!_seedAnnounced && _world.Research is { SeedDelivered: true })
+        {
+            _seedAnnounced = true;
+            Say("The Seed is away. It will come apart on entry somewhere else, and start again.");
+            _quests.Open();
+        }
 
         if (_toastFrames > 0) _toastFrames--;
 
@@ -213,7 +235,7 @@ public sealed partial class GameRoot : Node3D
                         $"batches {_renderer.BatchCount}   fps {Engine.GetFramesPerSecond():0}" +
                         power + stored + "\n" +
                         "WASD pan   Q/E rotate   wheel zoom   click a machine to inspect   " +
-                        "B build   R rotate   F5 save   F9 load   F1 script   Esc menu" +
+                        "B build   T objectives   R rotate   F5 save   F9 load   F1 script   Esc menu" +
                         (_toastFrames > 0 ? "\n" + _toast : "");
         }
     }
@@ -376,6 +398,26 @@ public sealed partial class GameRoot : Node3D
         GD.Print($"panel           showing={_panel.IsShowing}");
         GD.Print($"recipe picker   options={_panel.RecipeOptions} " +
                  $"current selected={_panel.CurrentRecipeIsSelected}");
+        // Research, which gates the build menu and so decides what the two
+        // lines above can ever say. Measured on a fresh state rather than on
+        // this world's, because the demo world the smoke run uses has none and
+        // the number that matters is the one a new game starts with: too few
+        // and the opening is unplayable, all of them and nothing is gated.
+        var fresh = new Research(Sim.Data.Catalogue.Instance);
+        var openAtStart = _buildables.OfferableWith(fresh).Count();
+        var openUngated = _buildables.Offerable.Count();
+        GD.Print($"research        techs={fresh.UnlockedTechs.Count}/{fresh.AllTechs.Count} " +
+                 $"objectives={fresh.Objectives.Count} " +
+                 $"buildable={openAtStart}/{openUngated} at tick zero");
+
+        // The demo world has no research, so the panel would photograph as an
+        // empty box. Give it the fresh state built above -- the same one a new
+        // game starts with -- so the line reports the text a player would read.
+        _world.Research ??= fresh;
+        _quests.Refresh();
+        GD.Print($"quest panel     {_quests.BodyText.Length} chars, " +
+                 $"{_quests.BodyText.Split('\n').Length} lines");
+
         GD.Print("=== SMOKE OK ===");
 
         GetTree().Quit();
@@ -438,6 +480,7 @@ public sealed partial class GameRoot : Node3D
             // then the pause menu. Jumping straight to a menu from an open panel
             // would feel like the game ignored the panel.
             if (_build.IsShowing) StopBuilding();
+            else if (_quests.IsShowing) _quests.Close();
             else if (_panel.IsShowing) _panel.Close();
             else if (_pause.Visible) _pause.Close();
             else _pause.Open();
@@ -450,6 +493,13 @@ public sealed partial class GameRoot : Node3D
         {
             _facing = Directions.Rotate(_facing);
             Say($"Facing {_facing}.");
+            return;
+        }
+
+        if (@event is InputEventKey { Pressed: true, Keycode: Key.T })
+        {
+            if (_quests.IsShowing) _quests.Close();
+            else _quests.Open();
             return;
         }
 
@@ -529,7 +579,7 @@ public sealed partial class GameRoot : Node3D
     {
         var layer = new CanvasLayer { Name = "BuildUi" };
         var menu = GD.Load<PackedScene>("res://scenes/build_menu.tscn").Instantiate<BuildMenu>();
-        menu.Bind(_buildables, _world.PlayerInventory, _world.Items);
+        menu.Bind(_buildables, _world, _world.Items);
         menu.Selected += OnBuildSelected;
         menu.Closed += StopBuilding;
         layer.AddChild(menu);
@@ -635,6 +685,8 @@ public sealed partial class GameRoot : Node3D
             BuildResult.TooFarToTunnel =>
                 $"Too far: a {_holding.DisplayName} tunnels {_holding.UndergroundReach} tiles.",
             BuildResult.NeedsRecipe => $"Choose what the {_holding.DisplayName} should make.",
+            BuildResult.NotResearched =>
+                "Not researched yet -- deliver the tier's machine hulls to the Uplink.",
             BuildResult.NotPlaceableYet => $"Nothing places a {_holding.DisplayName} yet.",
             _ => $"Cannot build a {_holding.DisplayName}.",
         });
@@ -668,6 +720,39 @@ public sealed partial class GameRoot : Node3D
             _ghost.Show(_holding, d, -4, true, _renderer.TileSize);
             return;
         }
+    }
+
+    /// Capture path for the Uplink: put one down, give it something research
+    /// wants and something it does not, and open the panel on it. Both halves
+    /// matter -- the want list and the hopper of refused items are the two
+    /// things this panel says that no other panel does.
+    private void ShowTheUplink()
+    {
+        _quests.Close();
+
+        var uplink = _buildables.Find(Research.UplinkItem);
+        if (uplink is null || _world.Research is null) return;
+
+        var recipe = _buildables.RecipesFor(uplink, _world.Research).FirstOrDefault();
+        if (recipe is null) return;
+
+        _world.PlayerInventory.Add(uplink.Item, 1);
+        for (var d = 0; d < 40; d++)
+            if (_world.TryBuild(_buildables, uplink.Item, d, -4, recipe) == BuildResult.Ok)
+            {
+                var index = _world.MachineCount - 1;
+                var placement = _world.PlacementOf(index);
+
+                if (_world.Items.TryGetId("iron_ingot", out var spare))
+                    _world.Machines[index].PushInput(spare, 5);
+
+                _rig.Position = new Vector3(placement.CentreX * _renderer.TileSize, 0f,
+                                            placement.CentreY * _renderer.TileSize);
+                _rig.ZoomLevel = 18f;
+                _rig.Apply();
+                _panel.Show(_world.Machines[index], placement, index);
+                return;
+            }
     }
 
     /// Points the camera at the belt line and closes the panel, so a capture
@@ -736,6 +821,9 @@ public sealed partial class GameRoot : Node3D
             _world = world;
             _panel.Close();
             _panel.Bind(_world.Items, _world.PlayerInventory, _world, _buildables);
+            _build.Bind(_buildables, _world, _world.Items);
+            _quests.Bind(_world);
+            _seedAnnounced = _world.Research?.SeedDelivered ?? false;
             _renderer.Sync(_world);
             _toast = "Quick loaded.";
         }
@@ -795,6 +883,16 @@ public sealed partial class GameRoot : Node3D
         layer.AddChild(panel);
         AddChild(layer);
         panel.Bind(_world.Items, _world.PlayerInventory, _world, _buildables);
+        return panel;
+    }
+
+    private QuestPanel BuildQuestPanel()
+    {
+        var layer = new CanvasLayer { Name = "QuestUi" };
+        var panel = GD.Load<PackedScene>("res://scenes/quest_panel.tscn").Instantiate<QuestPanel>();
+        panel.Bind(_world);
+        layer.AddChild(panel);
+        AddChild(layer);
         return panel;
     }
 

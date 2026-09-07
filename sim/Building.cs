@@ -226,14 +226,37 @@ public sealed class BuildCatalogue
     ///
     /// The UI needs this to offer a choice and the build path needs it to
     /// refuse a furnace told to run an assembler's recipe, so both ask here.
-    public IReadOnlyList<Recipe> RecipesFor(Buildable buildable)
-        => _recipesByMachine.TryGetValue(buildable.MachineId, out var found)
-            ? found.Where(r => r.Tier <= buildable.Tier).Select(r => r.Recipe).ToList()
-            : Array.Empty<Recipe>();
+    public IReadOnlyList<Recipe> RecipesFor(Buildable buildable) => RecipesFor(buildable, null);
 
-    public bool CanRun(Buildable buildable, Recipe recipe)
+    /// The same list, minus anything not yet researched (ADR 0023).
+    ///
+    /// `research` is nullable and null means "no gating" on purpose. The sim
+    /// can be run without a research state at all -- headless throughput
+    /// analysis and the demo world do -- and those callers want the whole
+    /// graph. Every player-facing caller passes `world.Research`, and the two
+    /// overloads are deliberately the same method so a picker and the build
+    /// path can never disagree about what a machine may run.
+    public IReadOnlyList<Recipe> RecipesFor(Buildable buildable, Research? research)
     {
-        foreach (var candidate in RecipesFor(buildable))
+        if (!_recipesByMachine.TryGetValue(buildable.MachineId, out var found))
+            return Array.Empty<Recipe>();
+
+        var recipes = new List<Recipe>();
+        foreach (var (tier, recipe) in found)
+        {
+            if (tier > buildable.Tier) continue;
+            if (research is not null && !research.IsUnlocked(recipe)) continue;
+            recipes.Add(recipe);
+        }
+
+        return recipes;
+    }
+
+    public bool CanRun(Buildable buildable, Recipe recipe) => CanRun(buildable, recipe, null);
+
+    public bool CanRun(Buildable buildable, Recipe recipe, Research? research)
+    {
+        foreach (var candidate in RecipesFor(buildable, research))
             if (ReferenceEquals(candidate, recipe)) return true;
         return false;
     }
@@ -248,9 +271,18 @@ public sealed class BuildCatalogue
     /// data has a job. The filter stays because that is a property of the data
     /// rather than of the code, and it is cheaper to keep the guard than to
     /// discover the next unused machine through a player building one.
-    public IEnumerable<Buildable> Offerable
+    public IEnumerable<Buildable> Offerable => OfferableWith(null);
+
+    /// The same list, gated on research (ADR 0023). A machine every one of
+    /// whose recipes is still locked is not offered, for exactly the reason the
+    /// ungated filter above exists: handing a player a machine that can do
+    /// nothing is a trap. Non-machines -- belts, poles, miners -- are never
+    /// hidden, because owning one already means its build recipe was unlocked;
+    /// hiding it would be the build menu refusing to place something the player
+    /// is holding, which is the one thing a build menu must never do.
+    public IEnumerable<Buildable> OfferableWith(Research? research)
         => _all.Where(b => b.Kind != BuildKind.NotPlaceable)
-               .Where(b => b.Kind != BuildKind.Machine || RecipesFor(b).Count > 0);
+               .Where(b => b.Kind != BuildKind.Machine || RecipesFor(b, research).Count > 0);
 
     public bool TryGet(ItemId item, out Buildable buildable)
         => _byItem.TryGetValue(item, out buildable!);
@@ -293,4 +325,10 @@ public enum BuildResult
     /// An underground belt end was placed in line with an unpaired entrance
     /// facing the same way, but beyond what this tier can tunnel.
     TooFarToTunnel,
+
+    /// The recipe exists and the machine could run it, but the tech that
+    /// unlocks it has not been researched (ADR 0023). Distinct from
+    /// `NeedsRecipe`, because the fix is a delivery to the Uplink rather than
+    /// a click on the picker.
+    NotResearched,
 }

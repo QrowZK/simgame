@@ -163,7 +163,10 @@ public sealed class OpeningRouteRunner
 
         if (!Acquire(itemId, 1)) return false;
 
-        var first = _buildables.RecipesFor(buildable).FirstOrDefault();
+        // Gated, like the build menu: a machine placed on a recipe the player
+        // has not researched would be refused by `TryBuild` anyway, and picking
+        // one here would report the refusal against the wrong step.
+        var first = _buildables.RecipesFor(buildable, _world.Research).FirstOrDefault();
         if (first is null)
         {
             StuckOn ??= $"{itemId} (no recipe it can run)";

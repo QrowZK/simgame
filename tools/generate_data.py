@@ -372,6 +372,17 @@ def main():
             add_recipe("build_%s" % item_id, builder, pt, 400, ins,
                        [{"item": item_id, "count": 1}], "fabrication")
 
+    # ---- the Uplink's one "recipe" -----------------------------------------
+    # The Uplink does not make anything: it is where research and, at the end,
+    # the Seed are delivered (ADR 0023). It still needs a recipe, because being
+    # an ordinary Machine is what earns it belts, inserters, drones, the
+    # inspection panel and the save format for free -- a bespoke structure
+    # would have had to reimplement every one of those. No inputs and no
+    # outputs, so nothing in the graph depends on it and the sim skips its
+    # cycle entirely and drains its input buffer into `Research` instead.
+    if any(m["id"] == "uplink" for m in spec["machines"]):
+        add_recipe("uplink_deliver", "uplink", "MAN", 1, [], [], "fabrication")
+
     # ---- the goal ----------------------------------------------------------
     goal = spec.get("goal")
     if goal:

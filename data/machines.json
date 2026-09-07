@@ -27,6 +27,17 @@
     "parallelism": 1
   },
   {
+    "id": "uplink",
+    "name": "Uplink",
+    "category": 6,
+    "tiers": [
+      "MAN"
+    ],
+    "min_tier": "MAN",
+    "size": 2,
+    "parallelism": 4
+  },
+  {
     "id": "alloy_smelter",
     "name": "Alloy Smelter",
     "category": 0,

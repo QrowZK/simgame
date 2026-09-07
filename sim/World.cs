@@ -41,11 +41,64 @@ public sealed class World
 
     public long TickCount { get; private set; }
 
+    /// Which techs are unlocked and what the Uplink is still waiting for
+    /// (ADR 0023). World state, not UI state: it decides what may be built, it
+    /// is changed by items arriving on a belt, and it is saved.
+    ///
+    /// Nullable, and null means an ungated world. Headless throughput analysis
+    /// and the demo world build machines directly and want the whole recipe
+    /// graph; a played game always has one.
+    public Research? Research { get; set; }
+
+    /// Indices of the machines that are Uplinks. Kept as a set rather than
+    /// re-tested each tick: recognising one means comparing a recipe id, and
+    /// doing that per machine per tick would cost more than the rest of the
+    /// tick at scale. Membership is fixed once placed -- an Uplink has exactly
+    /// one recipe it can run, so it can neither be retasked away nor become one.
+    private readonly HashSet<int> _uplinks = new();
+
+    public IReadOnlyCollection<int> Uplinks => _uplinks;
+
     public World(int seed, ItemDatabase? items = null, WorldGen? gen = null)
     {
         Seed = seed;
         Items = items ?? new ItemDatabase();
         Ground = new Ground(gen ?? new WorldGen(seed, Array.Empty<OreSpec>()));
+    }
+
+    /// Hands items to the research state and grants whatever a completed tech
+    /// pays out. Returns what was accepted; anything refused stays where it was.
+    ///
+    /// This is the one place a delivery is credited, whether it arrived in a
+    /// player's hands, on a belt or under a drone, so the three routes cannot
+    /// drift apart.
+    public DeliveryReport DeliverToUplink(ItemId item, int count)
+    {
+        if (Research is null || count <= 0) return new DeliveryReport();
+
+        var report = Research.Deliver(Items.GetName(item), count);
+
+        foreach (var tech in report.Completed)
+        {
+            if (!Sim.Research.Kits.TryGetValue(tech, out var kit)) continue;
+            foreach (var (name, amount) in kit)
+                if (Items.TryGetId(name, out var id))
+                    PlayerInventory.Add(id, amount);
+        }
+
+        return report;
+    }
+
+    /// Delivers straight out of the player's inventory. The hand version of
+    /// walking a hull to the Uplink, and the only route available before belts.
+    public DeliveryReport DeliverByHand(ItemId item, int count)
+    {
+        var have = Math.Min(count, PlayerInventory.Count(item));
+        if (have <= 0) return new DeliveryReport();
+
+        var report = DeliverToUplink(item, have);
+        PlayerInventory.Take(item, report.Accepted);
+        return report;
     }
 
     /// The terrain and its ore, with everything already dug out of it. A world
@@ -671,8 +724,17 @@ public sealed class World
         if (!CanPlace(placement) || CoversFluidNode(placement) || CoversBeltTile(placement))
             return BuildResult.Blocked;
 
-        if (buildable.Kind == BuildKind.Machine && (recipe is null || !catalogue.CanRun(buildable, recipe)))
-            return BuildResult.NeedsRecipe;
+        if (buildable.Kind == BuildKind.Machine)
+        {
+            if (recipe is null || !catalogue.CanRun(buildable, recipe))
+                return BuildResult.NeedsRecipe;
+
+            // Separated from the check above so the refusal can say which
+            // problem it is: "pick a recipe" and "that one is not researched
+            // yet" send the player to two different places.
+            if (Research is not null && !Research.IsUnlocked(recipe))
+                return BuildResult.NotResearched;
+        }
 
         var tunnel = TunnelRefusal.None;
 
@@ -861,6 +923,9 @@ public sealed class World
         if (!catalogue.CanRun(buildable, recipe))
             return RecipeChangeResult.CannotRun;
 
+        if (Research is not null && !Research.IsUnlocked(recipe))
+            return RecipeChangeResult.NotResearched;
+
         evicted = machine.SetRecipe(recipe, PlayerInventory);
         _states[index] = machine.State;
         return RecipeChangeResult.Ok;
@@ -893,6 +958,27 @@ public sealed class World
         return machine;
     }
 
+    /// An Uplink's cycle, which is not a cycle: everything pushed into it is
+    /// handed to `Research`, and whatever no objective wants is left in the
+    /// buffer rather than destroyed. A misrouted belt therefore backs up and
+    /// stops, which is a problem a player can see and undo -- the alternative,
+    /// silently eating it, is the same bug as a machine that voids its input.
+    private void DrainUplink(Machine machine)
+    {
+        if (Research is null) return;
+
+        // Snapshotted and ordered, so the credit order does not depend on
+        // dictionary iteration order and two identical worlds stay identical.
+        foreach (var (item, count) in machine.InputContents.OrderBy(kv => kv.Key.Value))
+        {
+            if (count <= 0) continue;
+            var report = DeliverToUplink(item, count);
+            if (report.Accepted > 0) machine.TakeInput(item, report.Accepted);
+        }
+
+        machine.SetIdle();
+    }
+
     public Machine AddMachine(Recipe recipe, MachinePlacement placement, int outputCapacityPerItem = 100)
     {
         var machine = new Machine(recipe, outputCapacityPerItem, placement.Area);
@@ -907,6 +993,7 @@ public sealed class World
         _machines.Add(machine);
         _placements[index] = placement;
         _states[index] = machine.State;
+        if (recipe.Id == Sim.Research.UplinkRecipe) _uplinks.Add(index);
         return machine;
     }
 
@@ -934,6 +1021,14 @@ public sealed class World
         for (var i = 0; i < _machines.Count; i++)
         {
             var machine = _machines[i];
+
+            if (_uplinks.Contains(i))
+            {
+                DrainUplink(machine);
+                _states[i] = machine.State;
+                continue;
+            }
+
             machine.Tick();
             _states[i] = machine.State;
         }

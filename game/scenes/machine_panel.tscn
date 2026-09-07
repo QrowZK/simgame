@@ -69,12 +69,15 @@ show_percentage = false
 
 [node name="Status" type="Label" parent="Margin/Rows"]
 text = "Idle"
+autowrap_mode = 2
 
 [node name="Inputs" type="Label" parent="Margin/Rows"]
 text = "Inputs"
+autowrap_mode = 2
 
 [node name="Outputs" type="Label" parent="Margin/Rows"]
 text = "Outputs"
+autowrap_mode = 2
 
 [node name="RecipeTitle" type="Label" parent="Margin/Rows"]
 text = "Makes:"
@@ -97,3 +100,4 @@ text = "Take output"
 
 [node name="Carrying" type="Label" parent="Margin/Rows"]
 text = "Carrying"
+autowrap_mode = 2
