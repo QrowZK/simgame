@@ -66,6 +66,14 @@ public static class NewGame
         // game this exists to create; no stone at all would mean the first
         // recipe cannot be opened.
         ("stone_deposit", 24),
+
+        // The lander's fabricator, which is the one thing that survived entry
+        // (ADR 0023). Granted rather than crafted because it is the premise:
+        // research is delivered into it, and a player who had to build one
+        // before they could unlock anything would be locked out by the very
+        // system that is supposed to open the game up. More can be built from
+        // stone -- `build_man_uplink` -- so a badly-sited one is not fatal.
+        ("man_uplink", 1),
     };
 
     public static World Create(int seed, Catalogue catalogue)
@@ -76,6 +84,10 @@ public static class NewGame
         foreach (var (item, count) in StarterKit)
             if (catalogue.Items.TryGetId(item, out var id))
                 world.PlayerInventory.Add(id, count);
+
+        // A played world is gated; the four Manual techs are open from here
+        // (ADR 0023), which is exactly the opening route and nothing more.
+        world.Research = new Research(catalogue);
 
         return world;
     }

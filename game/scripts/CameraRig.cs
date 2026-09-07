@@ -100,7 +100,14 @@ public sealed partial class CameraRig : Node3D
         offset = offset.Rotated(Vector3.Up, yawRad);
 
         _camera.Position = offset;
-        _camera.LookAt(GlobalPosition, Vector3.Up);
+
+        // Aimed in rig-local space, not with LookAt. LookAt reads the camera's
+        // *global* transform, which Godot has not yet recomputed when the rig
+        // was moved earlier in the same frame -- so a camera pointed at a
+        // freshly placed machine aimed at where the rig used to be, and the
+        // machine fell outside the frame. The rig is never rotated (yaw is
+        // baked into `offset`), so local and global orientation agree.
+        _camera.Basis = Basis.LookingAt(-offset, Vector3.Up);
 
         if (Orthographic)
         {

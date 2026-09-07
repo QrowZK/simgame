@@ -260,9 +260,9 @@ public class RecipeChangeTests
     {
         var (world, _) = FurnaceWorld();
         var save = SaveGame.Capture(world);
-        Assert.Equal(9, save.Version);
+        Assert.Equal(10, save.Version);
 
-        save.Version = 8;
+        save.Version = 9;
         Assert.Throws<SaveLoadException>(() => SaveGame.Restore(save, Recipes));
     }
 

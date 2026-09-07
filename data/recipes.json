@@ -9888,6 +9888,26 @@
     "unlocked_by": "tech_pls_fabrication"
   },
   {
+    "id": "build_man_uplink",
+    "machine": "manual_crafting",
+    "tier": "MAN",
+    "duration_ticks": 400,
+    "power_draw": 0,
+    "inputs": [
+      {
+        "item": "stone_deposit",
+        "count": 12
+      }
+    ],
+    "outputs": [
+      {
+        "item": "man_uplink",
+        "count": 1
+      }
+    ],
+    "unlocked_by": "tech_man_fabrication"
+  },
+  {
     "id": "build_man_alloy_smelter",
     "machine": "manual_crafting",
     "tier": "MAN",
@@ -17134,6 +17154,16 @@
       }
     ],
     "unlocked_by": "tech_pls_fabrication"
+  },
+  {
+    "id": "uplink_deliver",
+    "machine": "uplink",
+    "tier": "MAN",
+    "duration_ticks": 1,
+    "power_draw": 0,
+    "inputs": [],
+    "outputs": [],
+    "unlocked_by": "tech_man_fabrication"
   },
   {
     "id": "build_pressure_hull_assembly",

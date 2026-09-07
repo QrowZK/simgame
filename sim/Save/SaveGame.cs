@@ -194,6 +194,20 @@ public static class SaveGame
                 Amount = network.Amount,
             });
 
+        if (world.Research is { } research)
+        {
+            save.Research.Enabled = true;
+            save.Research.SeedDelivered = research.SeedDelivered;
+            save.Research.Unlocked = research.UnlockedInOrder.ToList();
+            foreach (var (objective, item, count) in research.Progress)
+                save.Research.Progress.Add(new ResearchProgressSave
+                {
+                    Objective = objective,
+                    Item = item,
+                    Count = count,
+                });
+        }
+
         return save;
     }
 
@@ -347,6 +361,18 @@ public static class SaveGame
 
         var world = new World(save.Seed, items, gen);
         world.RestoreTick(save.Tick);
+
+        // Research before machines: placing an Uplink registers it, and a
+        // delivery arriving on the first tick after load must land on the same
+        // objectives it would have before the save.
+        if (save.Research.Enabled)
+        {
+            var research = new Research(Sim.Data.GameData.Instance);
+            research.Restore(save.Research.Unlocked,
+                             save.Research.Progress.Select(p => (p.Objective, p.Item, p.Count)),
+                             save.Research.SeedDelivered);
+            world.Research = research;
+        }
 
         world.Ground.Restore(save.Depletion.Select(d => (d.X, d.Y, d.Taken)));
 

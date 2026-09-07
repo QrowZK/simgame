@@ -39,6 +39,10 @@ public enum RecipeChangeResult
 
     /// There is no machine at that index.
     NoMachine,
+
+    /// The machine could run it, but the tech that unlocks it has not been
+    /// researched yet (ADR 0023).
+    NotResearched,
 }
 
 public sealed class Machine
@@ -206,6 +210,32 @@ public sealed class Machine
         if (count < 0) throw new ArgumentOutOfRangeException(nameof(count));
         _inputBuffer[item] = _inputBuffer.GetValueOrDefault(item) + count;
     }
+
+    /// Removes items from the input buffer without running a cycle. The Uplink
+    /// is the only caller: what is pushed into it leaves as research rather
+    /// than as product, and it must leave the buffer exactly once.
+    public int TakeInput(ItemId item, int count)
+    {
+        if (count < 0) throw new ArgumentOutOfRangeException(nameof(count));
+        var available = _inputBuffer.GetValueOrDefault(item);
+        var taken = Math.Min(available, count);
+
+        // The key is dropped at zero rather than left holding one. An Uplink is
+        // fed and emptied every tick, and a buffer that kept a zero entry for
+        // every item ever delivered would grow forever and be written into
+        // every save.
+        if (taken > 0)
+        {
+            if (available == taken) _inputBuffer.Remove(item);
+            else _inputBuffer[item] = available - taken;
+        }
+
+        return taken;
+    }
+
+    /// Parks the machine as Idle. Save surface and the Uplink, which never
+    /// starts a cycle and would otherwise report whatever state it was left in.
+    public void SetIdle() => State = MachineState.Idle;
 
     /// Pulls up to `count` items out of the output buffer. Returns the amount actually removed.
     public int PullOutput(ItemId item, int count)

@@ -24,6 +24,7 @@ public sealed partial class MachinePanel : PanelContainer
     private Label _recipeTitle = null!;
     private ItemList _recipes = null!;
     private Label _retask = null!;
+    private Button _load = null!;
 
     /// The recipes currently listed, in list order, and the machine they belong
     /// to. Rebuilt only when the panel is pointed at a different machine: the
@@ -64,7 +65,8 @@ public sealed partial class MachinePanel : PanelContainer
         _recipes.FixedIconSize = new Vector2I(18, 18);
         _recipes.ItemSelected += OnRecipePicked;
 
-        GetNode<Button>("Margin/Rows/Buttons/Load").Pressed += LoadOneCycle;
+        _load = GetNode<Button>("Margin/Rows/Buttons/Load");
+        _load.Pressed += LoadOneCycle;
         GetNode<Button>("Margin/Rows/Buttons/Take").Pressed += TakeOutput;
 
         Visible = false;
@@ -115,11 +117,21 @@ public sealed partial class MachinePanel : PanelContainer
             return;
         }
 
+        // The Uplink has exactly one "recipe" and it makes nothing, so a picker
+        // on it would offer a single row reading "<- nothing". It is the one
+        // machine in the game with no choice to make about what it does.
+        if (machine.Recipe.Id == Research.UplinkRecipe)
+        {
+            _recipes.Visible = false;
+            _recipeTitle.Text = "";
+            return;
+        }
+
         _recipes.Visible = true;
 
         _recipeTitle.Text = "Makes -- pick another to retask:";
 
-        foreach (var recipe in _buildables.RecipesFor(buildable))
+        foreach (var recipe in _buildables.RecipesFor(buildable, _world.Research))
         {
             _shownRecipes.Add(recipe);
             _recipes.AddItem(Describe(recipe),
@@ -214,6 +226,11 @@ public sealed partial class MachinePanel : PanelContainer
             Refresh();
     }
 
+    /// Whether the machine this panel is pointed at is the Uplink. Recognised
+    /// by its recipe rather than by a flag on the panel, so a second Uplink --
+    /// they are craftable -- reads the same as the first.
+    private bool IsUplink => _machine is not null && _machine.Recipe.Id == Research.UplinkRecipe;
+
     private void Refresh()
     {
         if (_miner is not null)
@@ -222,8 +239,15 @@ public sealed partial class MachinePanel : PanelContainer
             return;
         }
 
+        if (IsUplink)
+        {
+            RefreshUplink(_machine!);
+            return;
+        }
+
         var machine = _machine!;
 
+        _load.Text = "Load one cycle";
         _title.Text = $"{machine.Recipe.Id}   [{_placement.Size}x{_placement.Size}]";
 
         // A parallel machine's real per-cycle amounts, not the recipe card's.
@@ -266,6 +290,7 @@ public sealed partial class MachinePanel : PanelContainer
     /// it is the only number the machine panel cannot infer.
     private void RefreshMiner(Miner miner)
     {
+        _load.Text = "Load one cycle";
         _title.Text = $"Mining {ItemName(miner.Item)}   [{_placement.Size}x{_placement.Size}]";
         _subtitle.Text = $"{miner.YieldPerCycle} per {miner.CycleTicks} ticks   " +
                          $"({_patchRemaining} left in this patch)";
@@ -288,6 +313,87 @@ public sealed partial class MachinePanel : PanelContainer
         _retask.Text = "";
     }
 
+    /// The Uplink's readout: what research is waiting on, and what is sitting
+    /// in the hopper. It runs no cycle, so the fields that would show one say
+    /// what the building is for instead -- a progress bar frozen at zero is the
+    /// most confusing thing this panel could show on the one machine that never
+    /// works.
+    private void RefreshUplink(Machine machine)
+    {
+        var research = _world.Research;
+
+        // "Load one cycle" is meaningless on a machine with no cycle, and a
+        // button whose label lies about what it does is worse than no button.
+        _load.Text = "Deliver what I carry";
+        _title.Text = $"Uplink   [{_placement.Size}x{_placement.Size}]";
+        _subtitle.Text = "Deliver research here -- by hand, by inserter or by drone.";
+        _progress.Value = 0;
+
+        if (research is null)
+        {
+            _status.Text = "This world has no research.";
+        }
+        else if (research.SeedDelivered)
+        {
+            _status.Text = "The Seed is away. Nothing more is wanted.";
+        }
+        else
+        {
+            // Grouped by item, not listed per objective. Four Steam techs want
+            // the same hull, and naming each of them turned one short line into
+            // four long ones that pushed this panel off the side of the screen.
+            var wants = research.Objectives
+                .SelectMany(o => o.Needs.Where(n => !n.Met))
+                .GroupBy(n => n.Item)
+                .Select(g => $"{g.Sum(n => n.Outstanding)} x {ItemLabel(g.Key)}")
+                .ToList();
+
+            _status.Text = wants.Count == 0
+                ? "Nothing is wanted right now."
+                : "Wants: " + string.Join("\n       ", wants);
+        }
+
+        // What is in the hopper is what nothing wanted: the Uplink credits what
+        // it can each tick and leaves the rest, so a full hopper is a misrouted
+        // belt rather than a queue.
+        _inputs.Text = "Unwanted, still in the hopper: " + Describe(machine.InputContents);
+        _outputs.Text = "";
+        _carrying.Text = "Carrying: " + Describe(_bag.Contents);
+        _retask.Text = _retaskMessage;
+    }
+
+    /// Hand-delivers everything the player is carrying that research wants.
+    /// The `Load` button, on the one machine where "load one cycle" means
+    /// nothing -- an Uplink has no cycle.
+    private void DeliverByHand()
+    {
+        if (_machine is null || _world.Research is null) return;
+
+        var accepted = 0;
+        var completed = new System.Collections.Generic.List<string>();
+        var seed = false;
+
+        foreach (var objective in _world.Research.Objectives.ToList())
+            foreach (var need in objective.Needs)
+            {
+                if (need.Met) continue;
+                if (!_names.TryGetId(need.Item, out var id)) continue;
+
+                var report = _world.DeliverByHand(id, need.Outstanding);
+                accepted += report.Accepted;
+                completed.AddRange(report.Completed);
+                seed |= report.SeedComplete;
+            }
+
+        _retaskMessage = seed
+            ? "The Seed is away."
+            : completed.Count > 0
+                ? $"Delivered {accepted}. Researched: {string.Join(", ", completed)}."
+                : accepted > 0
+                    ? $"Delivered {accepted}."
+                    : "You are carrying nothing it wants.";
+    }
+
     private string Missing(Machine machine)
     {
         var short_ = machine.Recipe.Inputs
@@ -305,6 +411,12 @@ public sealed partial class MachinePanel : PanelContainer
                                          .Select(kv => $"{kv.Value} {ItemName(kv.Key)}"));
     }
 
+    /// The readable name for a data item id, for the Uplink's want list. The
+    /// panel elsewhere names items through the world's table, which is keyed by
+    /// runtime id; research speaks in data ids, so this is the other direction.
+    private static string ItemLabel(string itemId) =>
+        Sim.Data.Catalogue.Instance.Data.Items.FirstOrDefault(i => i.Id == itemId)?.Name ?? itemId;
+
     private string ItemName(ItemId item) =>
         _names.Count > item.Value ? _names.GetName(item) : $"#{item.Value}";
 
@@ -314,6 +426,12 @@ public sealed partial class MachinePanel : PanelContainer
     private void LoadOneCycle()
     {
         if (_machine is null) return;      // nothing to hand-load into a miner
+
+        if (IsUplink)
+        {
+            DeliverByHand();
+            return;
+        }
 
         foreach (var input in _machine.Recipe.Inputs)
         {

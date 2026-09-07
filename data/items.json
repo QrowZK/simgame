@@ -3614,6 +3614,15 @@
     "tags": []
   },
   {
+    "id": "man_uplink",
+    "name": "Manual Uplink",
+    "category": "machine",
+    "tier": "MAN",
+    "form": "solid",
+    "raw": false,
+    "tags": []
+  },
+  {
     "id": "man_alloy_smelter",
     "name": "Manual Alloy Smelter",
     "category": "machine",

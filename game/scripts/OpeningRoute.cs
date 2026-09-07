@@ -230,7 +230,10 @@ public sealed class OpeningRoute
             var placement = buildable.PlacementAt(x, y);
             if (!_world.CanPlace(placement) || _world.CoversFluidNode(placement)) continue;
 
-            var first = _buildables.RecipesFor(buildable).FirstOrDefault();
+            // Gated, like the build menu: a machine placed on a recipe the player
+        // has not researched would be refused by `TryBuild` anyway, and picking
+        // one here would report the refusal against the wrong step.
+        var first = _buildables.RecipesFor(buildable, _world.Research).FirstOrDefault();
             if (first is null)
             {
                 StuckOn ??= $"{itemId} (no recipe it can run)";

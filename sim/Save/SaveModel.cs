@@ -41,7 +41,13 @@ public sealed class SaveFile
     /// give every machine an unknown source and refuse to retask any of them --
     /// a factory that silently cannot be reconfigured is exactly the quiet
     /// wrongness the version number exists to prevent.
-    public const int CurrentVersion = 9;
+    /// 10 added research: which techs are unlocked, what has been part
+    /// delivered to the Uplink, and whether the Seed is done (ADR 0023). A
+    /// version 9 file loaded as 10 would come back with nothing researched,
+    /// which is not a cosmetic loss -- every recipe past the Manual tier is
+    /// gated on it, so a twenty-hour factory would reload unable to build any
+    /// of the machines standing on the map.
+    public const int CurrentVersion = 10;
 
     public int Version { get; set; } = CurrentVersion;
     public int Seed { get; set; }
@@ -70,6 +76,37 @@ public sealed class SaveFile
     public List<ControllerSave> Controllers { get; set; } = new();
     public BeltNetworkSave Belts { get; set; } = new();
     public List<FluidNetworkSave> Fluids { get; set; } = new();
+
+    public ResearchSave Research { get; set; } = new();
+}
+
+/// Research state. Techs and objectives are stored by their data ids rather
+/// than by index, for the same reason items are stored by name: a data change
+/// that inserts a tech would otherwise shift every id in the file.
+///
+/// Unlocked techs are stored and the *recipes* they unlock are not: the recipe
+/// set belongs to the running build, so a save picks up recipes added to a tech
+/// since it was written, exactly as it picks up rebalanced ones.
+public sealed class ResearchSave
+{
+    /// Whether this world has research at all. Headless analysis worlds do not,
+    /// and restoring one with an empty tree would silently gate it.
+    public bool Enabled { get; set; }
+
+    public List<string> Unlocked { get; set; } = new();
+
+    /// Part-delivered objectives. A tech waiting on its second hull is state a
+    /// player has paid for, so it is written even though it is not an unlock.
+    public List<ResearchProgressSave> Progress { get; set; } = new();
+
+    public bool SeedDelivered { get; set; }
+}
+
+public sealed class ResearchProgressSave
+{
+    public string Objective { get; set; } = "";
+    public string Item { get; set; } = "";
+    public int Count { get; set; }
 }
 
 /// One item and how many of it. A list of these rather than a dictionary,

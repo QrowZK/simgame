@@ -51,6 +51,29 @@ Where to start: `sim.tests/RecipeChangeTests.cs`, and
 which plays the whole route. `godot --headless --path game -- --session-test`
 prints the same route and fails if any link in it breaks.
 
+## [gameplay → qa] Try to break the research gate, and the Uplink
+ADR 0024. Recipes are now gated on delivered research, the Uplink is an ordinary
+machine whose input buffer is drained into `Research` each tick, and the save
+format is 10. I wrote the tests for what I built, which is the half that needs
+somebody else's eyes -- and one mutation already survived my first pass (the
+picker offering what the build path refuses), so assume there are more.
+
+Worth attacking specifically: feeding the Uplink from a **belt or an inserter**
+rather than by hand or by `PushInput` (my tests do the latter two); a **drone**
+hauling to it; delivering a **fluid** item; two Uplinks both fed at once, where
+credit order across machines is not something I asserted; and whether a locked
+recipe can be reached through any path I did not gate -- `Controller` programs
+and `Logistics` both touch machines and neither knows about research.
+
+Also worth a look: the four Manual techs are what keep a new game playable, and
+`Research` unlocks them by testing `RequiresItem is null`. A data change that
+gave a Manual tech a `requires_item` would lock the player out of the game at
+tick zero with no test failing except the reachability closure.
+
+Where to start: `sim.tests/ResearchTests.cs`, and
+`godot --headless --path game -- --session-test`, whose `--- opening route ---`
+now walks the route with the gate switched on.
+
 ## [coordinator → art] One icon legibility question, when convenient
 The rendering QA flagged as unlooked-at **has** been looked at, twice: art
 reported what it saw, and the coordinator independently reviewed `--belt-shot`
