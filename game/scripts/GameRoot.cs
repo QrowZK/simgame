@@ -147,7 +147,8 @@ public sealed partial class GameRoot : Node3D
 
         if (AllArgs().Contains("--screenshot") || AllArgs().Contains("--build-shot")
             || AllArgs().Contains("--belt-shot") || AllArgs().Contains("--uplink-shot")
-            || AllArgs().Contains("--survey-shot") || AllArgs().Contains("--shore-shot"))
+            || AllArgs().Contains("--survey-shot") || AllArgs().Contains("--shore-shot")
+            || AllArgs().Contains("--dig-shot"))
         {
             _screenshotCountdown = 12;      // let a few frames draw first
 
@@ -211,6 +212,7 @@ public sealed partial class GameRoot : Node3D
             else if (AllArgs().Contains("--belt-shot")) FrameTheBelts();
             else if (AllArgs().Contains("--uplink-shot")) ShowTheUplink();
             else if (AllArgs().Contains("--survey-shot")) ShowTheSurvey();
+            else if (AllArgs().Contains("--dig-shot")) DigByHandForCapture();
             else if (AllArgs().Contains("--shore-shot")) FrameTheShore();
             else ShowAnyRunningMachine();
         }
@@ -683,7 +685,58 @@ public sealed partial class GameRoot : Node3D
             _panel.Show(miner, _world.MinerPlacements[minerIndex],
                         _world.Ground.RemainingAt(tileX, tileY));
         else
+            DigOrClose(tileX, tileY);
+    }
+
+    /// How much one click takes out of the ground by hand. Small on purpose:
+    /// the first furnace wants 24 stone, so a bench costs a handful of clicks
+    /// and a smelting run costs a few more. That is the ache the belt is the
+    /// answer to, and removing it would remove the argument for the rest of
+    /// the game.
+    private const int HandMinePerClick = 5;
+
+    /// Clicking bare ground.
+    ///
+    /// Hand mining existed in the simulation from the first week and was never
+    /// bound to anything: the headless tests called `HandOps.Mine` directly and
+    /// passed, the opening-route walker called it and passed, and a person
+    /// sitting in front of the game had no way to dig at all. The whole
+    /// documented opening -- walk to a patch, mine it by hand, craft a bench --
+    /// was impossible to actually perform.
+    ///
+    /// So a click on a resource tile digs it. Refusals carry their reason, as
+    /// everywhere else: a fluid deposit says the hands cannot lift it and names
+    /// what can, and a worked-out patch says it is finished rather than doing
+    /// nothing and looking broken.
+    private void DigOrClose(int tileX, int tileY)
+    {
+        if (!_world.Ground.TryResourceAt(tileX, tileY, out var item, out var remaining))
+        {
             _panel.Close();
+            return;
+        }
+
+        var name = _world.Items.GetName(item);
+
+        if (remaining <= 0)
+        {
+            Say($"This {name} patch is worked out. Press P to survey for another.");
+            return;
+        }
+
+        if (_world.Ground.Gen.TryPatchAt(tileX, tileY, out var patch) && patch.IsFluid)
+        {
+            Say($"{name} is a fluid -- hands cannot lift it. It needs a derrick standing on it.");
+            return;
+        }
+
+        var before = _world.PlayerInventory.Count(item);
+        var dug = HandOps.Mine(_world.Ground, tileX, tileY, _world.PlayerInventory,
+                               HandMinePerClick);
+
+        Say(dug == 0
+            ? $"Nothing came out of this {name}."
+            : $"Dug {dug} {name}. Carrying {before + dug}. ({remaining - dug} left here.)");
     }
 
     /// Opens the panel on a running machine, falling back to any machine at
@@ -941,6 +994,46 @@ public sealed partial class GameRoot : Node3D
         // panel's rect, produced a capture with no ghost in it at all.
         Input.WarpMouse(new Vector2(GetViewport().GetVisibleRect().Size.X * 0.72f,
                                     GetViewport().GetVisibleRect().Size.Y * 0.22f));
+    }
+
+    /// Capture path for hand mining, driven through the real input handler.
+    ///
+    /// It synthesises an actual left click at an actual screen position rather
+    /// than calling the dig directly, because calling the dig directly is
+    /// exactly what every test did while the game had no way to dig at all.
+    /// The thing worth proving is that a person clicking a patch gets ore.
+    private void DigByHandForCapture()
+    {
+        _quests.Close();
+
+        var usable = _world.Research?.ConsumableNow(_world.Items);
+        var hits = new Prospector(radius: 400).Scan(_world.Ground.Gen,
+                                                   NewGame.SpawnX, NewGame.SpawnY, usable);
+
+        // A solid patch: hands cannot lift a fluid, and the refusal for that is
+        // its own message rather than the thing being demonstrated here.
+        var target = hits.FindIndex(h => !(_world.Ground.Gen.TryPatchAt(h.X, h.Y, out var p)
+                                           && p.IsFluid));
+        if (target < 0) return;
+
+        var hit = hits[target];
+        _rig.Position = new Vector3(hit.X * _renderer.TileSize, 0f, hit.Y * _renderer.TileSize);
+        _rig.ZoomLevel = 18f;
+        _rig.Apply();
+
+        var screen = _rig.Camera.UnprojectPosition(
+            new Vector3(hit.X * _renderer.TileSize, 0f, hit.Y * _renderer.TileSize));
+
+        Input.WarpMouse(screen);
+        Input.ParseInputEvent(new InputEventMouseButton
+        {
+            ButtonIndex = MouseButton.Left,
+            Pressed = true,
+            Position = screen,
+            GlobalPosition = screen,
+        });
+
+        GD.Print($"dig target      {_world.Items.GetName(hit.Item)} at {hit.X},{hit.Y}");
     }
 
     /// Capture path for the survey device: open it where a new game starts, so
