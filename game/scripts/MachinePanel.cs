@@ -365,6 +365,10 @@ public sealed partial class MachinePanel : PanelContainer
     /// Hand-delivers everything the player is carrying that research wants.
     /// The `Load` button, on the one machine where "load one cycle" means
     /// nothing -- an Uplink has no cycle.
+    /// The noises this panel makes. Set by `GameRoot`; null in a headless run
+    /// and in the art preview harness, and every call site tolerates that.
+    public Sounds? Audio { get; set; }
+
     private void DeliverByHand()
     {
         if (_machine is null || _world.Research is null) return;
@@ -393,6 +397,8 @@ public sealed partial class MachinePanel : PanelContainer
                     seed |= report.SeedComplete;
                 }
             }
+
+        Audio?.Play(accepted > 0 ? Sounds.Cue.Deliver : Sounds.Cue.Refuse);
 
         _retaskMessage = seed
             ? "The Seed is away."
