@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using Godot;
 
@@ -35,6 +36,12 @@ public sealed partial class Boot : Node
         // menu -> New Game with a clock-derived seed. Every other headless run
         // builds its world directly and skips the menu entirely, which is how a
         // release shipped with New Game broken.
+        if (Cli.Has("--guide-test"))
+        {
+            CallDeferred(nameof(RunGuideTest));
+            return;
+        }
+
         if (Cli.Has("--menu-test"))
         {
             CallDeferred(nameof(RunMenuTest));
@@ -69,6 +76,119 @@ public sealed partial class Boot : Node
 
     /// Presses New Game the way a player does: through the menu, with the seed
     /// the menu would invent, and then runs the world the button produced.
+
+    /// Walks the opening ladder the way a person walks it, and checks that the
+    /// guide keeps up.
+    ///
+    /// `GuideTests` cover the logic; this covers the thing the logic is for. A
+    /// guide is only useful if it advances when the player does the work, and
+    /// the failure that matters -- a card that still says "find ore" after you
+    /// have mined half a patch -- is a stuck step, not a wrong sentence. So
+    /// every stage here does the deed with the same calls the interface makes,
+    /// then asks the guide what is next and refuses to accept the same answer
+    /// twice.
+    private void RunGuideTest()
+    {
+        GD.Print("=== GUIDE ===");
+
+        var world = GameSession.NewGame(seed: 20260907);
+        var catalogue = new Sim.BuildCatalogue(Sim.Data.Catalogue.Instance);
+        var seen = new List<string>();
+        var stuck = "";
+
+        string Now()
+        {
+            var step = Sim.Guide.Current(world);
+            return step is { } s ? s.Title : "(ladder finished)";
+        }
+
+        void Stage(string did)
+        {
+            var title = Now();
+            if (seen.Count > 0 && title == seen[seen.Count - 1] && stuck.Length == 0)
+                stuck = $"after \"{did}\" the guide still says \"{title}\"";
+
+            seen.Add(title);
+            GD.Print($"  after {did,-28} -> {title}");
+        }
+
+        GD.Print($"  at tick zero{new string(' ', 24)} -> {Now()}");
+        seen.Add(Now());
+
+        // 1. Mine, the way a click mines.
+        var hits = new Sim.Prospector(radius: 400).Scan(world.Ground.Gen, 0, 0,
+                                                       world.Research?.ConsumableNow(world.Items));
+        var dug = 0;
+        var ore = default(Sim.ItemId);
+        for (var i = 0; i < hits.Count && dug == 0; i++)
+        {
+            dug = Sim.HandOps.Mine(world.Ground, hits[i].X, hits[i].Y, world.PlayerInventory, 40);
+            if (dug > 0) ore = hits[i].Item;
+        }
+        Stage($"mining {dug} by hand");
+
+        // 2. Put the Uplink down.
+        var uplink = catalogue.Find(Sim.Research.UplinkItem);
+        var uplinkRecipe = uplink is null || world.Research is null
+            ? null
+            : catalogue.RecipesFor(uplink, world.Research).FirstOrDefault();
+
+        var placed = Sim.BuildResult.NoneCarried;
+        for (var d = 2; d < 60 && placed != Sim.BuildResult.Ok && uplink is not null; d++)
+            placed = world.TryBuild(catalogue, uplink.Item, d, 2, uplinkRecipe!);
+        Stage($"placing the Uplink ({placed})");
+
+        // 3. Hand it one ore. This is the whole research loop, once.
+        var first = world.DeliverByHand(ore, 1);
+        Stage($"delivering 1 ore ({first.Accepted} taken)");
+
+        // 4-6. The rungs that follow are ingot deliveries. Smelting them needs a
+        // furnace, a fuel and time; what this stage checks is the guide, so the
+        // ingots are granted rather than smelted, and the furnace is placed so
+        // the step that asks for it is genuinely satisfied.
+        var furnace = catalogue.Find("man_furnace");
+        if (furnace is not null && world.PlayerInventory.Count(furnace.Item) > 0)
+        {
+            var recipe = catalogue.RecipesFor(furnace, world.Research).FirstOrDefault();
+            for (var d = 2; d < 60; d++)
+                if (world.TryBuild(catalogue, furnace.Item, d, 6, recipe!) == Sim.BuildResult.Ok)
+                    break;
+        }
+        Stage("placing the Manual Furnace");
+
+        if (world.Items.TryGetId("copper_ingot", out var ingot))
+        {
+            world.PlayerInventory.Add(ingot, 3);
+            world.DeliverByHand(ingot, 3);
+            Stage("delivering 3 ingots");
+
+            world.PlayerInventory.Add(ingot, 6);
+            world.DeliverByHand(ingot, 6);
+            Stage("delivering 6 ingots");
+        }
+
+        var steps = Sim.Guide.Steps(world);
+        var done = steps.Count(s => s.Done);
+        GD.Print($"  ladder          {done} of {steps.Count} steps done");
+
+        if (stuck.Length > 0)
+        {
+            GD.Print($"guide           FAILED: {stuck}");
+            GetTree().Quit(1);
+            return;
+        }
+
+        if (done < 6)
+        {
+            GD.Print($"guide           FAILED: only {done} steps completed by playing them");
+            GetTree().Quit(1);
+            return;
+        }
+
+        GD.Print("=== GUIDE OK ===");
+        GetTree().Quit();
+    }
+
     private void RunMenuTest()
     {
         GD.Print("=== MENU ===");

@@ -161,6 +161,18 @@ jobs:
           # loop; if it breaks, the game is unplayable whatever the units say.
           grep -q -- "--- start flow ok ---" session.log
 
+      # The opening ladder, walked. A guide that does not advance when the
+      # player does the work is worse than none, and the failure is a stuck
+      # step rather than a wrong sentence -- so the run refuses to accept the
+      # same answer twice and this asserts it got to the belt.
+      - name: The guided opening advances when you play it
+        working-directory: game
+        run: |
+          GODOT=~/godot/Godot_v${GODOT_VERSION}_mono_linux_x86_64/Godot_v${GODOT_VERSION}_mono_linux.x86_64
+          "$GODOT" --headless -- --guide-test | tee guide.log
+          grep -q "=== GUIDE OK ===" guide.log
+          grep -qE "ladder          [6-9] of 9 steps done" guide.log
+
       # New Game, through the menu, with the seed the menu invents. Everything
       # else builds its world directly and skips the button entirely, which is
       # how a release shipped that could not start one (ADR 0027).
