@@ -5,6 +5,47 @@ this is a queue, not a log. Format and rules: `docs/team/README.md`.
 
 ---
 
+## [gameplay -> qa] Try to break the lockstep driver, the stall and the desync stop
+ADR 0038. Slice 3b, all of it in `/game/scripts`:
+`LockstepDriver.cs` (host as sequencer, 6-tick input delay, per-tick input from
+every peer including empty ones, state-hash exchange every 60 ticks, stop on
+mismatch, late join refused), `NetStatusPanel.cs`, and
+`godot --headless --path game -- --net-lockstep-test`, which plays one world on
+two peers in one process for 3,000 ticks and then corrupts one of them. Nothing
+in `/sim` was touched. I wrote the run for what I built and killed 6 mutants;
+that is the half that needs somebody else's eyes.
+
+Worth attacking specifically: **three or more peers** -- I only ever connect
+one client, so the merge order in `SealWhatWeCan` (roster order), a peer
+leaving mid-session (the sequencer stops waiting for it because ENet takes it
+off the roster -- untested), and two clients whose inputs for one tick arrive
+interleaved are all unproven. Then: **a stall that never ends** -- nothing times
+a hanging peer out, so the world waits forever with an amber card; I believe
+that is a real hole and it is named in the ADR. Then: the host pressing Start
+twice; a client that receives `OpStart` while already running (ignored, not
+refused); a `Stop` arriving from a peer that is not the host (any peer can stop
+any other today -- the transport has no notion of who may say what); an input
+message for a tick already sealed (counted as `Forged`, never applied, and the
+issuing peer is not told); and `CommandCodec.MaxCommands` -- a peer that issued
+more than 4,096 commands in one tick would throw at encode time inside the
+driver and take the session down with an exception rather than a sentence.
+
+Also worth knowing: the two peers' saves are byte-identical **except for
+`LocalPlayer`**, which is per-peer by design. The run asserts both that they
+match once that field is equalised and that they differ as written, so the
+exemption cannot go stale silently.
+
+Where to start: `godot --headless --path game -- --net-lockstep-test`
+(exits non-zero on any failed check, prints counts throughout, takes
+`--net-ticks=N` and `--net-port=N`), `LockstepDriver.Advance`,
+`LockstepDriver.SealWhatWeCan`, and `Compare`. Worth two lines in `ci.yml`
+beside `--net-test`:
+
+    godot --headless --path game -- --net-lockstep-test
+
+and, for a number rather than an exit code, grep the run for
+`mismatches 0` and for `desync check    caught at tick 120`.
+
 ## [gameplay -> qa] Try to break the command layer, the total order and the state hash
 ADR 0037. Slice 3a of multiplayer, all of it in `/sim`: `PlayerCommand` +
 `CommandCodec` (bytes, format 1), `World.ApplyCommands` (sorts on a total order

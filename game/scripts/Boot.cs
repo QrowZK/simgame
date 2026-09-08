@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
@@ -57,6 +58,12 @@ public sealed partial class Boot : Node
         if (Cli.Has("--net-test"))
         {
             CallDeferred(nameof(RunNetTest));
+            return;
+        }
+
+        if (Cli.Has("--net-lockstep-test"))
+        {
+            CallDeferred(nameof(RunNetLockstepTest));
             return;
         }
 
@@ -809,6 +816,8 @@ public sealed partial class Boot : Node
     private NetSession? _net;
     private MultiplayerSetup? _setup;
     private Lobby? _lobby;
+    private LockstepDriver? _driver;
+    private int _lobbySeed;
 
     /// The transport, as a node, because it has to be polled by the tree and
     /// has to die with it. One per process: hosting while joining is not a
@@ -858,7 +867,7 @@ public sealed partial class Boot : Node
         }
 
         CloseMultiplayerSetup();
-        ShowLobby(session, $"Seed {seed}. Waiting for players.");
+        ShowLobby(session, $"Seed {seed}. Waiting for players.", seed);
     }
 
     private void OnJoinRequested(string playerName, string address, int port)
@@ -887,17 +896,27 @@ public sealed partial class Boot : Node
         if (immediate != NetFailure.None) Failed(immediate, NetSession.Describe(immediate));
     }
 
-    private void ShowLobby(NetSession session, string note)
+    private void ShowLobby(NetSession session, string note, int seed = 0)
     {
         _lobby = GD.Load<PackedScene>("res://scenes/lobby.tscn").Instantiate<Lobby>();
         _lobby.Bind(session);
         _lobby.LeaveRequested += LeaveLobby;
 
-        // Start cannot start anything yet, and says so. The world does not
-        // travel over the wire until the command layer lands; a button that
-        // silently did nothing would be the worse of the two lies.
+        // The driver exists from the moment the lobby does, on both sides: a
+        // client that only built one when Start was pressed would not be
+        // listening when the host pressed it.
+        _driver?.Dispose();
+        _driver = new LockstepDriver(session, GameSession.Catalogue);
+        _driver.Started += OnSharedWorldStarted;
+        _driver.Stopped += why => _lobby?.ShowError(why);
+
+        _lobbySeed = seed;
         _lobby.StartRequested += () =>
-            _lobby?.ShowNote("Nothing to start yet: shared worlds arrive with the command layer.");
+        {
+            if (!session.IsHost) return;
+            _lobby?.ShowNote("Starting...");
+            _driver?.StartAsHost(_lobbySeed);
+        };
 
         var layer = new CanvasLayer { Name = "LobbyLayer" };
         layer.AddChild(_lobby);
@@ -907,11 +926,27 @@ public sealed partial class Boot : Node
         _lobby.ShowNote(note);
     }
 
-    private void LeaveLobby()
+    /// Every peer generates the same world from the same seed and drops into
+    /// it together. Nothing but the seed crossed the wire (ADR 0038).
+    private void OnSharedWorldStarted(Sim.World world)
     {
-        _net?.Close("");
+        HideLobby();
+        GameSession.Adopt(world);
+        StartGame(world, disposeMenu: true, net: _driver);
+    }
+
+    private void HideLobby()
+    {
         _lobby?.GetParent()?.QueueFree();
         _lobby = null;
+    }
+
+    private void LeaveLobby()
+    {
+        _driver?.Dispose();
+        _driver = null;
+        _net?.Close("");
+        HideLobby();
     }
 
     /// Host and client in one process, connecting for real over a loopback
@@ -1106,6 +1141,531 @@ public sealed partial class Boot : Node
             await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
     }
 
+    /// One player's script of actions, issued through the driver at ticks of
+    /// its own choosing.
+    ///
+    /// Two peers on the *same* schedule would be a tidy world, and this
+    /// repository's history is a list of tests that passed on tidy worlds. So
+    /// the two are offset, act at co-prime intervals, and do things that fail
+    /// as well as things that work: a second Uplink with none carried, a dig on
+    /// bare ground, a removal of something that was never built. A refusal
+    /// costs nothing and is therefore invisible unless the digest is watching,
+    /// which is exactly why the stream has to contain some.
+    private sealed class NetScript
+    {
+        private static readonly (int X, int Y)[] Ways =
+            { (1, 0), (0, 1), (-1, 0), (0, -1), (1, 1), (-1, 1) };
+
+        private readonly LockstepDriver _driver;
+        private long _nextMove, _nextDig, _nextBuild, _nextRemove;
+        private int _way;
+        private int _builtX, _builtY;
+
+        public int Moves, Digs, Builds, Removes;
+        public int Issued => Moves + Digs + Builds + Removes;
+
+        public NetScript(LockstepDriver driver, int offset)
+        {
+            _driver = driver;
+            _nextMove = 11 + offset;
+            _nextDig = 23 + offset;
+            _nextBuild = 137 + offset;
+            _nextRemove = 401 + offset;
+        }
+
+        public void Pump(long lastIssuingTick)
+        {
+            var world = _driver.World;
+            if (world is null || _driver.Phase != NetPhase.Running) return;
+
+            var tick = world.TickCount;
+            if (tick > lastIssuingTick) return;
+
+            var me = world.Players[_driver.LocalPlayer];
+
+            while (tick >= _nextMove)
+            {
+                if (_driver.SetIntent(new Sim.MoveIntent(Ways[_way % Ways.Length].X,
+                                                         Ways[_way % Ways.Length].Y)) >= 0)
+                    Moves++;
+                _way++;
+                _nextMove += 29;
+            }
+
+            while (tick >= _nextDig)
+            {
+                _driver.Issue(Sim.PlayerCommand.Dig(0, 0, 0, me.TileX, me.TileY, 5));
+                Digs++;
+                _nextDig += 41;
+            }
+
+            while (tick >= _nextBuild)
+            {
+                _builtX = me.TileX + 2;
+                _builtY = me.TileY;
+                _driver.Issue(Sim.PlayerCommand.Build(0, 0, 0, _builtX, _builtY,
+                                                      Sim.Research.UplinkItem,
+                                                      Sim.Research.UplinkRecipe));
+                Builds++;
+                _nextBuild += 211;
+            }
+
+            while (tick >= _nextRemove)
+            {
+                _driver.Issue(Sim.PlayerCommand.Remove(0, 0, 0, _builtX, _builtY));
+                Removes++;
+                _nextRemove += 223;
+            }
+        }
+    }
+
+    /// The run that proves slice 3b: a host and a client in one process, one
+    /// seed, real commands from both sides for a few thousand ticks, hashes
+    /// compared the whole way, saves compared at the end -- and then a
+    /// deliberate corruption, because a detector that has never been seen to
+    /// fire is not a detector.
+    private async void RunNetLockstepTest()
+    {
+        GD.Print("=== NET LOCKSTEP ===");
+        GD.Print($"protocol        {NetSession.Protocol}  input delay " +
+                 $"{LockstepDriver.InputDelay} ticks ({LockstepDriver.InputDelay * 1000 / 60} ms)" +
+                 $"  hash every {LockstepDriver.HashEvery}");
+
+        var port = Cli.ReadInt("--net-port", NetSession.DefaultPort + 20);
+        var ticks = Cli.ReadInt("--net-ticks", 3000);
+        var seed = Cli.ReadInt("--seed", 20260908);
+        var failures = new List<string>();
+        var catalogue = GameSession.Catalogue;
+
+        var host = new NetSession { Name = "LockHost" };
+        var client = new NetSession { Name = "LockClient" };
+        AddChild(host);
+        AddChild(client);
+
+        var opened = host.Host("Ada", port, maxPlayers: 4);
+        if (opened != NetFailure.None)
+        {
+            GD.Print($"lockstep        FAILED: could not host: {NetSession.Describe(opened)}");
+            GetTree().Quit(1);
+            return;
+        }
+
+        var joined = false;
+        var joinFailure = "";
+        client.Connected += () => joined = true;
+        client.ConnectFailed += (_, why) => joinFailure = why;
+        client.Join("Grace", "127.0.0.1", port);
+        await Frames(() => joined || joinFailure.Length > 0, 900);
+
+        GD.Print($"lobby           joined={joined} roster={host.Roster.Count} " +
+                 $"({Names(host)})");
+        if (!joined)
+        {
+            GD.Print($"lockstep        FAILED: the client never connected ({joinFailure})");
+            GetTree().Quit(1);
+            return;
+        }
+
+        using var hostDriver = new LockstepDriver(host, catalogue);
+        using var clientDriver = new LockstepDriver(client, catalogue);
+
+        Sim.World? hw = null;
+        Sim.World? cw = null;
+        hostDriver.Started += w => hw = w;
+        clientDriver.Started += w => cw = w;
+
+        var stops = new List<string>();
+        hostDriver.Stopped += why => stops.Add($"host: {why}");
+        clientDriver.Stopped += why => stops.Add($"client: {why}");
+
+        hostDriver.StartAsHost(seed);
+        await Frames(() => hw is not null && cw is not null, 600);
+
+        if (hw is null || cw is null)
+        {
+            GD.Print($"lockstep        FAILED: worlds host={hw is not null} client={cw is not null}");
+            GetTree().Quit(1);
+            return;
+        }
+
+        GD.Print($"world           seed {seed}  players {hw.Players.Count}  " +
+                 $"teams {hw.Teams.Count}  host is player {hostDriver.LocalPlayer}, " +
+                 $"client is player {clientDriver.LocalPlayer}");
+        GD.Print($"start hash      {hw.StateHash():X16} / {cw.StateHash():X16}");
+
+        if (hw.Players.Count != 2) failures.Add($"{hw.Players.Count} players, want 2");
+        if (cw.Players.Count != 2) failures.Add($"{cw.Players.Count} players on the client");
+        if (hostDriver.LocalPlayer != 0 || clientDriver.LocalPlayer != 1)
+            failures.Add($"player indices are {hostDriver.LocalPlayer}/{clientDriver.LocalPlayer}");
+        if (hw.LocalIndex != 0 || cw.LocalIndex != 1)
+            failures.Add($"local indices are {hw.LocalIndex}/{cw.LocalIndex}");
+        if (hw.StateHash() != cw.StateHash())
+            failures.Add("two worlds from one seed did not start on one hash");
+
+        // ---- the input delay, observed one tick at a time --------------------
+        //
+        // The single property this whole slice rests on: a local command is not
+        // applied when it is issued. Advancing one tick at a time is slow and is
+        // the only way to see the tick it lands on.
+        var issuedAt = hw.TickCount;
+        var appliesAt = hostDriver.Issue(Sim.PlayerCommand.Move(0, 0, 0, 1, 0));
+        var seenAt = -1L;
+
+        for (var i = 0; i < 200 && seenAt < 0; i++)
+        {
+            hostDriver.Advance(1);
+            clientDriver.Advance(1);
+            if (hw.Players[0].Intent.X == 1) seenAt = hw.TickCount - 1;
+            await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+        }
+
+        GD.Print($"input delay     issued during tick {issuedAt}, scheduled for {appliesAt}, " +
+                 $"took effect on tick {seenAt}");
+        if (appliesAt != issuedAt + LockstepDriver.InputDelay)
+            failures.Add($"a command issued at {issuedAt} was scheduled for {appliesAt}, " +
+                         $"want {issuedAt + LockstepDriver.InputDelay}");
+        if (seenAt != appliesAt)
+            failures.Add($"a command scheduled for {appliesAt} took effect on tick {seenAt} " +
+                         "-- a local command must never be applied early");
+
+        // ---- a few thousand ticks with both peers acting ---------------------
+        var hostScript = new NetScript(hostDriver, 0);
+        var clientScript = new NetScript(clientDriver, 17);
+        var lastIssuingTick = ticks - 200;
+
+        var mismatches = new List<string>();
+        var compared = 0;
+        var hostHashes = new Dictionary<long, ulong>();
+        var clientHashes = new Dictionary<long, ulong>();
+        var frames = 0;
+
+        while ((hw.TickCount < ticks || cw.TickCount < ticks) && frames < 20000)
+        {
+            frames++;
+            hostScript.Pump(lastIssuingTick);
+            clientScript.Pump(lastIssuingTick);
+
+            // Clamped so neither peer can step over a hash boundary: a
+            // comparison that is skipped because the loop ran eight ticks at
+            // once is a comparison that never happened, and this run would
+            // still print a number.
+            hostDriver.Advance(Room(hw.TickCount, ticks));
+            clientDriver.Advance(Room(cw.TickCount, ticks));
+
+            if (hw.TickCount % LockstepDriver.HashEvery == 0) hostHashes[hw.TickCount] = hw.StateHash();
+            if (cw.TickCount % LockstepDriver.HashEvery == 0) clientHashes[cw.TickCount] = cw.StateHash();
+
+            if (hostDriver.Phase != NetPhase.Running || clientDriver.Phase != NetPhase.Running)
+                break;
+
+            await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+        }
+
+        foreach (var (tick, hash) in hostHashes)
+        {
+            if (!clientHashes.TryGetValue(tick, out var theirs)) continue;
+            compared++;
+            if (hash != theirs) mismatches.Add($"tick {tick}: {hash:X16} != {theirs:X16}");
+        }
+
+        GD.Print($"ran             {frames} frames, host tick {hw.TickCount}, " +
+                 $"client tick {cw.TickCount}");
+        GD.Print($"commands        host issued {hostDriver.CommandsIssued} " +
+                 $"(moves {hostScript.Moves} digs {hostScript.Digs} builds {hostScript.Builds} " +
+                 $"removes {hostScript.Removes}), client issued {clientDriver.CommandsIssued} " +
+                 $"(moves {clientScript.Moves} digs {clientScript.Digs} " +
+                 $"builds {clientScript.Builds} removes {clientScript.Removes})");
+        GD.Print($"applied         host {hw.CommandsApplied} applied / {hw.CommandsRefused} " +
+                 $"refused, client {cw.CommandsApplied} / {cw.CommandsRefused}");
+        GD.Print($"batches         sequencer sent {hostDriver.BatchesSent}, host applied " +
+                 $"{hostDriver.BatchesApplied}, client applied {clientDriver.BatchesApplied}");
+        GD.Print($"inputs          host sent {hostDriver.InputsSent}, client sent " +
+                 $"{clientDriver.InputsSent}, sequencer received {hostDriver.InputsReceived}, " +
+                 $"forged {hostDriver.Forged}");
+        GD.Print($"hashes          exchanged {hostDriver.HashesSent}/{clientDriver.HashesSent}, " +
+                 $"compared over the wire {hostDriver.HashesCompared}/" +
+                 $"{clientDriver.HashesCompared}, compared here {compared}, " +
+                 $"mismatches {mismatches.Count}");
+        GD.Print($"stalls          host {hostDriver.StallTicks} tick-waits, client " +
+                 $"{clientDriver.StallTicks}");
+        GD.Print($"digest          host {hw.CommandDigest:X16} client {cw.CommandDigest:X16}");
+
+        foreach (var line in mismatches.Take(4)) GD.Print($"MISMATCH        {line}");
+
+        if (hw.TickCount != ticks) failures.Add($"the host stopped at tick {hw.TickCount}");
+        if (cw.TickCount != ticks) failures.Add($"the client stopped at tick {cw.TickCount}");
+        if (mismatches.Count > 0)
+            failures.Add($"{mismatches.Count} of {compared} hash comparisons disagreed");
+        if (compared < ticks / LockstepDriver.HashEvery - 2)
+            failures.Add($"only {compared} hashes were compared over {ticks} ticks");
+        if (hostDriver.HashesCompared < 10 || clientDriver.HashesCompared < 10)
+            failures.Add($"the peers only compared {hostDriver.HashesCompared}/" +
+                         $"{clientDriver.HashesCompared} hashes with each other over the wire");
+        if (hw.CommandDigest != cw.CommandDigest)
+            failures.Add("the two command digests differ");
+        if (stops.Count > 0) failures.Add($"the session stopped: {string.Join("; ", stops)}");
+
+        // Nobody's commands may go missing. A driver that dropped one peer's
+        // input would keep both peers identical and lose the click -- the one
+        // failure a hash comparison cannot see.
+        var issued = hostDriver.CommandsIssued + clientDriver.CommandsIssued;
+        var seen = hw.CommandsApplied + hw.CommandsRefused;
+        GD.Print($"accounting      {issued} issued, {seen} reached the simulation " +
+                 $"({hw.CommandsApplied} applied, {hw.CommandsRefused} refused)");
+        if (seen != issued)
+            failures.Add($"{issued} commands were issued and {seen} reached the world");
+        if (hw.CommandsApplied == 0 || hw.CommandsRefused == 0)
+            failures.Add($"a stream of {hw.CommandsApplied} applied and {hw.CommandsRefused} " +
+                         "refused proves nothing about refusals");
+
+        // ---- and the two saves, byte for byte --------------------------------
+        //
+        // With one honest exception, named here rather than papered over: a
+        // save records *which* player is the local one, and that is genuinely
+        // different on the two peers -- host is player 0, client is player 1.
+        // Everything the simulation owns is byte-identical; the one field that
+        // is not is the one field that describes the peer rather than the
+        // world. Both halves are asserted, so the day somebody makes
+        // LocalPlayer shared this run says so instead of quietly passing.
+        var hostModel = Sim.Save.SaveGame.Capture(hw);
+        var clientModel = Sim.Save.SaveGame.Capture(cw);
+        var rawHost = Sim.Save.SaveGame.ToJson(hostModel);
+        var rawClient = Sim.Save.SaveGame.ToJson(clientModel);
+        var rawDiffers = string.CompareOrdinal(rawHost, rawClient) != 0;
+
+        hostModel.LocalPlayer = 0;
+        clientModel.LocalPlayer = 0;
+        var hostSave = Sim.Save.SaveGame.ToJson(hostModel);
+        var clientSave = Sim.Save.SaveGame.ToJson(clientModel);
+        var identical = string.CompareOrdinal(hostSave, clientSave) == 0;
+
+        GD.Print($"saves           {hostSave.Length} chars vs {clientSave.Length}, identical " +
+                 $"except for LocalPlayer={identical}; differ as written={rawDiffers} " +
+                 $"(host is player {hw.LocalIndex}, client is player {cw.LocalIndex})");
+        if (!identical) failures.Add("the two peers saved different bytes");
+        if (!rawDiffers)
+            failures.Add("the two saves no longer differ in LocalPlayer -- the exemption " +
+                         "this check makes is stale");
+
+        // ---- and the game itself, driven by a driver -------------------------
+        await RunSharedGameCheck(port + 2, seed, catalogue, failures);
+
+        // ---- the detector, deliberately fired --------------------------------
+        var caught = await RunDesyncCheck(port + 1, seed, catalogue, failures);
+        GD.Print($"desync check    {caught}");
+
+        host.Close("");
+        client.Close("");
+
+        if (failures.Count > 0)
+        {
+            foreach (var problem in failures) GD.Print($"lockstep        FAILED: {problem}");
+            GetTree().Quit(1);
+            return;
+        }
+
+        GD.Print("=== NET LOCKSTEP OK ===");
+        GetTree().Quit();
+    }
+
+    /// The real path, not the harness one: a `GameRoot` with a driver attached,
+    /// running the world off the network clock instead of its own.
+    ///
+    /// This exists because everything above drives the driver directly, and the
+    /// game failing to launch is not something a driver test can see. It checks
+    /// the three things the attachment changes: the world advances, it advances
+    /// through the driver rather than past it, and the status card is on screen
+    /// saying something.
+    private async System.Threading.Tasks.Task RunSharedGameCheck(
+        int port, int seed, Sim.Data.Catalogue catalogue, List<string> failures)
+    {
+        var host = new NetSession { Name = "GameHost" };
+        var client = new NetSession { Name = "GameClient" };
+        AddChild(host);
+        AddChild(client);
+
+        if (host.Host("Ada", port, maxPlayers: 4) != NetFailure.None)
+        {
+            failures.Add("could not host the shared-game check");
+            return;
+        }
+
+        var joined = false;
+        client.Connected += () => joined = true;
+        client.Join("Grace", "127.0.0.1", port);
+        await Frames(() => joined, 900);
+        if (!joined)
+        {
+            failures.Add("the shared-game check's client never connected");
+            return;
+        }
+
+        using var hostDriver = new LockstepDriver(host, catalogue);
+        using var clientDriver = new LockstepDriver(client, catalogue);
+
+        Sim.World? hw = null;
+        Sim.World? cw = null;
+        hostDriver.Started += w => hw = w;
+        clientDriver.Started += w => cw = w;
+        hostDriver.StartAsHost(seed);
+        await Frames(() => hw is not null && cw is not null, 600);
+
+        if (hw is null || cw is null)
+        {
+            failures.Add("the shared-game check never got two worlds");
+            return;
+        }
+
+        var root = new GameRoot { Name = "SharedGameRoot", InitialWorld = hw, Net = hostDriver };
+        AddChild(root);
+
+        for (var frame = 0; frame < 400 && hw.TickCount < 120; frame++)
+        {
+            clientDriver.Advance(8);
+            await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+        }
+
+        var card = root.GetNodeOrNull<NetStatusPanel>("NetStatusLayer/NetStatus");
+        GD.Print($"in game         GameRoot ran the shared world to tick {hw.TickCount} " +
+                 $"(client at {cw.TickCount}), card=\"{card?.TitleText}\" " +
+                 $"showing={card?.IsShowing} body={card?.BodyText.Length ?? -1} chars");
+
+        if (hw.TickCount < 60)
+            failures.Add($"GameRoot only reached tick {hw.TickCount} in a shared world");
+        if (cw.TickCount < 60)
+            failures.Add($"the other peer only reached tick {cw.TickCount}");
+        if (card is null || !card.IsShowing || card.BodyText.Length == 0)
+            failures.Add("the shared world drew no net status card");
+
+        root.QueueFree();
+        host.Close("");
+        client.Close("");
+    }
+
+    /// Corrupts one peer by one milli-tile and insists the session notices.
+    ///
+    /// One milli-tile is a thousandth of a tile -- invisible on a screen, and
+    /// exactly the size of divergence a floating-point drift would produce.
+    /// If the detector catches this it catches anything.
+    private async System.Threading.Tasks.Task<string> RunDesyncCheck(
+        int port, int seed, Sim.Data.Catalogue catalogue, List<string> failures)
+    {
+        var host = new NetSession { Name = "DesyncHost" };
+        var client = new NetSession { Name = "DesyncClient" };
+        AddChild(host);
+        AddChild(client);
+
+        if (host.Host("Ada", port, maxPlayers: 4) != NetFailure.None)
+        {
+            failures.Add("could not host the desync check");
+            return "not run";
+        }
+
+        var joined = false;
+        client.Connected += () => joined = true;
+        client.Join("Grace", "127.0.0.1", port);
+        await Frames(() => joined, 900);
+        if (!joined)
+        {
+            failures.Add("the desync check's client never connected");
+            return "not run";
+        }
+
+        using var hostDriver = new LockstepDriver(host, catalogue);
+        using var clientDriver = new LockstepDriver(client, catalogue);
+
+        Sim.World? hw = null;
+        Sim.World? cw = null;
+        hostDriver.Started += w => hw = w;
+        clientDriver.Started += w => cw = w;
+        hostDriver.StartAsHost(seed);
+        await Frames(() => hw is not null && cw is not null, 600);
+
+        if (hw is null || cw is null)
+        {
+            failures.Add("the desync check never got two worlds");
+            return "not run";
+        }
+
+        var perturbed = false;
+        var corruptedAt = -1L;
+
+        for (var frame = 0; frame < 4000; frame++)
+        {
+            if (!perturbed && cw.TickCount >= 100)
+            {
+                // One thousandth of a tile, on one peer, silently.
+                var victim = cw.Players[1];
+                victim.Restore(victim.X + 1, victim.Y, victim.FacingX, victim.FacingY);
+                perturbed = true;
+                corruptedAt = cw.TickCount;
+            }
+
+            hostDriver.Advance(4);
+            clientDriver.Advance(4);
+
+            if (hostDriver.Phase == NetPhase.Stopped && clientDriver.Phase == NetPhase.Stopped)
+                break;
+
+            await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+        }
+
+        var reason = hostDriver.StopReason.Length > 0
+            ? hostDriver.StopReason
+            : clientDriver.StopReason;
+
+        GD.Print($"corrupted       client player by 1 milli-tile at tick {corruptedAt}");
+        GD.Print($"host stopped    {hostDriver.Phase} at tick {hw.TickCount}: " +
+                 $"{Trim(hostDriver.StopReason)}");
+        GD.Print($"client stopped  {clientDriver.Phase} at tick {cw.TickCount}: " +
+                 $"{Trim(clientDriver.StopReason)}");
+
+        var namedTick = corruptedAt < 0
+            ? -1
+            : ((corruptedAt / LockstepDriver.HashEvery) + 1) * LockstepDriver.HashEvery;
+
+        if (hostDriver.Phase != NetPhase.Stopped)
+            failures.Add("a peer was corrupted and the host never stopped");
+        if (clientDriver.Phase != NetPhase.Stopped)
+            failures.Add("a peer was corrupted and the client never stopped");
+        if (!reason.Contains($"tick {namedTick}"))
+            failures.Add($"the desync was not reported against tick {namedTick}: {reason}");
+        if (!reason.Contains("Desync"))
+            failures.Add($"the stop did not say what happened: {reason}");
+        if (hw.TickCount > namedTick + LockstepDriver.HashEvery)
+            failures.Add($"the host ran on to tick {hw.TickCount} after a desync at {namedTick}");
+
+        // Both peers compare, so both must stop on their own reckoning. Without
+        // this, deleting the local Stop() leaves the run green: each peer is
+        // still stopped by the *other* peer's Stop message, and "both peers
+        // stopped" cannot tell the two apart. A peer that only ever stops on
+        // the message runs on with a world it knows is wrong the moment that
+        // message cannot arrive.
+        if (!hostDriver.StoppedOnOwnComparison)
+            failures.Add("the host stopped only because it was told to, not on its own hash comparison");
+        if (!clientDriver.StoppedOnOwnComparison)
+            failures.Add("the client stopped only because it was told to, not on its own hash comparison");
+
+        host.Close("");
+        client.Close("");
+
+        return $"caught at tick {namedTick}, both peers stopped on their own " +
+               $"comparison (host {hostDriver.StoppedOnOwnComparison}, client " +
+               $"{clientDriver.StoppedOnOwnComparison}), " +
+               $"host at {hw.TickCount} and client at {cw.TickCount}";
+    }
+
+    /// How many ticks a peer may run before it must stop and be looked at:
+    /// never past the next hash boundary and never past the end of the run.
+    private static int Room(long tick, long limit)
+    {
+        var toBoundary = LockstepDriver.HashEvery - (int)(tick % LockstepDriver.HashEvery);
+        return (int)Math.Max(0, Math.Min(Math.Min(8, toBoundary), limit - tick));
+    }
+
+    private static string Trim(string text) =>
+        text.Length <= 96 ? text : text[..96] + "...";
+
     /// Captures the three multiplayer screens, each with a deliberately long
     /// refusal in it: the failure sentences are the longest strings any of
     /// these screens will ever hold, and a card that a long one pushes past the
@@ -1141,6 +1701,35 @@ public sealed partial class Boot : Node
         await Capture("lobby");
 
         session.Close("");
+        HideLobby();
+
+        // The two states of the in-game overlay, staged rather than induced: a
+        // real stall is a race and a real desync needs a corrupted peer, and
+        // neither is a thing to point a camera at and hope. The strings are the
+        // longest the panel can hold -- three peers being waited for, and a
+        // desync sentence with a tick and two hashes in it.
+        var statusLayer = new CanvasLayer { Name = "NetStatusShot" };
+        var status = new NetStatusPanel { Name = "NetStatus" };
+        statusLayer.AddChild(status);
+        AddChild(statusLayer);
+        await Frames(() => false, 4);
+
+        status.Show(new NetStatus(NetPhase.Running, 128_400, true,
+                                  "Grace Hopper, Charles Babbage, Ada", 214, ""));
+        await Frames(() => false, 8);
+        GD.Print($"stall caption   \"{status.TitleText}\" + {status.BodyText.Length} chars, " +
+                 $"showing={status.IsShowing}");
+        await Capture("stall");
+
+        status.Show(new NetStatus(NetPhase.Stopped, 128_460, false, "", 0,
+            "Desync at tick 128460: this peer computed 90107B8432E33FFD, Grace Hopper " +
+            "computed 491987B30360C438. The two simulations no longer agree, so the " +
+            "session has stopped. Nothing after that tick can be trusted."));
+        await Frames(() => false, 8);
+        GD.Print($"desync caption  \"{status.TitleText}\" + {status.BodyText.Length} chars, " +
+                 $"showing={status.IsShowing}");
+        await Capture("desync");
+
         GD.Print("=== NET SHOT OK ===");
         GetTree().Quit();
     }
@@ -1230,7 +1819,7 @@ public sealed partial class Boot : Node
         }
     }
 
-    private void StartGame(Sim.World world, bool disposeMenu = false)
+    private void StartGame(Sim.World world, bool disposeMenu = false, LockstepDriver? net = null)
     {
         if (disposeMenu)
         {
@@ -1238,7 +1827,7 @@ public sealed partial class Boot : Node
             _menu = null;
         }
 
-        _game = new GameRoot { Name = "GameRoot", InitialWorld = world };
+        _game = new GameRoot { Name = "GameRoot", InitialWorld = world, Net = net };
         _game.ReturnToMenuRequested += ShowMenu;
         AddChild(_game);
     }

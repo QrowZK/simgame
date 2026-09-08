@@ -16,6 +16,30 @@ public sealed partial class GameRoot : Node3D
     /// game, or one restored from a save.
     public World? InitialWorld { get; set; }
 
+    /// The lockstep driver, when this world is a shared one. Null for a solo
+    /// game, and the only thing that changes about the loop when it is not:
+    /// the driver owns the clock and the player's input (ADR 0038).
+    public LockstepDriver? Net { get; set; }
+
+    private NetStatusPanel? _netStatus;
+
+    /// What a shared world will not do yet, said out loud. Walking goes through
+    /// the command layer; building, digging and removal do not, and a click
+    /// that quietly changed one peer's world and no other peer's would be a
+    /// desync a minute later rather than a refusal now. Refusing with a
+    /// sentence is the honest half of an unfinished feature.
+    private const string NotSharedYet =
+        "Shared worlds accept walking today. Building, digging and removal go " +
+        "through the command layer in the next slice -- doing them locally " +
+        "would put this world out of step with everyone else's.";
+
+    private bool RefusedByLockstep()
+    {
+        if (Net is null) return false;
+        Say(NotSharedYet);
+        return true;
+    }
+
     /// The world this root is actually running, once _Ready has built it. Used
     /// by the headless menu test, which has to inspect what the New Game button
     /// produced rather than what it was handed.
@@ -120,6 +144,18 @@ public sealed partial class GameRoot : Node3D
         _progression = BuildProgressionPanel();
         _survey = BuildSurveyPanel();
         _editor = BuildScriptEditor();
+
+        // Only in a shared world: a solo game has nothing to wait for and no
+        // peer to disagree with, and a permanent "in step at tick N" caption
+        // over a single-player game would be noise.
+        if (Net is not null)
+        {
+            _netStatus = new NetStatusPanel { Name = "NetStatus" };
+            var layer = new CanvasLayer { Name = "NetStatusLayer" };
+            layer.AddChild(_netStatus);
+            AddChild(layer);
+            Net.Stopped += _ => _netStatus?.Show(Net.Status);
+        }
 
         // A brand new game, and only a brand new game: the premise is shown at
         // tick zero on an untouched world, so a loaded save never replays it.
@@ -235,24 +271,48 @@ public sealed partial class GameRoot : Node3D
             return;
         }
 
-        // The walk intent, set once per frame from the keyboard and consumed
-        // by however many ticks this frame happens to cover. Never scaled by
-        // delta: how far a player walks is decided in the sim, in integers, so
-        // a slow frame costs a stutter rather than a different position.
-        _world.Player.Intent = ReadWalkIntent();
-
-        _accumulator += delta;
-
-        var ticks = 0;
-        while (_accumulator >= SecondsPerTick && ticks < MaxCatchUpTicks)
+        // In a shared world the clock is not ours. The driver owns both halves
+        // of this: the walk keys become a Move command scheduled six ticks out,
+        // and a tick only runs when the batch for it has arrived. Setting
+        // `Intent` here as well would be applying a local command early, which
+        // is the desync this whole design exists to avoid.
+        if (Net is not null)
         {
-            _world.Tick();
-            _accumulator -= SecondsPerTick;
-            ticks++;
-        }
+            Net.SetIntent(ReadWalkIntent());
 
-        if (_accumulator > SecondsPerTick * MaxCatchUpTicks)
-            _accumulator = 0;
+            _accumulator += delta;
+            var want = 0;
+            while (_accumulator >= SecondsPerTick && want < MaxCatchUpTicks)
+            {
+                _accumulator -= SecondsPerTick;
+                want++;
+            }
+
+            if (_accumulator > SecondsPerTick * MaxCatchUpTicks) _accumulator = 0;
+            Net.Advance(want);
+            _netStatus?.Show(Net.Status);
+        }
+        else
+        {
+            // The walk intent, set once per frame from the keyboard and consumed
+            // by however many ticks this frame happens to cover. Never scaled by
+            // delta: how far a player walks is decided in the sim, in integers, so
+            // a slow frame costs a stutter rather than a different position.
+            _world.Player.Intent = ReadWalkIntent();
+
+            _accumulator += delta;
+
+            var ticks = 0;
+            while (_accumulator >= SecondsPerTick && ticks < MaxCatchUpTicks)
+            {
+                _world.Tick();
+                _accumulator -= SecondsPerTick;
+                ticks++;
+            }
+
+            if (_accumulator > SecondsPerTick * MaxCatchUpTicks)
+                _accumulator = 0;
+        }
 
         if (!_cameraPinned) _rig.Follow(PlayerPoint(), (float)delta);
         PlaceAvatar();
@@ -908,6 +968,8 @@ public sealed partial class GameRoot : Node3D
     /// nothing and looking broken.
     private void DigOrClose(int tileX, int tileY)
     {
+        if (RefusedByLockstep()) return;
+
         var report = _world.TryDigByHand(tileX, tileY, HandMinePerClick);
 
         if (report.Result == DigResult.NothingThere)
@@ -1081,6 +1143,8 @@ public sealed partial class GameRoot : Node3D
     /// from one that ate them.
     public void RemoveAt(int tileX, int tileY)
     {
+        if (RefusedByLockstep()) return;
+
         var report = _world.TryRemove(tileX, tileY);
 
         var name = report.Ok && _buildables.TryGet(report.Item, out var buildable)
@@ -1135,6 +1199,8 @@ public sealed partial class GameRoot : Node3D
     /// which is exactly why the sim returns a reason rather than a bool.
     public void PlaceHeld(int tileX, int tileY)
     {
+        if (RefusedByLockstep()) return;
+
         if (_holding is null)
         {
             _sounds.Play(Sounds.Cue.Refuse);
