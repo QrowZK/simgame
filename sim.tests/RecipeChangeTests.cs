@@ -28,7 +28,7 @@ public class RecipeChangeTests
         var furnace = Buildables.Find("man_furnace")!;
         world.PlayerInventory.Add(furnace.Item, 1);
 
-        var result = world.TryBuild(Buildables, furnace.Item, 0, 0, Data.Recipe("smelt_chalcopyrite"));
+        var result = world.BuildStandingBy(Buildables, furnace.Item, 0, 0, Data.Recipe("smelt_chalcopyrite"));
         Assert.Equal(BuildResult.Ok, result);
         return (world, 0);
     }

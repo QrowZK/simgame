@@ -35,6 +35,18 @@ public sealed partial class GameRoot : Node3D
     private BeltRenderer _belts = null!;
     private ScriptEditor _editor = null!;
     private CameraRig _rig = null!;
+
+    /// The avatar, if the art layer has supplied one. Optional on purpose: the
+    /// player is simulation state and the game has to run headlessly and in a
+    /// build where nobody has drawn a figure yet, so this is looked up by name
+    /// and every use is guarded.
+    private Node3D? _avatar;
+
+    /// Set when a capture path has deliberately framed something that is not
+    /// the player. The rig follows the player every frame, so without this a
+    /// shot of the coastline is dragged back to the landing site between being
+    /// framed and being taken.
+    private bool _cameraPinned;
     private Label _hud = null!;
     private Label _guide = null!;
     private Sounds _sounds = null!;
@@ -126,7 +138,13 @@ public sealed partial class GameRoot : Node3D
             // the wreckage at all. Looking a little past it puts the wreck in
             // the upper corner, where the eye still goes to it, and leaves the
             // ground the guide sends you to build on clear and in frame.
-            _rig.Position = new Vector3(NewGame.SpawnX + 6f, 0f, NewGame.SpawnY + 6f);
+            // On the player, who is standing on the landing site. It used to
+            // be six tiles off the wreck so the debris did not fill the frame;
+            // now the rig follows a figure, and a rig that starts six tiles
+            // away from the thing it follows spends the first second of a new
+            // game sliding for no reason the player asked for.
+            _rig.Position = new Vector3(_world.Player.TileX + 0.5f, 0f,
+                                        _world.Player.TileY + 0.5f);
 
             // Close enough that the first thing a player sees is a place.
             //
@@ -142,11 +160,18 @@ public sealed partial class GameRoot : Node3D
         else
         {
             var side = Mathf.CeilToInt(Mathf.Sqrt(machineCount));
+            // The demo factory has a player too -- it is a World -- and it is
+            // put in the middle of the benchmark rather than at the origin, so
+            // the reach checks in the build-menu smoke lines are asked about a
+            // player who is standing where the machines are.
+            _world.Player.TeleportToTile(side / 2, side / 2);
             _rig.Position = new Vector3(side * 0.5f, 0f, side * 0.5f);
             _rig.ZoomLevel = Mathf.Clamp(side * 1.4f, 8f, 160f);
         }
 
         _rig.Apply();
+
+        AttachAvatar();
 
         // The crash site. Scenery, not a machine: it is not in `World`, holds no
         // tiles, and a player can build straight through it. It exists because
@@ -210,6 +235,12 @@ public sealed partial class GameRoot : Node3D
             return;
         }
 
+        // The walk intent, set once per frame from the keyboard and consumed
+        // by however many ticks this frame happens to cover. Never scaled by
+        // delta: how far a player walks is decided in the sim, in integers, so
+        // a slow frame costs a stutter rather than a different position.
+        _world.Player.Intent = ReadWalkIntent();
+
         _accumulator += delta;
 
         var ticks = 0;
@@ -222,6 +253,9 @@ public sealed partial class GameRoot : Node3D
 
         if (_accumulator > SecondsPerTick * MaxCatchUpTicks)
             _accumulator = 0;
+
+        if (!_cameraPinned) _rig.Follow(PlayerPoint(), (float)delta);
+        PlaceAvatar();
 
         _renderer.Sync(_world);
         _terrain.Sync(_world, _rig.Position);
@@ -307,6 +341,94 @@ public sealed partial class GameRoot : Node3D
     }
 
 
+    /// Where the player is, in world units. One tile is `TileSize` units and
+    /// the sim's position is in milli-tiles, so this is the one conversion
+    /// between the two and it lives here rather than at six call sites.
+    /// Frames the rig on something other than the player, and stops following.
+    private void FrameOn(Vector3 point, float zoom)
+    {
+        _cameraPinned = true;
+        _rig.ZoomLevel = zoom;
+        _rig.SnapTo(point);
+    }
+
+    private Vector3 PlayerPoint()
+        => new(_world.Player.X * _renderer.TileSize / (float)Sim.Player.MilliPerTile, 0f,
+               _world.Player.Y * _renderer.TileSize / (float)Sim.Player.MilliPerTile);
+
+    /// WASD, turned into one of nine integer intents.
+    ///
+    /// Relative to the camera's yaw, as the pan was, so "W" still means "up the
+    /// screen" after rotating. The rotated vector is then snapped to the eight
+    /// compass directions with a 22.5-degree dead band per axis: the sim takes
+    /// -1, 0 or +1 and nothing else, and rounding a rotated vector without a
+    /// band would make a nearly-north walk flicker between north and
+    /// north-east as the camera turned.
+    private MoveIntent ReadWalkIntent()
+    {
+        // Whatever has the keyboard, has the keyboard. A player typing "was"
+        // into the script editor must not walk three tiles.
+        if (!_rig.InputEnabled || _editor.IsOpen || _pause.Visible)
+            return MoveIntent.Still;
+
+        var raw = Vector3.Zero;
+        if (Input.IsKeyPressed(Key.W)) raw.Z -= 1f;
+        if (Input.IsKeyPressed(Key.S)) raw.Z += 1f;
+        if (Input.IsKeyPressed(Key.A)) raw.X -= 1f;
+        if (Input.IsKeyPressed(Key.D)) raw.X += 1f;
+
+        if (raw == Vector3.Zero) return MoveIntent.Still;
+
+        raw = raw.Normalized().Rotated(Vector3.Up, Mathf.DegToRad(_rig.Yaw));
+
+        const float band = 0.383f;      // sin(22.5 degrees)
+        return new MoveIntent(Mathf.Abs(raw.X) > band ? Mathf.Sign(raw.X) : 0,
+                              Mathf.Abs(raw.Z) > band ? Mathf.Sign(raw.Z) : 0);
+    }
+
+    /// Finds the avatar the art layer draws, if it is in the scene.
+    ///
+    /// Looked up by name and duck-typed through `Call`, deliberately: the
+    /// figure is being drawn in parallel and this half must compile, run
+    /// headlessly and pass its tests whether or not that node exists yet. A
+    /// hard reference would make the game fail to launch on the days it does
+    /// not.
+    private void AttachAvatar()
+    {
+        _avatar = GetNodeOrNull<Node3D>("PlayerRenderer");
+
+        if (_avatar is null && ResourceLoader.Exists("res://scripts/PlayerRenderer.cs"))
+        {
+            var script = GD.Load<Script>("res://scripts/PlayerRenderer.cs");
+            if (script is CSharpScript sharp && sharp.New().Obj is Node3D node)
+            {
+                node.Name = "PlayerRenderer";
+                AddChild(node);
+                _avatar = node;
+            }
+        }
+
+        PlaceAvatar();
+    }
+
+    /// Puts the avatar where the sim says the player is. Facing is derived from
+    /// the last direction walked, which the sim keeps as two integers -- the
+    /// angle is a rendering convention and belongs on this side of the line.
+    private void PlaceAvatar()
+    {
+        if (_avatar is null || !_avatar.HasMethod("Place")) return;
+
+        var point = PlayerPoint();
+
+        // Degrees clockwise from north, which is what the renderer takes. The
+        // sim's +Y is *south* (`Directions.Delta`), so the Y axis is negated on
+        // the way out. Without that the figure is exactly 180 degrees out --
+        // which looks correct walking east or west and is backwards walking
+        // north or south, the worst way for it to be wrong.
+        var facing = Mathf.RadToDeg(Mathf.Atan2(_world.Player.FacingX, -_world.Player.FacingY));
+        _avatar.Call("Place", point.X, point.Z, facing);
+    }
+
     private void Capture()
     {
         var image = GetViewport().GetTexture().GetImage();
@@ -343,7 +465,7 @@ public sealed partial class GameRoot : Node3D
         if (_progression.IsShowing) return "T  close progression";
         if (_panel.IsShowing) return "click another machine to inspect it   ·   Esc  close";
 
-        return "WASD  pan   ·   wheel  zoom   ·   Q/E  rotate   ·   B  build   ·   " +
+        return "WASD  walk   ·   wheel  zoom   ·   Q/E  rotate   ·   B  build   ·   " +
                "P  survey   ·   T  progression   ·   Esc  menu";
     }
 
@@ -455,7 +577,8 @@ public sealed partial class GameRoot : Node3D
         var ghostShown = false;
         if (_holding is not null)
         {
-            _ghost.Show(_holding, 0, -6, true, _renderer.TileSize);
+            _ghost.Show(_holding, _world.Player.TileX, _world.Player.TileY - 6, true,
+                        _renderer.TileSize);
             ghostShown = _ghost.Visible;
         }
 
@@ -550,6 +673,23 @@ public sealed partial class GameRoot : Node3D
         _world.Research ??= fresh;
         _progression.Refresh();
         GD.Print($"sounds          {_sounds.Loaded} of 4 cues loaded");
+
+        // The player, in numbers a screenshot cannot show: where they are to
+        // the milli-tile, how far their hands and their build cursor go, and
+        // that a second of walking is exactly six tiles rather than
+        // approximately six. The last one is the fixed-point claim, measured.
+        var walkedFrom = _world.Player.X;
+        _world.Player.Intent = new MoveIntent(1, 0);
+        _world.Tick(60);
+        _world.Player.Intent = MoveIntent.Still;
+        var walked = _world.Player.X - walkedFrom;
+
+        GD.Print($"player          at {_world.Player.TileX},{_world.Player.TileY} " +
+                 $"({_world.Player.X},{_world.Player.Y} milli) " +
+                 $"hand={Sim.Player.HandReachTiles} build={Sim.Player.BuildReachTiles} tiles");
+        GD.Print($"walk 60 ticks   {walked} milli-tiles east " +
+                 $"(exactly {Sim.Player.SpeedPerTick * 60}: {walked == Sim.Player.SpeedPerTick * 60})");
+        GD.Print($"avatar          {(_avatar is null ? "not in the scene" : _avatar.Name.ToString())}");
 
         var site = new LandingSite { Name = "SmokeLandingSite" };
         AddChild(site);
@@ -655,8 +795,11 @@ public sealed partial class GameRoot : Node3D
         if (@event is InputEventKey { Pressed: true, Keycode: Key.P })
         {
             if (_survey.IsShowing) _survey.Close();
-            else _survey.Open(Mathf.FloorToInt(_rig.Position.X / _renderer.TileSize),
-                              Mathf.FloorToInt(_rig.Position.Z / _renderer.TileSize));
+            // From the player, not from the camera. The device is carried, so
+            // it answers about where its owner is standing -- surveying from
+            // the camera meant a player could scroll the view across the map
+            // and prospect a hundred tiles away without moving.
+            else _survey.Open(_world.Player.TileX, _world.Player.TileY);
             return;
         }
 
@@ -765,36 +908,31 @@ public sealed partial class GameRoot : Node3D
     /// nothing and looking broken.
     private void DigOrClose(int tileX, int tileY)
     {
-        if (!_world.Ground.TryResourceAt(tileX, tileY, out var item, out var remaining))
+        var report = _world.TryDigByHand(tileX, tileY, HandMinePerClick);
+
+        if (report.Result == DigResult.NothingThere)
         {
             _panel.Close();
             return;
         }
 
-        var name = _world.Items.GetName(item);
+        var name = _world.Items.GetName(report.Item);
 
-        if (remaining <= 0)
+        _sounds.Play(report.Taken > 0 ? Sounds.Cue.Dig : Sounds.Cue.Refuse);
+
+        Say(report.Result switch
         {
-            _sounds.Play(Sounds.Cue.Refuse);
-            Say($"This {name} patch is worked out. Press P to survey for another.");
-            return;
-        }
-
-        if (_world.Ground.Gen.TryPatchAt(tileX, tileY, out var patch) && patch.IsFluid)
-        {
-            _sounds.Play(Sounds.Cue.Refuse);
-            Say($"{name} is a fluid -- hands cannot lift it. It needs a derrick standing on it.");
-            return;
-        }
-
-        var before = _world.PlayerInventory.Count(item);
-        var dug = HandOps.Mine(_world.Ground, tileX, tileY, _world.PlayerInventory,
-                               HandMinePerClick);
-
-        _sounds.Play(dug == 0 ? Sounds.Cue.Refuse : Sounds.Cue.Dig);
-        Say(dug == 0
-            ? $"Nothing came out of this {name}."
-            : $"Dug {dug} {name}. Carrying {before + dug}. ({remaining - dug} left here.)");
+            DigResult.TooFar =>
+                $"Too far to reach -- walk closer. Your hands go {Sim.Player.HandReachTiles} tiles.",
+            DigResult.CannotLiftFluid =>
+                $"{name} is a fluid -- hands cannot lift it. It needs a derrick standing on it.",
+            DigResult.WorkedOut =>
+                $"This {name} patch is worked out. Press P to survey for another.",
+            _ when report.Taken == 0 => $"Nothing came out of this {name}.",
+            _ => $"Dug {report.Taken} {name}. " +
+                 $"Carrying {_world.PlayerInventory.Count(report.Item)}. " +
+                 $"({report.RemainingAfter} left here.)",
+        });
     }
 
     /// Opens the panel on a running machine, falling back to any machine at
@@ -879,7 +1017,8 @@ public sealed partial class GameRoot : Node3D
         }
 
         var placement = _holding.PlacementAt(tileX, tileY);
-        var allowed = _world.CanPlace(placement)
+        var allowed = _world.InBuildReach(placement)
+                      && _world.CanPlace(placement)
                       && !_world.CoversFluidNode(placement)
                       && !_world.CoversBeltTile(placement)
                       && (_holding.Kind != BuildKind.Miner
@@ -927,7 +1066,11 @@ public sealed partial class GameRoot : Node3D
             return;
         }
 
-        _ghost.Show(buildable, anchorX, anchorY, true, _renderer.TileSize);
+        // Red at range, for the same reason it is red over an occupied tile:
+        // the ghost's whole job is to answer "will this click do anything"
+        // before the click, and out of reach it will not.
+        var inReach = _world.InBuildReach(anchorX, anchorY) || _world.InBuildReach(tileX, tileY);
+        _ghost.Show(buildable, anchorX, anchorY, inReach, _renderer.TileSize);
     }
 
     /// Takes back what is under the cursor, and says what came with it.
@@ -950,6 +1093,9 @@ public sealed partial class GameRoot : Node3D
             RemoveResult.NothingThere => "Nothing of yours is there.",
             RemoveResult.UnknownBuilding =>
                 "That was not built from anything you carried, so there is nothing to give back.",
+            RemoveResult.TooFar =>
+                $"Too far to reach -- walk closer. You can take back what is within " +
+                $"{Sim.Player.BuildReachTiles} tiles.",
             _ => "That cannot be removed.",
         });
 
@@ -1005,6 +1151,9 @@ public sealed partial class GameRoot : Node3D
         {
             BuildResult.Ok => $"Built {_holding.DisplayName} at {tileX},{tileY}.",
             BuildResult.Blocked => "Something is already there.",
+            BuildResult.TooFar =>
+                $"Too far to reach -- walk closer. You can build {Sim.Player.BuildReachTiles} " +
+                "tiles from where you are standing.",
             BuildResult.NoneCarried => $"You have no {_holding.DisplayName} left.",
             BuildResult.NoResource => "A miner needs ore under it.",
             BuildResult.NoFluid => "A pump needs water or a fluid deposit under it.",
@@ -1078,9 +1227,12 @@ public sealed partial class GameRoot : Node3D
         if (target < 0) return;
 
         var hit = hits[target];
-        _rig.Position = new Vector3(hit.X * _renderer.TileSize, 0f, hit.Y * _renderer.TileSize);
-        _rig.ZoomLevel = 18f;
-        _rig.Apply();
+
+        // The player goes to the ore, not just the camera. Since reach exists,
+        // a capture framed on a patch the player is standing 300 tiles from
+        // photographs a refusal.
+        _world.Player.TeleportToTile(hit.X, hit.Y);
+        FrameOn(new Vector3(hit.X * _renderer.TileSize, 0f, hit.Y * _renderer.TileSize), 18f);
 
         var screen = _rig.Camera.UnprojectPosition(
             new Vector3(hit.X * _renderer.TileSize, 0f, hit.Y * _renderer.TileSize));
@@ -1103,6 +1255,7 @@ public sealed partial class GameRoot : Node3D
     private void ShowTheSurvey()
     {
         _progression.Close();
+        _world.Player.TeleportToTile(NewGame.SpawnX, NewGame.SpawnY);
         _survey.Open(NewGame.SpawnX, NewGame.SpawnY);
     }
 
@@ -1122,6 +1275,8 @@ public sealed partial class GameRoot : Node3D
 
         _world.PlayerInventory.Add(uplink.Item, 1);
         for (var d = 0; d < 40; d++)
+        {
+            _world.Player.TeleportToTile(d, -4);
             if (_world.TryBuild(_buildables, uplink.Item, d, -4, recipe) == BuildResult.Ok)
             {
                 var index = _world.MachineCount - 1;
@@ -1130,13 +1285,12 @@ public sealed partial class GameRoot : Node3D
                 if (_world.Items.TryGetId("iron_ingot", out var spare))
                     _world.Machines[index].PushInput(spare, 5);
 
-                _rig.Position = new Vector3(placement.CentreX * _renderer.TileSize, 0f,
-                                            placement.CentreY * _renderer.TileSize);
-                _rig.ZoomLevel = 18f;
-                _rig.Apply();
+                FrameOn(new Vector3(placement.CentreX * _renderer.TileSize, 0f,
+                                    placement.CentreY * _renderer.TileSize), 18f);
                 _panel.Show(_world.Machines[index], placement, index);
                 return;
             }
+        }
     }
 
     /// Points the camera at the belt line and closes the panel, so a capture
@@ -1154,9 +1308,7 @@ public sealed partial class GameRoot : Node3D
         var coast = TerrainRenderer.NearestWater(_world, _rig.Position);
         if (coast is not { } shore) return;
 
-        _rig.Position = shore;
-        _rig.ZoomLevel = 48f;
-        _rig.Apply();
+        FrameOn(shore, 48f);
         _terrain.Sync(_world, _rig.Position);
     }
 
@@ -1175,24 +1327,19 @@ public sealed partial class GameRoot : Node3D
 
             var a = map.Undergrounds[i];
             var b = map.Undergrounds[partner];
-            _rig.Position = new Vector3((a.X + b.X + 1) * 0.5f * _renderer.TileSize, 0f,
-                                        (a.Y + b.Y + 1) * 0.5f * _renderer.TileSize);
-            _rig.ZoomLevel = 22f;
-
             // Zoom is the orthographic size, and nothing re-reads it until the
             // rig is applied -- setting it alone left the belt capture at the
             // default framing, too far out to see a tunnel end.
-            _rig.Apply();
+            FrameOn(new Vector3((a.X + b.X + 1) * 0.5f * _renderer.TileSize, 0f,
+                                (a.Y + b.Y + 1) * 0.5f * _renderer.TileSize), 22f);
             return;
         }
 
         if (map.Belts.Count == 0) return;
 
         var belt = map.Belts[map.Belts.Count / 2];
-        _rig.Position = new Vector3((belt.X + 0.5f) * _renderer.TileSize, 0f,
-                                    (belt.Y + 0.5f) * _renderer.TileSize);
-        _rig.ZoomLevel = 16f;
-        _rig.Apply();
+        FrameOn(new Vector3((belt.X + 0.5f) * _renderer.TileSize, 0f,
+                            (belt.Y + 0.5f) * _renderer.TileSize), 16f);
     }
 
     private void Say(string message)
@@ -1233,6 +1380,12 @@ public sealed partial class GameRoot : Node3D
             _build.Bind(_buildables, _world, _world.Items);
             _progression.Bind(_world);
             _seedAnnounced = _world.Research?.SeedDelivered ?? false;
+            // The loaded player is wherever they saved, which is usually not
+            // where the camera is. Cut to them: trailing across a factory is a
+            // long look at nothing, and the save's whole point is to put the
+            // player back where they were.
+            _rig.SnapTo(PlayerPoint());
+            PlaceAvatar();
             _renderer.Sync(_world);
             _toast = "Quick loaded.";
         }

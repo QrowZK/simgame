@@ -326,6 +326,12 @@ public enum BuildResult
     /// facing the same way, but beyond what this tier can tunnel.
     TooFarToTunnel,
 
+    /// The tile is outside the player's build reach (ADR 0033). Its own reason
+    /// rather than `Blocked`, because the fix is the one thing no other refusal
+    /// asks for: walk closer. Checked before the footprint, so a player never
+    /// gets told what is standing on a tile they cannot get to.
+    TooFar,
+
     /// The recipe exists and the machine could run it, but the tech that
     /// unlocks it has not been researched (ADR 0023). Distinct from
     /// `NeedsRecipe`, because the fix is a delivery to the Uplink rather than

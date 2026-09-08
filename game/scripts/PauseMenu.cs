@@ -30,7 +30,7 @@ public sealed partial class PauseMenu : Control
         // you had forgotten. Pausing to check is the ordinary way to do that,
         // and it is the ordinary place to find it.
         GetNode<Label>("Card/Rows/Controls").Text =
-            "WASD  pan the camera\n" +
+            "WASD  walk\n" +
             "Q / E  rotate     ·  mouse wheel  zoom\n" +
             "click  inspect a machine, or dig a resource tile\n" +
             "B  build     ·  R  rotate what you are holding\n" +

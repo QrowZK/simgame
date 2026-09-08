@@ -243,11 +243,11 @@ public class BeltMapTests
         world.PlayerInventory.Add(inserter.Item, 1);
 
         Assert.Equal(BuildResult.Ok,
-                     world.TryBuild(Buildables, belt.Item, 0, 40, facing: Direction.South));
+                     world.BuildStandingBy(Buildables, belt.Item, 0, 40, facing: Direction.South));
         Assert.Equal(BuildResult.Ok,
-                     world.TryBuild(Buildables, belt.Item, 0, 41, facing: Direction.South));
+                     world.BuildStandingBy(Buildables, belt.Item, 0, 41, facing: Direction.South));
         Assert.Equal(BuildResult.Ok,
-                     world.TryBuild(Buildables, inserter.Item, 1, 41, facing: Direction.East));
+                     world.BuildStandingBy(Buildables, inserter.Item, 1, 41, facing: Direction.East));
 
         Assert.Equal(1, world.PlayerInventory.Count(belt.Item));
         Assert.Equal(0, world.PlayerInventory.Count(inserter.Item));
@@ -258,7 +258,7 @@ public class BeltMapTests
 
         // And a second belt on the same tile is refused, without charging.
         Assert.Equal(BuildResult.Blocked,
-                     world.TryBuild(Buildables, belt.Item, 0, 40, facing: Direction.South));
+                     world.BuildStandingBy(Buildables, belt.Item, 0, 40, facing: Direction.South));
         Assert.Equal(1, world.PlayerInventory.Count(belt.Item));
     }
 
@@ -274,13 +274,13 @@ public class BeltMapTests
         world.PlayerInventory.Add(belt.Item, 2);
         world.PlayerInventory.Add(furnace.Item, 2);
 
-        Assert.Equal(BuildResult.Ok, world.TryBuild(Buildables, belt.Item, 0, 40));
+        Assert.Equal(BuildResult.Ok, world.BuildStandingBy(Buildables, belt.Item, 0, 40));
         Assert.Equal(BuildResult.Blocked,
-                     world.TryBuild(Buildables, furnace.Item, 0, 40, recipe));
+                     world.BuildStandingBy(Buildables, furnace.Item, 0, 40, recipe));
 
         Assert.Equal(BuildResult.Ok,
-                     world.TryBuild(Buildables, furnace.Item, 0, 42, recipe));
-        Assert.Equal(BuildResult.Blocked, world.TryBuild(Buildables, belt.Item, 0, 42));
+                     world.BuildStandingBy(Buildables, furnace.Item, 0, 42, recipe));
+        Assert.Equal(BuildResult.Blocked, world.BuildStandingBy(Buildables, belt.Item, 0, 42));
     }
 
     /// Belt speed is a tier upgrade, and it has to reach the compiled segment
@@ -297,7 +297,7 @@ public class BeltMapTests
         world.PlayerInventory.Add(better.Item, 4);
         for (var i = 0; i < 4; i++)
             Assert.Equal(BuildResult.Ok,
-                         world.TryBuild(Buildables, better.Item, i, 40, facing: Direction.East));
+                         world.BuildStandingBy(Buildables, better.Item, i, 40, facing: Direction.East));
 
         world.SyncBelts();
         Assert.Equal(better.BeltSpeed,

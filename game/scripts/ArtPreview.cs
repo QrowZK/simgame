@@ -18,6 +18,10 @@ namespace Game;
 ///   `landing`  the opening frame of a new game -- spawn, 30 units of view.
 ///   `tech`     the tech tree panel over that frame, with a partial research
 ///              state so locked, open and done are all on screen at once.
+///   `player`   the player figure on open ground, and again beside a machine,
+///              so the size relationship can be judged rather than assumed.
+///              `--facing=N` turns the figure; `--machines` puts the demo
+///              factory in the frame next to it.
 ///
 /// It builds the same world `NewGame.Create` gives a player, so what it shows
 /// is the game, not a diorama. It draws no HUD of its own and simulates
@@ -57,6 +61,50 @@ public sealed partial class ArtPreview : Node3D
         AddChild(site);
         GD.Print($"landing site    pieces={site.PieceCount} tris={site.TriangleCount} " +
                  $"radius={site.Radius:0.0} tiles at {site.TileX},{site.TileY} drawn={site.IsDrawn}");
+
+        if (shot == "player")
+        {
+            // Two frames answer two different questions, so this shot has two
+            // modes. Open ground says "can I find the figure at all"; a corner
+            // of the demo factory says "how big is it next to a machine", which
+            // is the judgement no amount of describing a mesh can settle.
+            var withMachines = args.Contains("--machines");
+            var px = withMachines ? 7.5f : NewGame.SpawnX + 6.5f;
+            var pz = withMachines ? 7.5f : NewGame.SpawnY + 5.5f;
+            var facing = float.TryParse(Arg(args, "--facing"), out var f) ? f : 135f;
+
+            if (withMachines)
+            {
+                var demo = DemoWorld.Build(24, seed);
+                var machines = new MachineRenderer { Name = "MachineRenderer" };
+                AddChild(machines);
+                machines.Sync(demo);
+                GD.Print($"machines        {demo.Placements.Length} drawn");
+            }
+
+            var player = args.Contains("--no-player")
+                ? null
+                : new PlayerRenderer { Name = "PlayerRenderer" };
+            if (player is null)
+            {
+                GD.Print("player          not drawn (--no-player)");
+                return;
+            }
+
+            AddChild(player);
+
+            // Placed twice, a third of a tile apart, so the frame is taken
+            // mid-stride: the bob is exercised rather than only its zero case.
+            player.Place(px, pz, facing);
+            player.Place(px + 0.31f, pz, facing);
+
+            rig.Position = new Vector3(px, 0f, pz);
+            rig.Apply();
+
+            GD.Print($"player          pieces={player.PieceCount} tris={player.TriangleCount} " +
+                     $"height={player.Height:0.00} facing={player.FacingDegrees:0} " +
+                     $"walked={player.DistanceWalked:0.00} drawn={player.IsDrawn}");
+        }
 
         if (shot == "tech")
         {
@@ -109,6 +157,11 @@ public sealed partial class ArtPreview : Node3D
         if (probe is not null)
             GD.Print($"graph box       holder={probe.Size} graph={probe.GetChild<Control>(0).Size} " +
                      $"panel={probe.GetParent().GetParent().GetParent<Control>().Size}");
+
+        // What a new pool actually costs, measured rather than argued: run the
+        // same shot with and without `--player` and diff this number.
+        GD.Print("draw batches    " +
+                 RenderingServer.GetRenderingInfo(RenderingServer.RenderingInfo.TotalDrawCallsInFrame));
 
         var image = GetViewport().GetTexture().GetImage();
         image.SavePng(_out);

@@ -48,7 +48,7 @@ godot --path game --headless -- --smoke        # headless verification
 godot --path game --headless -- --machines=100000   # stress the renderer
 ```
 
-Controls: WASD pan, Q/E rotate yaw, mouse wheel zoom, B build, X remove,
+Controls: WASD walk (the camera follows), Q/E rotate yaw, mouse wheel zoom, B build, X remove,
 R rotate, F5 save, F9 load, F1 script editor, Esc menu.
 
 ```

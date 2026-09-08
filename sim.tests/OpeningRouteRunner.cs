@@ -69,9 +69,11 @@ public sealed class OpeningRouteRunner
                      .Scan(_world.Ground.Gen, NewGame.SpawnX, NewGame.SpawnY)
                      .Where(h => h.Item.Equals(id)))
         {
+            // Walked to, not reached across the map (ADR 0033).
+            Walk.To(_world, hit.X, hit.Y);
+
             while (Have(item) < count &&
-                   HandOps.Mine(_world.Ground, hit.X, hit.Y, _world.PlayerInventory,
-                                count - Have(item)) > 0) { }
+                   _world.TryDigByHand(hit.X, hit.Y, count - Have(item)).Taken > 0) { }
 
             if (Have(item) >= count) return true;
         }
@@ -175,7 +177,7 @@ public sealed class OpeningRouteRunner
 
         for (var d = 1; d < 400; d++)
         {
-            if (_world.TryBuild(_buildables, buildable.Item, d, -4, first) != BuildResult.Ok)
+            if (_world.BuildStandingBy(_buildables, buildable.Item, d, -4, first) != BuildResult.Ok)
                 continue;
             index = _world.MachineCount - 1;
             return true;

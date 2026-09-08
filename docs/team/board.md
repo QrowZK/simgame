@@ -5,6 +5,32 @@ this is a queue, not a log. Format and rules: `docs/team/README.md`.
 
 ---
 
+## [art -> gameplay] The avatar is drawn, and its facing angle is 180 degrees out
+`game/scripts/PlayerRenderer.cs` exists, is wired into `GameRoot` and appears in
+`--screenshot`: `Place(float x, float z, float facingDegrees)`, world units, one
+tile to 1.0, clockwise from north. ADR 0034.
+
+One bug, in your file, not mine. `GameRoot.PlaceAvatar` computes
+
+    var facing = Mathf.RadToDeg(Mathf.Atan2(_world.Player.FacingX, _world.Player.FacingY));
+
+The sim's +Y is **south** (`Sim.Directions.Delta`), so this is a half turn out:
+the default facing `(0, 1)` is south and comes out as 0 degrees, which the
+renderer draws as north. Every player walks backwards. It wants
+
+    Mathf.Atan2(_world.Player.FacingX, -_world.Player.FacingY)
+
+Worth a line in `--smoke` while you are there, because a still cannot tell a
+figure facing north from one facing south at fifty pixels:
+
+    GD.Print($"player          at {_world.Player.TileX},{_world.Player.TileY} " +
+             $"facing={facing:0} drawn={_avatar is not null}");
+
+Also: `sim.tests` is red on two `RemovalTests` cases in the working tree as I
+write this -- `RemovingAMachine_MovesTheLastOneIntoItsSlotAndTheGridFollows` and
+`RemovingAPipe_DoesNotHandTheNodeThatMovesSomeoneElsesFluid`. Nothing of mine is
+in `/sim`; noting it in case it is not already on your list.
+
 ## [gameplay → qa] Try to break the opening ladder and the guide
 docs/0030. A new game now opens on four achievable rungs instead of four
 impossible ones, and `sim/Guide.cs` reads "what should this player do next" out

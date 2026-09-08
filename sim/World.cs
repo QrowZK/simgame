@@ -27,6 +27,11 @@ public sealed class World
     /// change, so it lives on the same side of the engine boundary as the tick.
     public Inventory PlayerInventory { get; } = new();
 
+    /// Where the player is standing (ADR 0033). Simulation state, not camera
+    /// state: it ticks with the world, it is saved, and it decides whether the
+    /// hands and the build cursor can touch a tile at all.
+    public Player Player { get; } = new();
+
     /// Belts, splitters and inserters. Owned here so the whole world advances
     /// under one deterministic tick.
     public BeltNetwork Belts { get; } = new();
@@ -105,11 +110,20 @@ public sealed class World
     /// walking a hull to the Uplink, and the only route available before belts.
     public DeliveryReport DeliverByHand(ItemId item, int count)
     {
+        // Reach first, and before the inventory check: "walk over to it" is the
+        // answer whether or not you happen to be carrying the right thing, and
+        // a player standing 200 tiles from their Uplink should be told that
+        // rather than told their pockets are empty.
+        if (!TryUplinkInHandReach(out _))
+            return new DeliveryReport { Refusal = DeliveryRefusal.NoUplinkInReach };
+
         var have = Math.Min(count, PlayerInventory.Count(item));
-        if (have <= 0) return new DeliveryReport();
+        if (have <= 0)
+            return new DeliveryReport { Refusal = DeliveryRefusal.NotCarried };
 
         var report = DeliverToUplink(item, have);
         PlayerInventory.Take(item, report.Accepted);
+        if (report.Accepted == 0) report.Refusal = DeliveryRefusal.NothingWanted;
         return report;
     }
 
@@ -748,6 +762,12 @@ public sealed class World
 
         var placement = buildable.PlacementAt(x, y);
 
+        // Reach before the footprint checks: what is under a tile you cannot
+        // walk to is not the problem you have, and "something is already there"
+        // would send the player looking for a machine they cannot even see.
+        if (!InBuildReach(placement))
+            return BuildResult.TooFar;
+
         if (!CanPlace(placement) || CoversFluidNode(placement) || CoversBeltTile(placement))
             return BuildResult.Blocked;
 
@@ -1108,6 +1128,12 @@ public sealed class World
                                               : RemoveResult.NothingThere);
         }
 
+        // Reach measured against the building's own anchor, not the clicked
+        // tile: clicking the far corner of a 3x3 you are standing beside must
+        // not refuse what clicking its near corner allows.
+        if (!InBuildReach(anchorX, anchorY) && !InBuildReach(x, y))
+            return new RemovalReport(RemoveResult.TooFar);
+
         var returned = 0;
         var voided = 0;
         var spilledBefore = BeltMap.SpilledOnRemoval;
@@ -1332,8 +1358,88 @@ public sealed class World
         return machine;
     }
 
+    /// Whether the player's hands can touch a tile. Digging, hand-loading and
+    /// hand-delivering all ask this; *looking* never does, because inspection
+    /// is not physical (ADR 0033).
+    public bool InHandReach(int x, int y) => Player.CanReachTile(x, y, Sim.Player.HandReachTiles);
+
+    public bool InHandReach(in MachinePlacement placement)
+        => Player.CanReach(placement, Sim.Player.HandReachTiles);
+
+    /// Whether the player could set something down on a tile.
+    public bool InBuildReach(int x, int y) => Player.CanReachTile(x, y, Sim.Player.BuildReachTiles);
+
+    public bool InBuildReach(in MachinePlacement placement)
+        => Player.CanReach(placement, Sim.Player.BuildReachTiles);
+
+    /// Digs a tile by hand, with the reach check and every refusal named.
+    ///
+    /// The reasons used to live in the Godot layer, which meant the one rule
+    /// that decides whether the opening of the game is playable could only be
+    /// tested by launching a renderer. They are here now: `HandOps.Mine` stays
+    /// the unchecked primitive that miners and worldgen analysis use, and this
+    /// is what a pair of hands does.
+    public DigReport TryDigByHand(int x, int y, int amount)
+    {
+        if (!Ground.TryPatchAt(x, y, out var patch))
+            return new DigReport(DigResult.NothingThere, default, 0, 0);
+
+        var remaining = Ground.Remaining(patch);
+
+        // Reach before the state of the patch: a player who cannot get to a
+        // tile has one thing to do about it, and knowing the patch under it is
+        // empty does not change that.
+        if (!InHandReach(x, y))
+            return new DigReport(DigResult.TooFar, patch.Item, remaining, 0);
+
+        if (patch.IsFluid)
+            return new DigReport(DigResult.CannotLiftFluid, patch.Item, remaining, 0);
+
+        if (remaining <= 0)
+            return new DigReport(DigResult.WorkedOut, patch.Item, 0, 0);
+
+        var dug = HandOps.Mine(Ground, x, y, PlayerInventory, amount);
+        return new DigReport(DigResult.Ok, patch.Item, remaining, dug);
+    }
+
+    /// The Uplink the player could reach out and put something into, if any.
+    /// Nearest first, so two Uplinks in reach resolve the same way every time
+    /// rather than by list order.
+    public bool TryUplinkInHandReach(out int index)
+    {
+        index = -1;
+        var best = long.MaxValue;
+
+        foreach (var candidate in _uplinks)
+        {
+            var placement = _placements[candidate];
+            if (!InHandReach(placement)) continue;
+
+            var x = Math.Clamp(Player.TileX, placement.X, placement.X + placement.Size - 1);
+            var y = Math.Clamp(Player.TileY, placement.Y, placement.Y + placement.Size - 1);
+            var distance = Player.DistanceSquaredToTile(x, y);
+
+            // Ties broken by index, so the answer does not depend on the set's
+            // enumeration order -- which is not a promise HashSet makes.
+            if (distance < best || (distance == best && candidate < index))
+            {
+                best = distance;
+                index = candidate;
+            }
+        }
+
+        return index >= 0;
+    }
+
     public void Tick()
     {
+        // The player walks first. Nothing else in the tick reads their
+        // position -- reach is only ever asked about by a player action, which
+        // happens between ticks -- so the order is a choice rather than a
+        // constraint, and the top is where a thing that nothing depends on
+        // belongs: it can never see half-advanced world state.
+        Player.Tick();
+
         // Power first: generators burn and the networks are shared out before
         // anything tries to run, so a machine's power state this tick reflects
         // this tick's generation rather than last tick's.
