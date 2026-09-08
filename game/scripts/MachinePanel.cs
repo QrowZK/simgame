@@ -423,11 +423,20 @@ public sealed partial class MachinePanel : PanelContainer
     /// The readable name for a data item id, for the Uplink's want list. The
     /// panel elsewhere names items through the world's table, which is keyed by
     /// runtime id; research speaks in data ids, so this is the other direction.
-    private static string ItemLabel(string itemId) =>
-        Sim.Data.Catalogue.Instance.Data.Items.FirstOrDefault(i => i.Id == itemId)?.Name ?? itemId;
+    private static readonly System.Collections.Generic.Dictionary<string, string> Labels =
+        Sim.Data.Catalogue.Instance.Data.Items.ToDictionary(i => i.Id, i => i.Name);
 
+    private static string ItemLabel(string itemId) => Labels.GetValueOrDefault(itemId, itemId);
+
+    /// The name a player reads, not the key the data is filed under.
+    ///
+    /// This used to hand back the item's data id, so a panel that had every
+    /// other string right still told the player they were carrying
+    /// "24 stone_deposit, 1 man_manual_crafting, 1 man_uplink". The id is what
+    /// the recipe graph is keyed by and nobody outside the code should ever see
+    /// one.
     private string ItemName(ItemId item) =>
-        _names.Count > item.Value ? _names.GetName(item) : $"#{item.Value}";
+        _names.Count > item.Value ? ItemLabel(_names.GetName(item)) : $"#{item.Value}";
 
     /// Loads exactly one cycle's worth from the player's inventory -- the
     /// smallest useful unit of hand-feeding, and the one that makes the progress

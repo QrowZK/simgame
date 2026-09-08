@@ -115,7 +115,14 @@ public sealed partial class GameRoot : Node3D
         // reads as terrain rather than as a texture.
         if (machineCount == 0)
         {
-            _rig.Position = new Vector3(NewGame.SpawnX, 0f, NewGame.SpawnY);
+            // Off the wreck, not on it. The site is nearly fifteen tiles across
+            // and it sits on the landing point, so a camera centred there fills
+            // the screen with debris and the first thing the player builds gets
+            // lost in it -- an Uplink four tiles out could not be picked out of
+            // the wreckage at all. Looking a little past it puts the wreck in
+            // the upper corner, where the eye still goes to it, and leaves the
+            // ground the guide sends you to build on clear and in frame.
+            _rig.Position = new Vector3(NewGame.SpawnX + 6f, 0f, NewGame.SpawnY + 6f);
 
             // Close enough that the first thing a player sees is a place.
             //
@@ -147,7 +154,9 @@ public sealed partial class GameRoot : Node3D
         // benchmark whose spawn is covered in machines, and a wreck under them
         // would be scenery in the middle of a measurement.
         if (_world.Research is not null)
+        {
             AddChild(new LandingSite { Name = "LandingSite" });
+        }
 
         _renderer.Sync(_world);
         _terrain.Sync(_world, _rig.Position);
