@@ -115,10 +115,16 @@ public sealed partial class GameRoot : Node3D
         {
             _rig.Position = new Vector3(NewGame.SpawnX, 0f, NewGame.SpawnY);
 
-            // Wide enough to see the lie of the land and the nearest ore --
-            // the first decision a new game asks for -- but inside the drawn
-            // tile field, so the player never sees its edge.
-            _rig.ZoomLevel = 78f;
+            // Close enough that the first thing a player sees is a place.
+            //
+            // This was 78, chosen to show "the lie of the land and the nearest
+            // ore". It showed neither: at 78 units of view a machine is eight
+            // pixels, ground detail averages into a flat sheet, and the opening
+            // frame of the game is an empty green field. The nearest ore is
+            // 12-40 tiles away and is the prospector's job to find, not the
+            // camera's -- the camera's job is to make the ground look like
+            // somewhere you are standing.
+            _rig.ZoomLevel = 30f;
         }
         else
         {
@@ -258,11 +264,40 @@ public sealed partial class GameRoot : Node3D
 
             _hud.Text = $"machines {_world.MachineCount}   tick {_world.TickCount}   " +
                         $"batches {_renderer.BatchCount}   fps {Engine.GetFramesPerSecond():0}" +
-                        power + stored + "\n" +
-                        "WASD pan   Q/E rotate   wheel zoom   click a machine to inspect   " +
-                        "B build   X remove   P survey   T objectives   R rotate   F5 save   F9 load   F1 script   Esc menu" +
+                        power + stored + "\n" + Keys() +
                         (_toastFrames > 0 ? "\n" + _toast : "");
         }
+    }
+
+
+    /// The keys worth naming *right now*.
+    ///
+    /// This line used to list all twelve bindings in the game, always, whatever
+    /// the player was doing. That is a reference card, and a reference card
+    /// pinned to the top of the screen is read once and then becomes furniture
+    /// -- while still costing a new player the width of the window to scan.
+    ///
+    /// A mode names its own exits and nothing else. Outside a mode the line
+    /// stays short enough to actually read, and the rarely-used bindings live
+    /// where they belong: on the pause menu, which is where a player goes when
+    /// they want to know what a game can do.
+    private string Keys()
+    {
+        if (_build.IsShowing)
+            return _holding is null
+                ? "pick something to build   ·   Esc  stop building"
+                : $"click a tile to place {_holding.DisplayName}   ·   R  rotate   ·   " +
+                  "Esc  stop building";
+
+        if (_removing)
+            return "click a building to take it back   ·   Esc  stop removing";
+
+        if (_survey.IsShowing) return "P  close survey";
+        if (_quests.IsShowing) return "T  close objectives";
+        if (_panel.IsShowing) return "click another machine to inspect it   ·   Esc  close";
+
+        return "WASD  pan   ·   wheel  zoom   ·   Q/E  rotate   ·   B  build   ·   " +
+               "P  survey   ·   T  objectives   ·   Esc  menu";
     }
 
     /// Headless verification: tick the sim, refill the instance buffers, and
