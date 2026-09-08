@@ -171,7 +171,8 @@ public sealed partial class GameRoot : Node3D
         if (AllArgs().Contains("--screenshot") || AllArgs().Contains("--build-shot")
             || AllArgs().Contains("--belt-shot") || AllArgs().Contains("--uplink-shot")
             || AllArgs().Contains("--survey-shot") || AllArgs().Contains("--shore-shot")
-            || AllArgs().Contains("--dig-shot") || AllArgs().Contains("--opening-shot"))
+            || AllArgs().Contains("--dig-shot") || AllArgs().Contains("--opening-shot")
+            || AllArgs().Contains("--pause-shot"))
         {
             _screenshotCountdown = 12;      // let a few frames draw first
 
@@ -196,6 +197,12 @@ public sealed partial class GameRoot : Node3D
         _poles.SyncFluids(_world);
         _drones.Sync(_world);
         _belts.Sync(_world, _renderer.TileSize);
+
+            // A capture still has to finish while the world is paused: the
+            // pause menu is itself a thing worth photographing, and arming a
+            // shot of it used to hang forever because the countdown lived past
+            // this return.
+            if (_screenshotCountdown > 0 && --_screenshotCountdown == 0) Capture();
             return;
         }
 
@@ -237,18 +244,16 @@ public sealed partial class GameRoot : Node3D
             else if (AllArgs().Contains("--survey-shot")) ShowTheSurvey();
             else if (AllArgs().Contains("--dig-shot")) DigByHandForCapture();
             else if (AllArgs().Contains("--opening-shot")) _progression.Close();
+            else if (AllArgs().Contains("--pause-shot"))
+            {
+                _progression.Close();
+                _pause.Open();
+            }
             else if (AllArgs().Contains("--shore-shot")) FrameTheShore();
             else ShowAnyRunningMachine();
         }
 
-        if (_screenshotCountdown > 0 && --_screenshotCountdown == 0)
-        {
-            var image = GetViewport().GetTexture().GetImage();
-            var path = "user://shot.png";
-            image.SavePng(path);
-            GD.Print($"screenshot {image.GetWidth()}x{image.GetHeight()} -> {ProjectSettings.GlobalizePath(path)}");
-            GetTree().Quit();
-        }
+        if (_screenshotCountdown > 0 && --_screenshotCountdown == 0) Capture();
 
         UpdateGhost();
 
@@ -297,6 +302,16 @@ public sealed partial class GameRoot : Node3D
         }
     }
 
+
+    private void Capture()
+    {
+        var image = GetViewport().GetTexture().GetImage();
+        var path = "user://shot.png";
+        image.SavePng(path);
+        GD.Print($"screenshot {image.GetWidth()}x{image.GetHeight()} -> " +
+                 ProjectSettings.GlobalizePath(path));
+        GetTree().Quit();
+    }
 
     /// The keys worth naming *right now*.
     ///
