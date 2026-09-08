@@ -64,7 +64,7 @@ public class BuildTests
 
         Give(world, "stm_furnace", 3);
 
-        Assert.Equal(BuildResult.Ok, world.TryBuild(Buildables, furnace.Item, x, y, recipe));
+        Assert.Equal(BuildResult.Ok, world.BuildStandingBy(Buildables, furnace.Item, x, y, recipe));
 
         Assert.Equal(1, world.MachineCount);
         Assert.Equal(2, world.PlayerInventory.Count(furnace.Item));
@@ -81,12 +81,12 @@ public class BuildTests
         var (x, y) = BareTile(world);
 
         Give(world, "stm_furnace", 2);
-        Assert.Equal(BuildResult.Ok, world.TryBuild(Buildables, furnace.Item, x, y, recipe));
+        Assert.Equal(BuildResult.Ok, world.BuildStandingBy(Buildables, furnace.Item, x, y, recipe));
 
         // Same tile again: blocked, and the second furnace must still be in
         // the player's pocket. A build that charges for a refusal is the
         // cruellest bug this code could have.
-        Assert.Equal(BuildResult.Blocked, world.TryBuild(Buildables, furnace.Item, x, y, recipe));
+        Assert.Equal(BuildResult.Blocked, world.BuildStandingBy(Buildables, furnace.Item, x, y, recipe));
         Assert.Equal(1, world.PlayerInventory.Count(furnace.Item));
         Assert.Equal(1, world.MachineCount);
     }
@@ -100,7 +100,7 @@ public class BuildTests
         var (x, y) = BareTile(world);
 
         Assert.Equal(BuildResult.NoneCarried,
-                     world.TryBuild(Buildables, furnace.Item, x, y, recipe));
+                     world.BuildStandingBy(Buildables, furnace.Item, x, y, recipe));
         Assert.Equal(0, world.MachineCount);
     }
 
@@ -113,7 +113,7 @@ public class BuildTests
         Give(world, "stm_furnace");
 
         Assert.Equal(BuildResult.NeedsRecipe,
-                     world.TryBuild(Buildables, furnace.Item, x, y));
+                     world.BuildStandingBy(Buildables, furnace.Item, x, y));
         Assert.Equal(1, world.PlayerInventory.Count(furnace.Item));
     }
 
@@ -130,7 +130,7 @@ public class BuildTests
 
         Give(world, "stm_furnace");
         Assert.Equal(BuildResult.NeedsRecipe,
-                     world.TryBuild(Buildables, furnace.Item, x, y, foreign));
+                     world.BuildStandingBy(Buildables, furnace.Item, x, y, foreign));
         Assert.Equal(0, world.MachineCount);
     }
 
@@ -142,7 +142,7 @@ public class BuildTests
         var (x, y) = BareTile(world);
 
         Give(world, "stone_deposit", 50);
-        Assert.Equal(BuildResult.NotBuildable, world.TryBuild(Buildables, stone, x, y));
+        Assert.Equal(BuildResult.NotBuildable, world.BuildStandingBy(Buildables, stone, x, y));
     }
 
     /// A splitter is one tile with a facing, and costs the item like anything
@@ -157,12 +157,12 @@ public class BuildTests
         Give(world, "vlt_splitter", 5);
         Assert.Equal(BuildKind.Splitter, splitter.Kind);
         Assert.Equal(BuildResult.Ok,
-                     world.TryBuild(Buildables, splitter.Item, x, y, facing: Direction.East));
+                     world.BuildStandingBy(Buildables, splitter.Item, x, y, facing: Direction.East));
         Assert.Equal(4, world.PlayerInventory.Count(splitter.Item));
 
         // And it is a thing on the map, so nothing else can go on top of it.
         Assert.Equal(BuildResult.Blocked,
-                     world.TryBuild(Buildables, splitter.Item, x, y, facing: Direction.East));
+                     world.BuildStandingBy(Buildables, splitter.Item, x, y, facing: Direction.East));
         Assert.Equal(4, world.PlayerInventory.Count(splitter.Item));
     }
 
@@ -186,16 +186,16 @@ public class BuildTests
         Assert.Equal(12, Get("qnt_underground_belt").UndergroundReach);
 
         Assert.Equal(BuildResult.Ok,
-                     world.TryBuild(Buildables, under.Item, x, y, facing: Direction.East));
+                     world.BuildStandingBy(Buildables, under.Item, x, y, facing: Direction.East));
 
         // One past the reach: refused, and the item stays in the bag.
         Assert.Equal(BuildResult.TooFarToTunnel,
-                     world.TryBuild(Buildables, under.Item, x + 5, y, facing: Direction.East));
+                     world.BuildStandingBy(Buildables, under.Item, x + 5, y, facing: Direction.East));
         Assert.Equal(3, world.PlayerInventory.Count(under.Item));
 
         // Exactly at the reach: the pair completes.
         Assert.Equal(BuildResult.Ok,
-                     world.TryBuild(Buildables, under.Item, x + 4, y, facing: Direction.East));
+                     world.BuildStandingBy(Buildables, under.Item, x + 4, y, facing: Direction.East));
         Assert.Equal(2, world.PlayerInventory.Count(under.Item));
 
         world.SyncBelts();
@@ -214,11 +214,11 @@ public class BuildTests
 
         Give(world, "stm_miner", 2);
         Assert.Equal(BuildResult.NoResource,
-                     world.TryBuild(Buildables, miner.Item, bareX, bareY));
+                     world.BuildStandingBy(Buildables, miner.Item, bareX, bareY));
         Assert.Equal(2, world.PlayerInventory.Count(miner.Item));
 
         var (oreX, oreY) = FindOre(world);
-        Assert.Equal(BuildResult.Ok, world.TryBuild(Buildables, miner.Item, oreX, oreY));
+        Assert.Equal(BuildResult.Ok, world.BuildStandingBy(Buildables, miner.Item, oreX, oreY));
         Assert.Single(world.Miners);
         Assert.Equal(1, world.PlayerInventory.Count(miner.Item));
     }
@@ -232,7 +232,7 @@ public class BuildTests
         var (x, y) = BareTile(world);
 
         Give(world, "stm_pole");
-        Assert.Equal(BuildResult.Ok, world.TryBuild(Buildables, steam.Item, x, y));
+        Assert.Equal(BuildResult.Ok, world.BuildStandingBy(Buildables, steam.Item, x, y));
 
         Assert.Single(world.Power.Poles);
         Assert.Equal(steam.PoleSupplyRadius, world.Power.Poles[0].SupplyRadius);
@@ -259,7 +259,7 @@ public class BuildTests
         Assert.Equal(1, world.PlayerInventory.Count(bench.Item));
 
         var recipe = Buildables.RecipesFor(bench)[0];
-        Assert.Equal(BuildResult.Ok, world.TryBuild(Buildables, bench.Item, x, y, recipe));
+        Assert.Equal(BuildResult.Ok, world.BuildStandingBy(Buildables, bench.Item, x, y, recipe));
         Assert.Equal(0, world.PlayerInventory.Count(bench.Item));
         Assert.Equal(1, world.MachineCount);
     }
@@ -303,10 +303,10 @@ public class BuildTests
         Give(world, "stm_pole", 2);
         Give(world, "stm_furnace");
 
-        Assert.Equal(BuildResult.Ok, world.TryBuild(Buildables, pole.Item, x, y));
-        Assert.Equal(BuildResult.Blocked, world.TryBuild(Buildables, pole.Item, x, y));
+        Assert.Equal(BuildResult.Ok, world.BuildStandingBy(Buildables, pole.Item, x, y));
+        Assert.Equal(BuildResult.Blocked, world.BuildStandingBy(Buildables, pole.Item, x, y));
         Assert.Equal(BuildResult.Blocked,
-                     world.TryBuild(Buildables, furnace.Item, x, y, recipe));
+                     world.BuildStandingBy(Buildables, furnace.Item, x, y, recipe));
 
         Assert.Single(world.Power.Poles);
         Assert.Equal(0, world.MachineCount);
@@ -333,7 +333,7 @@ public class BuildTests
         Give(world, "stm_generator", 2);
         Give(world, "stm_accumulator");
 
-        Assert.Equal(BuildResult.Ok, world.TryBuild(Buildables, furnace.Item, x, y, recipe));
+        Assert.Equal(BuildResult.Ok, world.BuildStandingBy(Buildables, furnace.Item, x, y, recipe));
         var machine = world.Machines[0];
         foreach (var input in recipe.Inputs)
             machine.PushInput(input.Item, 1000);
@@ -342,10 +342,10 @@ public class BuildTests
         world.Tick(120);
         Assert.Equal(MachineState.Unpowered, machine.State);
 
-        Assert.Equal(BuildResult.Ok, world.TryBuild(Buildables, Get("stm_pole").Item, x + 1, y));
-        Assert.Equal(BuildResult.Ok, world.TryBuild(Buildables, Get("stm_generator").Item, x + 2, y));
-        Assert.Equal(BuildResult.Ok, world.TryBuild(Buildables, Get("stm_generator").Item, x + 3, y));
-        Assert.Equal(BuildResult.Ok, world.TryBuild(Buildables, Get("stm_accumulator").Item, x + 4, y));
+        Assert.Equal(BuildResult.Ok, world.BuildStandingBy(Buildables, Get("stm_pole").Item, x + 1, y));
+        Assert.Equal(BuildResult.Ok, world.BuildStandingBy(Buildables, Get("stm_generator").Item, x + 2, y));
+        Assert.Equal(BuildResult.Ok, world.BuildStandingBy(Buildables, Get("stm_generator").Item, x + 3, y));
+        Assert.Equal(BuildResult.Ok, world.BuildStandingBy(Buildables, Get("stm_accumulator").Item, x + 4, y));
 
         foreach (var generator in world.Power.Generators) generator.AddFuel(100);
         world.Tick(600);
@@ -369,10 +369,10 @@ public class BuildTests
         Give(world, "stm_pipe", 2);
         Give(world, "stm_furnace");
 
-        Assert.Equal(BuildResult.Ok, world.TryBuild(Buildables, pipe.Item, x, y));
-        Assert.Equal(BuildResult.Blocked, world.TryBuild(Buildables, pipe.Item, x, y));
+        Assert.Equal(BuildResult.Ok, world.BuildStandingBy(Buildables, pipe.Item, x, y));
+        Assert.Equal(BuildResult.Blocked, world.BuildStandingBy(Buildables, pipe.Item, x, y));
         Assert.Equal(BuildResult.Blocked,
-                     world.TryBuild(Buildables, furnace.Item, x, y, recipe));
+                     world.BuildStandingBy(Buildables, furnace.Item, x, y, recipe));
 
         Assert.Equal(1, world.PlayerInventory.Count(pipe.Item));
         Assert.Equal(1, world.PlayerInventory.Count(furnace.Item));
@@ -393,12 +393,12 @@ public class BuildTests
         world.PlayerInventory.Add(big!.Item, 1);
         Give(world, "stm_pole", 1);
 
-        Assert.Equal(BuildResult.Ok, world.TryBuild(Buildables, big.Item, x, y, recipe));
+        Assert.Equal(BuildResult.Ok, world.BuildStandingBy(Buildables, big.Item, x, y, recipe));
 
         // The far corner of the footprint, which a corner-only occupancy check
         // would happily let a pole sit on top of.
         Assert.Equal(BuildResult.Blocked,
-                     world.TryBuild(Buildables, pole.Item, x + big.Size - 1, y + big.Size - 1));
+                     world.BuildStandingBy(Buildables, pole.Item, x + big.Size - 1, y + big.Size - 1));
         Assert.Equal(1, world.PlayerInventory.Count(pole.Item));
     }
 

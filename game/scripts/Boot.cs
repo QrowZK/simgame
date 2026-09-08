@@ -170,7 +170,8 @@ public sealed partial class Boot : Node
         var ore = default(Sim.ItemId);
         for (var i = 0; i < hits.Count && dug == 0; i++)
         {
-            dug = Sim.HandOps.Mine(world.Ground, hits[i].X, hits[i].Y, world.PlayerInventory, 40);
+            Sim.Walk.To(world, hits[i].X, hits[i].Y);
+            dug = world.TryDigByHand(hits[i].X, hits[i].Y, 40).Taken;
             if (dug > 0) ore = hits[i].Item;
         }
         Stage($"mining {dug} by hand");
@@ -182,11 +183,22 @@ public sealed partial class Boot : Node
             : catalogue.RecipesFor(uplink, world.Research).FirstOrDefault();
 
         var placed = Sim.BuildResult.NoneCarried;
+        var (uplinkX, uplinkY) = (0, 2);
         for (var d = 2; d < 60 && placed != Sim.BuildResult.Ok && uplink is not null; d++)
+        {
+            Sim.Walk.To(world, d, 2);
             placed = world.TryBuild(catalogue, uplink.Item, d, 2, uplinkRecipe!);
+            if (placed == Sim.BuildResult.Ok) (uplinkX, uplinkY) = (d, 2);
+        }
+
+        // Delivering is a thing you do with your hands, so every delivery below
+        // is preceded by the walk back to the lander. That walk is the whole
+        // reason the Uplink's siting is a decision (ADR 0033).
+        void AtTheUplink() => Sim.Walk.To(world, uplinkX, uplinkY);
         Stage($"placing the Uplink ({placed})");
 
         // 3. Hand it one ore. This is the whole research loop, once.
+        AtTheUplink();
         var first = world.DeliverByHand(ore, 1);
         Stage($"delivering 1 ore ({first.Accepted} taken)");
 
@@ -199,18 +211,23 @@ public sealed partial class Boot : Node
         {
             var recipe = catalogue.RecipesFor(furnace, world.Research).FirstOrDefault();
             for (var d = 2; d < 60; d++)
+            {
+                Sim.Walk.To(world, d, 6, Sim.Player.BuildReachTiles);
                 if (world.TryBuild(catalogue, furnace.Item, d, 6, recipe!) == Sim.BuildResult.Ok)
                     break;
+            }
         }
         Stage("placing the Manual Furnace");
 
         if (world.Items.TryGetId("copper_ingot", out var ingot))
         {
             world.PlayerInventory.Add(ingot, 3);
+            AtTheUplink();
             world.DeliverByHand(ingot, 3);
             Stage("delivering 3 ingots");
 
             world.PlayerInventory.Add(ingot, 6);
+            AtTheUplink();
             world.DeliverByHand(ingot, 6);
             Stage("delivering 6 ingots");
         }
@@ -358,8 +375,17 @@ public sealed partial class Boot : Node
         var name = world.Items.GetName(hit.Item);
         var before = world.Ground.RemainingAt(hit.X, hit.Y);
 
-        var dug = Sim.HandOps.Mine(world.Ground, hit.X, hit.Y, world.PlayerInventory, 25);
+        // Reach is real now (ADR 0033), so the ore has to be walked to before
+        // it can be dug -- and the walk is worth reporting, because "how long
+        // is the opening walk" is the number that decides whether the first
+        // minute of the game is a stroll or a chore.
+        var refusedFromSpawn = world.TryDigByHand(hit.X, hit.Y, 25).Result;
+        var walked = Sim.Walk.To(world, hit.X, hit.Y);
+        var dug = world.TryDigByHand(hit.X, hit.Y, 25).Taken;
+
         GD.Print($"nearest ore     {name} at {hit.X},{hit.Y} ({hit.Distance} tiles), {before} units");
+        GD.Print($"from spawn      {refusedFromSpawn} (digging it without walking)");
+        GD.Print($"walked          {walked} ticks ({walked / 60.0:0.0} s) to stand on it");
         GD.Print($"hand mined      {dug}");
 
         var miner = world.TryPlaceMiner(
@@ -483,6 +509,7 @@ public sealed partial class Boot : Node
         var tunnel = catalogue.Find("vlt_underground_belt")!;
         var band = tunnel.UndergroundReach + 1;
         world.PlayerInventory.Add(tunnel.Item, 2);
+        Sim.Walk.To(world, 200 + band / 2, 0);
         var entrance = world.TryBuild(catalogue, tunnel.Item, 200, 0, null, Sim.Direction.East);
         var refused = world.TryBuild(catalogue, tunnel.Item, 200 + band, 0, null,
                                      Sim.Direction.East);
@@ -540,6 +567,7 @@ public sealed partial class Boot : Node
             .Scan(world.Ground.Gen, 0, 0)
             .FirstOrDefault(h => world.Items.GetName(h.Item) == "chalcopyrite");
 
+        Sim.Walk.To(world, patch.X, patch.Y);
         var built = world.TryBuild(buildables, data.Item("stm_miner"), patch.X, patch.Y);
         GD.Print($"miner placed    {built}");
 
@@ -589,13 +617,17 @@ public sealed partial class Boot : Node
         const int y = 60;
         var laid = 0;
         for (var x = 0; x < 8; x++)
+        {
+            Sim.Walk.To(world, x, y, Sim.Player.BuildReachTiles);
             if (world.TryBuild(buildables, belt.Item, x, y, facing: Sim.Direction.East)
                 == Sim.BuildResult.Ok) laid++;
+        }
 
         // The arm stands at (7, y-1) facing north: it reaches back to the belt
         // tile at (7, y) and forward into the furnace at (7, y-2). Getting this
         // wrong is silent -- the inserter simply holds an item forever -- which
         // is why the check below is "did ore arrive" and not "did it build".
+        Sim.Walk.To(world, 7, y - 2, Sim.Player.BuildReachTiles);
         var machineBuilt = world.TryBuild(buildables, furnace.Item, 7, y - 2, recipe);
         var armBuilt = world.TryBuild(buildables, inserter.Item, 7, y - 1,
                                       facing: Sim.Direction.North);

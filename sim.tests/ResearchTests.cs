@@ -60,6 +60,11 @@ public class ResearchTests
 
     private static void Hand(World world, string item, int count)
     {
+        // A hand delivery needs an Uplink you can touch (ADR 0033). Before
+        // reach existed these tests credited research on a map with no Uplink
+        // anywhere on it, which the premise says is impossible.
+        world.StandByAnUplink(new BuildCatalogue(Data));
+
         var id = Data.Item(item);
         world.PlayerInventory.Add(id, count);
         Assert.Equal(count, world.DeliverByHand(id, count).Accepted);
@@ -154,7 +159,7 @@ public class ResearchTests
         world.PlayerInventory.Add(furnace.Item, gated.Count);
         var x = 60;
         foreach (var recipe in gated)
-            Assert.Equal(BuildResult.Ok, world.TryBuild(Buildables, furnace.Item, x += 2, 60, recipe));
+            Assert.Equal(BuildResult.Ok, world.BuildStandingBy(Buildables, furnace.Item, x += 2, 60, recipe));
     }
 
     /// A machine every one of whose recipes is locked is not offered at all.
@@ -192,7 +197,7 @@ public class ResearchTests
         var steam = Buildables.RecipesFor(furnace).First(r => !world.Research!.IsUnlocked(r));
         world.PlayerInventory.Add(furnace.Item, 1);
 
-        Assert.Equal(BuildResult.NotResearched, world.TryBuild(Buildables, furnace.Item, 40, 40, steam));
+        Assert.Equal(BuildResult.NotResearched, world.BuildStandingBy(Buildables, furnace.Item, 40, 40, steam));
 
         // Refused builds cost nothing -- the same invariant every other refusal
         // holds, and the one a gate is most likely to break.
@@ -209,7 +214,7 @@ public class ResearchTests
         var world = NewWorld();
         var bench = Buildables.Find("man_manual_crafting")!;
         var first = Buildables.RecipesFor(bench, world.Research)[0];
-        Assert.Equal(BuildResult.Ok, world.TryBuild(Buildables, bench.Item, 40, 40, first));
+        Assert.Equal(BuildResult.Ok, world.BuildStandingBy(Buildables, bench.Item, 40, 40, first));
 
         // A recipe this bench could physically run, at a tier it has not
         // reached. Manual crafting exists only at MAN, so use a furnace instead.
@@ -217,7 +222,7 @@ public class ResearchTests
         world.Research!.UnlockAll();
         world.PlayerInventory.Add(furnace.Item, 1);
         var steam = Buildables.RecipesFor(furnace).First(r => r.Id.StartsWith("smelt_"));
-        Assert.Equal(BuildResult.Ok, world.TryBuild(Buildables, furnace.Item, 44, 44, steam));
+        Assert.Equal(BuildResult.Ok, world.BuildStandingBy(Buildables, furnace.Item, 44, 44, steam));
 
         // Now lock it all again and try to move that furnace onto another of
         // its own recipes.
@@ -378,9 +383,12 @@ public class ResearchTests
 
         Assert.Equal(Research.UplinkRecipe, recipe.Id);
         Assert.Equal(1, world.PlayerInventory.Count(uplink.Item));
-        Assert.Equal(BuildResult.Ok, world.TryBuild(Buildables, uplink.Item, 40, 40, recipe));
+        Assert.Equal(BuildResult.Ok, world.BuildStandingBy(Buildables, uplink.Item, 40, 40, recipe));
 
-        var machine = world.Machines[0];
+        // The one just placed, not machine 0: walking the opening ladder now
+        // has to stand an Uplink somewhere too, so index 0 is that one.
+        var index0 = world.MachineCount - 1;
+        var machine = world.Machines[index0];
         machine.PushInput(Data.Item("stm_machine_hull"), 2);
 
         Assert.False(world.Research!.IsTechUnlocked("tech_stm_metallurgy"));
@@ -392,8 +400,8 @@ public class ResearchTests
 
         // And a 2x2 Uplink covers four tiles, so a belt can reach it from any
         // of them -- which is what makes feeding it by belt possible at all.
-        Assert.Equal(2, world.PlacementOf(0).Size);
-        Assert.True(world.TryMachineAt(41, 41, out _, out var index) && index == 0);
+        Assert.Equal(2, world.PlacementOf(index0).Size);
+        Assert.True(world.TryMachineAt(41, 41, out _, out var index) && index == index0);
     }
 
     /// What no objective wants stays in the hopper rather than vanishing. A
@@ -405,7 +413,7 @@ public class ResearchTests
         var world = NewWorld();
         var uplink = Buildables.Find("man_uplink")!;
         var recipe = Buildables.RecipesFor(uplink, world.Research).Single();
-        Assert.Equal(BuildResult.Ok, world.TryBuild(Buildables, uplink.Item, 40, 40, recipe));
+        Assert.Equal(BuildResult.Ok, world.BuildStandingBy(Buildables, uplink.Item, 40, 40, recipe));
 
         var ingot = Data.Item("iron_ingot");
         world.Machines[0].PushInput(ingot, 7);
@@ -423,7 +431,7 @@ public class ResearchTests
         var world = NewWorld();
         CompleteTheOpening(world);
         var uplink = Buildables.Find("man_uplink")!;
-        Assert.Equal(BuildResult.Ok, world.TryBuild(Buildables, uplink.Item, 40, 40,
+        Assert.Equal(BuildResult.Ok, world.BuildStandingBy(Buildables, uplink.Item, 40, 40,
                                                     Buildables.RecipesFor(uplink, world.Research).Single()));
 
         world.Tick(600);

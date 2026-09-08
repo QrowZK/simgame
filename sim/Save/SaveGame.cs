@@ -38,6 +38,10 @@ public static class SaveGame
             Seed = world.Seed,
             Tick = world.TickCount,
             Items = world.Items.Names.ToList(),
+            PlayerX = world.Player.X,
+            PlayerY = world.Player.Y,
+            PlayerFacingX = world.Player.FacingX,
+            PlayerFacingY = world.Player.FacingY,
         };
 
         foreach (var (item, count) in world.PlayerInventory.Contents.OrderBy(kv => kv.Key.Value))
@@ -382,6 +386,9 @@ public static class SaveGame
         world.Ground.Restore(save.Depletion.Select(d => (d.X, d.Y, d.Taken)));
 
         world.PlayerInventory.Restore(save.Player.Select(s => (Item(s.Item, save), s.Count)).ToList());
+
+        world.Player.Restore(save.PlayerX, save.PlayerY,
+                             save.PlayerFacingX, save.PlayerFacingY);
 
         foreach (var entry in save.Machines)
             RestoreMachine(world, entry, recipes, save);

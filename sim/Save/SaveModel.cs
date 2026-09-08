@@ -66,7 +66,23 @@ public sealed class SaveFile
     /// belt and the inserter away from a player who had already earned them.
     /// It also carries `UnattendedDeliveries`, which is progress rather than
     /// derived state and cannot be recovered from anything else in the file.
-    public const int CurrentVersion = 13;
+    /// 14 added where the player is standing (ADR 0033). Until now there was
+    /// no player: the camera was the pocket, and everything the game's own text
+    /// promised about walking to a patch was a lie. A version 13 file has no
+    /// position in it, so loading one as 14 would put the player back at the
+    /// origin -- which after twenty hours is the middle of a factory, standing
+    /// inside whatever has been built there since, and a hundred tiles from the
+    /// ore patch they saved beside. With reach, that is not a cosmetic wrong
+    /// place: it is a save that reloads unable to touch the machine it was
+    /// saved working on, which is exactly the quiet wrongness the version
+    /// number exists to refuse.
+    ///
+    /// What 14 deliberately does *not* store is the movement intent. A world
+    /// reloaded stands still whatever was held down when it was written, so the
+    /// save describes the world rather than the keyboard. Byte-identical
+    /// round-tripping therefore holds for a stopped player and, for a walking
+    /// one, holds for the position and not for the walk.
+    public const int CurrentVersion = 14;
 
     public int Version { get; set; } = CurrentVersion;
     public int Seed { get; set; }
@@ -78,6 +94,15 @@ public sealed class SaveFile
     public List<string> Items { get; set; } = new();
 
     public List<StackSave> Player { get; set; } = new();
+
+    /// The player's feet in milli-tiles, and the direction they last walked.
+    /// Raw fixed-point rather than a tile, because a tile is lossy: saving
+    /// mid-stride and reloading would snap you to the tile centre, which over a
+    /// long game is a save that quietly moves you.
+    public int PlayerX { get; set; }
+    public int PlayerY { get; set; }
+    public int PlayerFacingX { get; set; }
+    public int PlayerFacingY { get; set; } = 1;
 
     /// Which item paid for the building anchored on each tile. Written in
     /// coordinate order rather than in build order, so the same world saved

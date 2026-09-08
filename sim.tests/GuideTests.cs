@@ -374,7 +374,7 @@ public class GuideTests
     {
         var uplink = Buildables.Find("man_uplink")!;
         var recipe = Buildables.RecipesFor(uplink, world.Research).Single();
-        Assert.Equal(BuildResult.Ok, world.TryBuild(Buildables, uplink.Item, x, y, recipe));
+        Assert.Equal(BuildResult.Ok, world.BuildStandingBy(Buildables, uplink.Item, x, y, recipe));
         return world.MachineCount - 1;
     }
 
@@ -386,7 +386,7 @@ public class GuideTests
         var smelt = Buildables.RecipesFor(furnace, world.Research)
                               .Single(r => r.Inputs.Any(i => i.Item.Equals(ore)));
 
-        Assert.Equal(BuildResult.Ok, world.TryBuild(Buildables, furnace.Item, x, y, smelt));
+        Assert.Equal(BuildResult.Ok, world.BuildStandingBy(Buildables, furnace.Item, x, y, smelt));
         return world.MachineCount - 1;
     }
 

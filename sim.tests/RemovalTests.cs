@@ -78,7 +78,7 @@ public class RemovalTests
         var furnace = Get("man_furnace");
         var recipe = Data.Recipe("smelt_chalcopyrite");
         Give(world, "man_furnace");
-        Assert.Equal(BuildResult.Ok, world.TryBuild(Buildables, furnace.Item, 0, 0, recipe));
+        Assert.Equal(BuildResult.Ok, world.BuildStandingBy(Buildables, furnace.Item, 0, 0, recipe));
 
         var machine = world.Machines[0];
         var ore = Data.Item("chalcopyrite");
@@ -98,7 +98,7 @@ public class RemovalTests
         var carriedOre = world.PlayerInventory.Count(ore);
         var carriedIngot = world.PlayerInventory.Count(ingot);
 
-        var report = world.TryRemove(0, 0);
+        var report = world.RemoveStandingBy(0, 0);
 
         Assert.Equal(RemoveResult.Ok, report.Result);
         Assert.Equal(furnace.Item, report.Item);
@@ -126,7 +126,7 @@ public class RemovalTests
         var furnace = Get("man_furnace");
         var recipe = Data.Recipe("smelt_chalcopyrite");
         Give(world, "man_furnace");
-        Assert.Equal(BuildResult.Ok, world.TryBuild(Buildables, furnace.Item, 0, 0, recipe));
+        Assert.Equal(BuildResult.Ok, world.BuildStandingBy(Buildables, furnace.Item, 0, 0, recipe));
 
         var machine = world.Machines[0];
         machine.PushInput(Data.Item("chalcopyrite"), 5);
@@ -145,7 +145,7 @@ public class RemovalTests
                 : 0);
 
         var before = Total();
-        Assert.True(world.TryRemove(0, 0).Ok);
+        Assert.True(world.RemoveStandingBy(0, 0).Ok);
         Assert.Equal(before, Total());
     }
 
@@ -163,11 +163,11 @@ public class RemovalTests
 
         Give(world, "stm_furnace", 3);
         foreach (var (tx, ty) in new[] { first, second, third })
-            Assert.Equal(BuildResult.Ok, world.TryBuild(Buildables, furnace.Item, tx, ty, recipe));
+            Assert.Equal(BuildResult.Ok, world.BuildStandingBy(Buildables, furnace.Item, tx, ty, recipe));
 
         var survivor = world.Machines[2];
 
-        Assert.True(world.TryRemove(0 + first.Item1, first.Item2).Ok);
+        Assert.True(world.RemoveStandingBy(0 + first.Item1, first.Item2).Ok);
 
         Assert.Equal(2, world.MachineCount);
 
@@ -199,18 +199,18 @@ public class RemovalTests
         Give(world, "man_uplink");
         Give(world, "stm_furnace");
 
-        Assert.Equal(BuildResult.Ok, world.TryBuild(Buildables, furnace.Item, x, y, furnaceRecipe));
+        Assert.Equal(BuildResult.Ok, world.BuildStandingBy(Buildables, furnace.Item, x, y, furnaceRecipe));
         Assert.Equal(BuildResult.Ok,
-                     world.TryBuild(Buildables, uplink.Item, x + 8, y, recipe));
+                     world.BuildStandingBy(Buildables, uplink.Item, x + 8, y, recipe));
         Assert.Equal(new[] { 1 }, world.Uplinks.OrderBy(i => i).ToArray());
 
         // Removing the furnace moves the Uplink from slot 1 to slot 0. If the
         // registration did not move with it, an ordinary furnace built later
         // would be drained into research every tick.
-        Assert.True(world.TryRemove(x, y).Ok);
+        Assert.True(world.RemoveStandingBy(x, y).Ok);
         Assert.Equal(new[] { 0 }, world.Uplinks.OrderBy(i => i).ToArray());
 
-        Assert.True(world.TryRemove(x + 8, y).Ok);
+        Assert.True(world.RemoveStandingBy(x + 8, y).Ok);
         Assert.Empty(world.Uplinks);
     }
 
@@ -223,7 +223,7 @@ public class RemovalTests
         var (x, y) = BareTile(world);
         var carried = world.PlayerInventory.Contents.Count;
 
-        var report = world.TryRemove(x, y);
+        var report = world.RemoveStandingBy(x, y);
 
         Assert.Equal(RemoveResult.NothingThere, report.Result);
         Assert.Equal(0, report.Returned);
@@ -242,7 +242,7 @@ public class RemovalTests
         // does: no item was ever spent, so there is nothing to hand back.
         world.TryPlaceMachine(recipe, furnace.PlacementAt(x, y));
 
-        var report = world.TryRemove(x, y);
+        var report = world.RemoveStandingBy(x, y);
 
         Assert.Equal(RemoveResult.UnknownBuilding, report.Result);
         Assert.Equal(1, world.MachineCount);
@@ -267,13 +267,13 @@ public class RemovalTests
 
             Give(world, "vlt_underground_belt", 2);
             Assert.Equal(BuildResult.Ok,
-                         world.TryBuild(Buildables, tunnel.Item, 100, 0, null, Direction.East));
+                         world.BuildStandingBy(Buildables, tunnel.Item, 100, 0, null, Direction.East));
 
             Assert.Equal(BuildResult.TooFarToTunnel,
-                         world.TryBuild(Buildables, tunnel.Item, 100 + ahead, 0, null,
+                         world.BuildStandingBy(Buildables, tunnel.Item, 100 + ahead, 0, null,
                                         Direction.East));
 
-            var report = world.TryRemove(100, 0);
+            var report = world.RemoveStandingBy(100, 0);
             Assert.Equal(RemoveResult.Ok, report.Result);
             Assert.Equal(2, world.PlayerInventory.Count(tunnel.Item));
             Assert.False(world.BeltMap.HasAnythingAt(100, 0));
@@ -281,7 +281,7 @@ public class RemovalTests
             // The whole point: the tile that was permanently unbuildable now
             // takes an end, as a fresh entrance.
             Assert.Equal(BuildResult.Ok,
-                         world.TryBuild(Buildables, tunnel.Item, 100 + ahead, 0, null,
+                         world.BuildStandingBy(Buildables, tunnel.Item, 100 + ahead, 0, null,
                                         Direction.East));
             Assert.True(world.BeltMap.HasUndergroundAt(100 + ahead, 0));
             Assert.Equal(1, world.PlayerInventory.Count(tunnel.Item));
@@ -296,20 +296,20 @@ public class RemovalTests
         Give(world, "vlt_underground_belt", 3);
 
         Assert.Equal(BuildResult.Ok,
-                     world.TryBuild(Buildables, tunnel.Item, 10, 10, null, Direction.East));
+                     world.BuildStandingBy(Buildables, tunnel.Item, 10, 10, null, Direction.East));
         Assert.Equal(BuildResult.Ok,
-                     world.TryBuild(Buildables, tunnel.Item, 13, 10, null, Direction.East));
+                     world.BuildStandingBy(Buildables, tunnel.Item, 13, 10, null, Direction.East));
         world.SyncBelts();
         Assert.True(world.BeltMap.PartnerOf(0) >= 0);
 
         // Pull up the exit. The entrance must go back to being unpaired, which
         // is what lets a new exit complete it.
-        Assert.True(world.TryRemove(13, 10).Ok);
+        Assert.True(world.RemoveStandingBy(13, 10).Ok);
         world.SyncBelts();
         Assert.Equal(-1, world.BeltMap.PartnerOf(0));
 
         Assert.Equal(BuildResult.Ok,
-                     world.TryBuild(Buildables, tunnel.Item, 14, 10, null, Direction.East));
+                     world.BuildStandingBy(Buildables, tunnel.Item, 14, 10, null, Direction.East));
         world.SyncBelts();
         Assert.Equal(1, world.BeltMap.PartnerOf(0));
     }
@@ -325,7 +325,7 @@ public class RemovalTests
 
         for (var i = 0; i < 6; i++)
             Assert.Equal(BuildResult.Ok,
-                         world.TryBuild(Buildables, belt.Item, 20 + i, 5, null, Direction.East));
+                         world.BuildStandingBy(Buildables, belt.Item, 20 + i, 5, null, Direction.East));
 
         world.SyncBelts();
         Assert.Single(world.Belts.Segments);
@@ -346,7 +346,7 @@ public class RemovalTests
         // are on the exit tile 25,5 and the last two -- one of them the coal --
         // are on 24,5.
         var spilledBefore = world.BeltMap.SpilledOnRemoval;
-        var report = world.TryRemove(24, 5);
+        var report = world.RemoveStandingBy(24, 5);
 
         Assert.Equal(RemoveResult.Ok, report.Result);
         Assert.Equal(belt.Item, report.Item);
@@ -382,13 +382,13 @@ public class RemovalTests
 
         // belt, entrance, three buried tiles, exit, belt.
         Assert.Equal(BuildResult.Ok,
-                     world.TryBuild(Buildables, belt.Item, 40, 9, null, Direction.East));
+                     world.BuildStandingBy(Buildables, belt.Item, 40, 9, null, Direction.East));
         Assert.Equal(BuildResult.Ok,
-                     world.TryBuild(Buildables, tunnel.Item, 41, 9, null, Direction.East));
+                     world.BuildStandingBy(Buildables, tunnel.Item, 41, 9, null, Direction.East));
         Assert.Equal(BuildResult.Ok,
-                     world.TryBuild(Buildables, tunnel.Item, 45, 9, null, Direction.East));
+                     world.BuildStandingBy(Buildables, tunnel.Item, 45, 9, null, Direction.East));
         Assert.Equal(BuildResult.Ok,
-                     world.TryBuild(Buildables, belt.Item, 46, 9, null, Direction.East));
+                     world.BuildStandingBy(Buildables, belt.Item, 46, 9, null, Direction.East));
         world.SyncBelts();
 
         var ore = Data.Item("magnetite");
@@ -409,7 +409,7 @@ public class RemovalTests
         while (past.TryPack(coal)) untouched++;
         Assert.Equal(4, untouched);
 
-        var report = world.TryRemove(41, 9);
+        var report = world.RemoveStandingBy(41, 9);
 
         Assert.Equal(RemoveResult.Ok, report.Result);
 
@@ -440,16 +440,16 @@ public class RemovalTests
 
         for (var i = 0; i < 4; i++)
             Assert.Equal(BuildResult.Ok,
-                         world.TryBuild(Buildables, belt.Item, 60 + i, 3, null, Direction.East));
+                         world.BuildStandingBy(Buildables, belt.Item, 60 + i, 3, null, Direction.East));
 
         // Facing north out of the second tile: the inserter reads it, which
         // forces a segment boundary there.
         Assert.Equal(BuildResult.Ok,
-                     world.TryBuild(Buildables, inserter.Item, 61, 2, null, Direction.North));
+                     world.BuildStandingBy(Buildables, inserter.Item, 61, 2, null, Direction.North));
         world.SyncBelts();
         Assert.Equal(2, world.Belts.Segments.Count);
 
-        Assert.True(world.TryRemove(61, 2).Ok);
+        Assert.True(world.RemoveStandingBy(61, 2).Ok);
         world.SyncBelts();
 
         // A long belt is one segment. Freeing the tiles the inserter read is
@@ -471,12 +471,12 @@ public class RemovalTests
         // Three in a line, each within wire reach of the next but not of the
         // far one, so the middle pole is the only thing joining the two ends.
         var span = pole.PoleWireRadius;
-        Assert.Equal(BuildResult.Ok, world.TryBuild(Buildables, pole.Item, 0, 40));
-        Assert.Equal(BuildResult.Ok, world.TryBuild(Buildables, pole.Item, span, 40));
-        Assert.Equal(BuildResult.Ok, world.TryBuild(Buildables, pole.Item, span * 2, 40));
+        Assert.Equal(BuildResult.Ok, world.BuildStandingBy(Buildables, pole.Item, 0, 40));
+        Assert.Equal(BuildResult.Ok, world.BuildStandingBy(Buildables, pole.Item, span, 40));
+        Assert.Equal(BuildResult.Ok, world.BuildStandingBy(Buildables, pole.Item, span * 2, 40));
         Assert.Equal(1, world.Power.NetworkCount);
 
-        var report = world.TryRemove(span, 40);
+        var report = world.RemoveStandingBy(span, 40);
 
         Assert.Equal(RemoveResult.Ok, report.Result);
         Assert.Equal(2, world.Power.Poles.Count);
@@ -501,8 +501,8 @@ public class RemovalTests
         Give(world, "stm_pole");
 
         var (x, y) = BareTile(world);
-        Assert.Equal(BuildResult.Ok, world.TryBuild(Buildables, generator.Item, x, y));
-        Assert.Equal(BuildResult.Ok, world.TryBuild(Buildables, pole.Item, x + 1, y));
+        Assert.Equal(BuildResult.Ok, world.BuildStandingBy(Buildables, generator.Item, x, y));
+        Assert.Equal(BuildResult.Ok, world.BuildStandingBy(Buildables, pole.Item, x + 1, y));
 
         var coal = Data.Item("coal_deposit");
         world.Power.Generators[0].AddFuel(5);
@@ -512,7 +512,7 @@ public class RemovalTests
         world.Tick();
         Assert.True(world.Power.Generators[0].IsBurning);
 
-        var report = world.TryRemove(x, y);
+        var report = world.RemoveStandingBy(x, y);
 
         Assert.Equal(RemoveResult.Ok, report.Result);
         Assert.Equal(4, report.Returned);
@@ -531,7 +531,7 @@ public class RemovalTests
         Give(world, "stm_pipe", 4);
 
         for (var i = 0; i < 4; i++)
-            Assert.Equal(BuildResult.Ok, world.TryBuild(Buildables, pipe.Item, 70 + i, 30));
+            Assert.Equal(BuildResult.Ok, world.BuildStandingBy(Buildables, pipe.Item, 70 + i, 30));
 
         var water = Data.Item("water");
         var network = world.Fluids.Network(world.Fluids.NetworkAt(70, 30));
@@ -539,7 +539,7 @@ public class RemovalTests
         Assert.Equal(400, network.Capacity);
         Assert.Equal(200, network.TryInsert(water, 200));
 
-        var report = world.TryRemove(71, 30);
+        var report = world.RemoveStandingBy(71, 30);
 
         Assert.Equal(RemoveResult.Ok, report.Result);
         Assert.Equal(1, world.PlayerInventory.Count(pipe.Item));
@@ -564,7 +564,7 @@ public class RemovalTests
         Give(world, "stm_pump_station");
         var (x, y) = WaterTile(world);
 
-        Assert.Equal(BuildResult.Ok, world.TryBuild(Buildables, pump.Item, x, y));
+        Assert.Equal(BuildResult.Ok, world.BuildStandingBy(Buildables, pump.Item, x, y));
 
         // Water in its buffer with nowhere to send it. Set rather than pumped:
         // a pump needs a grid to run, and what is under test is what happens to
@@ -573,7 +573,7 @@ public class RemovalTests
         var buffered = world.Extractors[0].Buffered;
         Assert.Equal(300, buffered);
 
-        var report = world.TryRemove(x, y);
+        var report = world.RemoveStandingBy(x, y);
 
         Assert.Equal(RemoveResult.Ok, report.Result);
         Assert.Equal(buffered, report.FluidVoided);
@@ -590,10 +590,10 @@ public class RemovalTests
         Give(world, "stm_pipe", 4);
 
         // Two runs far apart, so they are two networks holding two fluids.
-        Assert.Equal(BuildResult.Ok, world.TryBuild(Buildables, pipe.Item, 0, 60));
-        Assert.Equal(BuildResult.Ok, world.TryBuild(Buildables, pipe.Item, 1, 60));
-        Assert.Equal(BuildResult.Ok, world.TryBuild(Buildables, pipe.Item, 30, 60));
-        Assert.Equal(BuildResult.Ok, world.TryBuild(Buildables, pipe.Item, 31, 60));
+        Assert.Equal(BuildResult.Ok, world.BuildStandingBy(Buildables, pipe.Item, 0, 60));
+        Assert.Equal(BuildResult.Ok, world.BuildStandingBy(Buildables, pipe.Item, 1, 60));
+        Assert.Equal(BuildResult.Ok, world.BuildStandingBy(Buildables, pipe.Item, 30, 60));
+        Assert.Equal(BuildResult.Ok, world.BuildStandingBy(Buildables, pipe.Item, 31, 60));
 
         var water = Data.Item("water");
         var oil = Data.Item("crude_oil");
@@ -609,7 +609,7 @@ public class RemovalTests
         // other network entirely -- into its slot. If the per-node network
         // bookkeeping does not move with it, the next rebuild hands it a share
         // of the water and its oil is invented or destroyed.
-        Assert.True(world.TryRemove(0, 60).Ok);
+        Assert.True(world.RemoveStandingBy(0, 60).Ok);
 
         Assert.Equal(2, world.Fluids.NetworkCount);
         var stillWater = world.Fluids.Network(world.Fluids.NetworkAt(1, 60));
@@ -655,15 +655,15 @@ public class RemovalTests
         Give(world, "stm_transport_belt");
 
         Assert.Equal(BuildResult.Ok,
-                     world.TryBuild(Buildables, belt.Item, 0, 0, null, Direction.East));
-        Assert.True(world.TryRemove(0, 0).Ok);
+                     world.BuildStandingBy(Buildables, belt.Item, 0, 0, null, Direction.East));
+        Assert.True(world.RemoveStandingBy(0, 0).Ok);
 
         // Placed directly, the way a scenario does: nothing was paid for it. If
         // the belt's record were still sitting on the tile, removing this would
         // hand out a free belt and delete a machine nobody bought.
         world.TryPlaceMachine(Data.Recipe("smelt_chalcopyrite"), furnace.PlacementAt(0, 0));
 
-        Assert.Equal(RemoveResult.UnknownBuilding, world.TryRemove(0, 0).Result);
+        Assert.Equal(RemoveResult.UnknownBuilding, world.RemoveStandingBy(0, 0).Result);
         Assert.Equal(1, world.MachineCount);
         Assert.Equal(1, world.PlayerInventory.Count(belt.Item));
     }
@@ -713,10 +713,10 @@ public class RemovalTests
                 : null;
 
             Assert.Equal(BuildResult.Ok,
-                         world.TryBuild(Buildables, buildable.Item, x, y, recipe));
+                         world.BuildStandingBy(Buildables, buildable.Item, x, y, recipe));
             Assert.Equal(0, world.PlayerInventory.Count(buildable.Item));
 
-            var report = world.TryRemove(x, y);
+            var report = world.RemoveStandingBy(x, y);
 
             Assert.Equal(RemoveResult.Ok, report.Result);
             Assert.Equal(buildable.Item, report.Item);
@@ -725,7 +725,7 @@ public class RemovalTests
             // The tile is genuinely free again: the same thing goes straight
             // back onto it.
             Assert.Equal(BuildResult.Ok,
-                         world.TryBuild(Buildables, buildable.Item, x, y, recipe));
+                         world.BuildStandingBy(Buildables, buildable.Item, x, y, recipe));
         }
     }
 
@@ -756,11 +756,11 @@ public class RemovalTests
         Give(world, "stm_transport_belt");
         Give(world, "stm_furnace");
         Give(world, "stm_pole");
-        Assert.Equal(BuildResult.Ok, world.TryBuild(Buildables, furnace.Item, x, y, recipe));
+        Assert.Equal(BuildResult.Ok, world.BuildStandingBy(Buildables, furnace.Item, x, y, recipe));
         Assert.Equal(BuildResult.Ok,
-                     world.TryBuild(Buildables, Get("stm_pole").Item, x + 3, y + 3));
+                     world.BuildStandingBy(Buildables, Get("stm_pole").Item, x + 3, y + 3));
         Assert.Equal(BuildResult.Ok,
-                     world.TryBuild(Buildables, belt.Item, x + 6, y, null, Direction.South));
+                     world.BuildStandingBy(Buildables, belt.Item, x + 6, y, null, Direction.South));
 
         var file = Sim.Save.SaveGame.Capture(world);
         var reloaded = Sim.Save.SaveGame.Restore(file, Data.Recipes,
@@ -794,14 +794,14 @@ public class RemovalTests
         Give(world, "stm_transport_belt", 2);
 
         Assert.Equal(BuildResult.Ok,
-                     world.TryBuild(Buildables, belt.Item, 80, 80, null, Direction.East));
-        Assert.True(world.TryRemove(80, 80).Ok);
+                     world.BuildStandingBy(Buildables, belt.Item, 80, 80, null, Direction.East));
+        Assert.True(world.RemoveStandingBy(80, 80).Ok);
 
         // Nothing there any more, and the tile does not still claim to owe the
         // player a belt -- a stale record would hand out a free one for every
         // click on bare ground.
         Assert.False(world.TryRemovableAt(80, 80, out _, out _, out _));
-        Assert.Equal(RemoveResult.NothingThere, world.TryRemove(80, 80).Result);
+        Assert.Equal(RemoveResult.NothingThere, world.RemoveStandingBy(80, 80).Result);
         Assert.Equal(2, world.PlayerInventory.Count(belt.Item));
     }
 
@@ -820,7 +820,7 @@ public class RemovalTests
         var (x, y) = BareTile(world, multi.Size);
 
         world.PlayerInventory.Add(multi.Item, 1);
-        Assert.Equal(BuildResult.Ok, world.TryBuild(Buildables, multi.Item, x, y, recipe));
+        Assert.Equal(BuildResult.Ok, world.BuildStandingBy(Buildables, multi.Item, x, y, recipe));
 
         // Clicked on the far corner, not the anchor: the preview has to report
         // the corner the footprint is drawn from, or the ghost sits one tile

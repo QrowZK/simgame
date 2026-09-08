@@ -23,6 +23,11 @@ public enum RemoveResult
     /// practice this is a world a scenario or a test built directly rather than
     /// through `TryBuild`; a played game routes every placement through it.
     UnknownBuilding,
+
+    /// Outside the player's build reach (ADR 0033). The same radius that put it
+    /// down takes it back: a rule where you can place at twelve tiles and only
+    /// unplace at six would mean building a mistake you then have to walk to.
+    TooFar,
 }
 
 /// What a removal gave back, and what it could not.

@@ -105,3 +105,46 @@ public static class HandOps
         return total;
     }
 }
+
+/// Why a hand dig did or did not produce ore.
+///
+/// Five reasons rather than a count, because a zero means five different things
+/// to a player and only one of them is "keep clicking". A worked-out patch and
+/// a patch you are standing too far from look identical on screen.
+public enum DigResult
+{
+    Ok,
+
+    /// No patch under the tile at all.
+    NothingThere,
+
+    /// Outside hand reach (ADR 0033).
+    TooFar,
+
+    /// A fluid deposit. Hands cannot scoop a liquid; it wants a derrick.
+    CannotLiftFluid,
+
+    /// A real patch with nothing left in it.
+    WorkedOut,
+}
+
+/// What one dig did. `RemainingBefore` is carried so the interface can say how
+/// much is left without asking the ground a second question and getting an
+/// answer from after the dig.
+public readonly struct DigReport
+{
+    public readonly DigResult Result;
+    public readonly ItemId Item;
+    public readonly int RemainingBefore;
+    public readonly int Taken;
+
+    public DigReport(DigResult result, ItemId item, int remainingBefore, int taken)
+    {
+        Result = result;
+        Item = item;
+        RemainingBefore = remainingBefore;
+        Taken = taken;
+    }
+
+    public int RemainingAfter => RemainingBefore - Taken;
+}

@@ -331,7 +331,10 @@ public sealed partial class MachinePanel : PanelContainer
         _inputs.Text = "In:  the ground";
         _outputs.Text = $"Out: {miner.Buffered} {ItemName(miner.Item)}";
         _carrying.Text = "Carrying: " + Describe(_bag.Contents);
-        _retask.Text = "";
+        // The miner's readout has no retask line of its own, so it is where a
+        // refused Take says why. Blanking it unconditionally, as this did,
+        // meant emptying a miner from across the map failed in silence.
+        _retask.Text = _retaskMessage;
     }
 
     /// The Uplink's readout: what research is waiting on, and what is sitting
@@ -394,9 +397,30 @@ public sealed partial class MachinePanel : PanelContainer
     /// and in the art preview harness, and every call site tolerates that.
     public Sounds? Audio { get; set; }
 
+    /// Whether the player could put a hand on what this panel is showing.
+    ///
+    /// Only the *actions* ask. Opening the panel never does: looking is not
+    /// touching, so a machine across the map can be inspected from anywhere and
+    /// only its Load and Take buttons refuse (ADR 0033).
+    private bool InReach => _world.InHandReach(_placement);
+
+    private static readonly string TooFar =
+        $"Too far to reach -- walk closer. Your hands go {Sim.Player.HandReachTiles} tiles.";
+
     private void DeliverByHand()
     {
         if (_machine is null || _world.Research is null) return;
+
+        // The Uplink is where research is handed over, so the reach that
+        // matters is the reach to *it* rather than to whatever this panel is
+        // showing -- and the sim's own check is the one that decides, so the
+        // button can never promise a delivery the sim then refuses.
+        if (!_world.TryUplinkInHandReach(out _))
+        {
+            Audio?.Play(Sounds.Cue.Refuse);
+            _retaskMessage = TooFar;
+            return;
+        }
 
         var accepted = 0;
         var completed = new System.Collections.Generic.List<string>();
@@ -478,6 +502,13 @@ public sealed partial class MachinePanel : PanelContainer
             return;
         }
 
+        if (!InReach)
+        {
+            Audio?.Play(Sounds.Cue.Refuse);
+            _retaskMessage = TooFar;
+            return;
+        }
+
         foreach (var input in _machine.Recipe.Inputs)
         {
             var want = _machine.InputPerCycle(input.Item) - _machine.GetInputCount(input.Item);
@@ -488,6 +519,13 @@ public sealed partial class MachinePanel : PanelContainer
 
     private void TakeOutput()
     {
+        if (!InReach)
+        {
+            Audio?.Play(Sounds.Cue.Refuse);
+            _retaskMessage = TooFar;
+            return;
+        }
+
         if (_machine is not null)
             HandOps.ExtractAll(_machine, _bag);
 

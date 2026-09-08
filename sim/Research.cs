@@ -119,8 +119,28 @@ public sealed class ResearchObjective
 /// What a delivery did. Returned rather than raised as an event, because the
 /// UI has to say "that completed Steam Metallurgy" in the same frame the player
 /// clicked, and a headless test has to assert it without a subscription.
+/// Why a hand delivery did nothing. A reason rather than a zero, because the
+/// three cases send the player to three different places: walk to the Uplink,
+/// go and get something, or go and make something else.
+public enum DeliveryRefusal
+{
+    None,
+
+    /// No Uplink within the player's hand reach (ADR 0033).
+    NoUplinkInReach,
+
+    /// You are not carrying any of it.
+    NotCarried,
+
+    /// Carried, in reach, and nothing on the objective list wants it.
+    NothingWanted,
+}
+
 public sealed class DeliveryReport
 {
+    /// Why nothing was accepted. `None` whenever `Accepted` is positive.
+    public DeliveryRefusal Refusal { get; internal set; }
+
     /// Units actually taken. A delivery of something nothing wants accepts
     /// nothing, and the caller must put it back -- an Uplink that swallows a
     /// belt of ore is the worst thing this system could do.

@@ -91,10 +91,14 @@ public sealed class OpeningRoute
 
         foreach (var hit in hits.Where(h => h.Item.Equals(id)))
         {
+            // Walk there. Since ADR 0033 a patch across the map is not
+            // something the hands can reach, and the whole point of this
+            // harness is that it plays the game the way a player does.
+            Walk.To(_world, hit.X, hit.Y);
+
             while (Have(item) < count)
             {
-                var dug = HandOps.Mine(_world.Ground, hit.X, hit.Y, _world.PlayerInventory,
-                                       count - Have(item));
+                var dug = _world.TryDigByHand(hit.X, hit.Y, count - Have(item)).Taken;
                 if (dug == 0) break;      // patch worked out; try the next one
             }
 
@@ -240,6 +244,7 @@ public sealed class OpeningRoute
                 return false;
             }
 
+            Walk.To(_world, x, y);
             if (_world.TryBuild(_buildables, buildable.Item, x, y, first) != BuildResult.Ok)
                 continue;
 
