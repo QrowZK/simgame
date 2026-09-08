@@ -186,6 +186,7 @@ jobs:
           grep -q "=== NET LOCKSTEP OK ===" netlockstep.log
           grep -q "mismatches 0" netlockstep.log
           grep -q "both peers stopped on their own comparison (host True, client True)" netlockstep.log
+          grep -q "no prediction   machines (0, 0) before the click, (0, 0) in the same frame" netlockstep.log
 
       - name: Save/load session test
         working-directory: game
@@ -254,6 +255,9 @@ jobs:
           "$GODOT" --headless -- --menu-test | tee menu.log
           grep -q "=== MENU OK ===" menu.log
           grep -q "research        present" menu.log
+          # Solo play goes through the same command path as a shared world, and
+          # unlike a shared world it must answer inside the click.
+          grep -qE "solo input      machines [0-9]+ -> [0-9]+ in the click" menu.log
           # Not seed 0 every time: the "surprise me" seed used to overflow to
           # zero, so every random world was the same world.
           grep -qE "menu seed       [1-9][0-9]+" menu.log

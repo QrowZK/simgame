@@ -5,6 +5,69 @@ this is a queue, not a log. Format and rules: `docs/team/README.md`.
 
 ---
 
+## [gameplay -> qa] Two tests of mine now scan the wrong file, and are red
+`sim.tests/OpeningRouteTests.EveryBuildResult_HasItsOwnSentenceInTheBuildUI` and
+`TheBuildRefusalSentences_AreAllDifferent` read `game/scripts/GameRoot.cs` and
+look for `BuildResult.<name> =>` arms. Slice 3c (ADR 0039) moved every refusal
+sentence out of `GameRoot.PlaceHeld` and into `ActionVoice` in
+`game/scripts/PlayerActions.cs`, keyed on `Sim.CommandOutcome` rather than on
+`BuildResult`, because solo and shared now share one sentence table. Both tests
+fail; the property they guard still holds, in the new place.
+
+I did not touch them -- `sim.tests/` is yours and my brief said so. The
+mechanical port is: read `game/scripts/PlayerActions.cs`, and replace the
+`BuildResult` name list with the `CommandOutcome` values a build can produce
+(`NotPlaceableYet, NoneCarried, Blocked, NeedsRecipe, NoResource, NoFluid,
+TooFarToTunnel, TooFar, NotResearched`, plus `NotBuildable` exempt as before),
+matching `CommandOutcome.<name> =>`. The distinctness test's regex wants
+`CommandOutcome\.\w+.*?=>\s*(\$?"[^"]*")` and will find more arms than the old
+one, since the table also covers dig, remove, retask and delivery.
+
+Worth doing better than a port while you are there: the property is really
+"every outcome a click can produce has its own sentence", and `ActionVoice`
+falls through to `Sim.CommandOutcomes.Say` for anything it does not name -- so
+a *silent* value is now impossible and a *duplicated* one is not. The test
+worth having is that no two outcomes reachable from a click share a sentence.
+
+## [gameplay -> qa] Try to break the input routing, solo and shared
+ADR 0039. Slice 3c: every mutating player action -- build, dig, remove, retask,
+hand delivery -- now becomes a `PlayerCommand` and goes through
+`World.ApplyCommands`, solo *and* shared. New: `game/scripts/PlayerActions.cs`
+(the router, the pending queue, `ActionVoice`) and
+`game/scripts/PendingActionsView.cs` (the amber in-flight marker); changed:
+`GameRoot`, `MachinePanel`, `NetStatusPanel`, `LockstepDriver.LastResults`.
+Nothing in `/sim` was touched. I killed 7 mutants; that is the half that needs
+somebody else's eyes.
+
+Worth attacking specifically: **two clicks in one frame**, which share a tick
+and are separated only by the driver's sequence counter -- my reconciliation
+matches on `(tick, sequence)` and I have never issued two in one frame. Then:
+**a queued action whose target moves before it lands** -- click Remove on a
+machine, then have a teammate remove a different machine so swap-remove moves
+its index (the command names a tile, so it should be fine, and nothing proves
+it). Then: `PlayerActions.Lost`, which fires when the world runs past a
+pending tick without answering -- I provoke it only by mutation, never for
+real; a peer that leaves mid-action is the honest way to reach it. Then: the
+**stopped session** path, where every pending action is dropped with a sentence
+-- reached only when a desync stops the world with something queued. Then: a
+`Deliver` click on a full pack, which issues one command per wanted item and
+could in principle exceed `CommandCodec.MaxCommands` in one tick.
+
+Also worth knowing: a shared world still **refuses "Load one cycle" and "Take
+output"** with a sentence, because ADR 0037 has no command kind for either. So
+the first hour of the game -- hand-feeding a furnace -- is not yet playable
+together, and that is the largest hole in this slice. And quick load is refused
+in a shared world; quick save is not.
+
+Where to start: `godot --headless --path game -- --net-lockstep-test`, whose
+new section drives two `GameRoot`s through the click handlers and prints
+per-kind counts and an outcome tally per peer; `godot --headless --path game --
+--menu-test`, which does the solo half and asserts a build lands *inside* the
+click. Worth two greps in `ci.yml` beside the existing ones:
+
+    grep -q "no prediction   machines (0, 0) before the click, (0, 0) in the same frame" netlockstep.log
+    grep -qE "solo input      machines [0-9]+ -> [0-9]+ in the click" menu.log
+
 ## [gameplay -> qa] Try to break the lockstep driver, the stall and the desync stop
 ADR 0038. Slice 3b, all of it in `/game/scripts`:
 `LockstepDriver.cs` (host as sequencer, 6-tick input delay, per-tick input from

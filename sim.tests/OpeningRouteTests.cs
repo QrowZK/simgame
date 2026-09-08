@@ -332,34 +332,26 @@ public class OpeningRouteTests
         Assert.Contains(Buildables.RecipesFor(bench), r => r.Id == "build_man_furnace");
     }
 
-    /// Every refusal has to reach the player as its own sentence. The build UI
-    /// switches on `BuildResult` with a `_` fallback, so a value added later
-    /// compiles, ships, and says "Cannot build a Steam Furnace" to a player who
-    /// needed to be told why.
+    /// The game's own refusal table must not undo the sim's.
     ///
-    /// `NotBuildable` is exempt and only that: the UI can only offer things the
-    /// build catalogue knows, so it is unreachable from a click.
+    /// This pair used to read `GameRoot.cs` for `BuildResult.<name> =>` arms.
+    /// The sentences moved to `ActionVoice` in `game/scripts/PlayerActions.cs`,
+    /// keyed on `CommandOutcome`, when solo and shared play were put on one
+    /// input path -- so the old tests were pinning a place rather than a
+    /// property, and went red on a move that lost nothing.
+    ///
+    /// The half that asks whether every outcome has its own sentence now lives
+    /// in `CommandTests.EveryOutcome_HasASentenceOfItsOwn`, where it can *call*
+    /// `CommandOutcomes.Say` rather than grep for it. Only this half needs to
+    /// stay here: `ActionVoice` says more than the sim can -- it knows what was
+    /// clicked and how far the player's arms go -- and anything it does not
+    /// name falls through to the sim's sentence. What it *does* name still has
+    /// to be distinct, or two refusals read alike again one layer up.
     [Fact]
-    public void EveryBuildResult_HasItsOwnSentenceInTheBuildUI()
+    public void TheGamesRefusalSentences_AreAllDifferent()
     {
-        var source = File.ReadAllText(Path.Combine(RepoRoot(), "game/scripts/GameRoot.cs"));
-        var missing = Enum.GetNames<BuildResult>()
-            .Where(name => name != nameof(BuildResult.NotBuildable))
-            .Where(name => !source.Contains($"BuildResult.{name} =>"))
-            .ToList();
-
-        Assert.True(missing.Count == 0,
-            "BuildResult values with no sentence of their own in GameRoot.PlaceHeld, so a " +
-            "player gets the generic fallback: " + string.Join(", ", missing));
-    }
-
-    /// The messages must also be distinct. Two refusals sharing one sentence is
-    /// the same silence the enum exists to prevent.
-    [Fact]
-    public void TheBuildRefusalSentences_AreAllDifferent()
-    {
-        var source = File.ReadAllText(Path.Combine(RepoRoot(), "game/scripts/GameRoot.cs"));
-        var arms = Regex.Matches(source, @"BuildResult\.\w+ =>\s*(\$?""[^""]*"")")
+        var source = File.ReadAllText(Path.Combine(RepoRoot(), "game/scripts/PlayerActions.cs"));
+        var arms = Regex.Matches(source, @"CommandOutcome\.\w+(?: when [^=]+)? =>\s*(\$?""[^""]*"")")
                         .Select(m => m.Groups[1].Value)
                         .ToList();
 

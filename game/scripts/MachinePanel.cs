@@ -46,6 +46,21 @@ public sealed partial class MachinePanel : PanelContainer
     private World _world = null!;
     private BuildCatalogue _buildables = null!;
 
+    /// Where a mutating click goes. Set by `GameRoot`; when it is null this
+    /// panel is a read-only preview (the art harness, a capture rig) and its
+    /// action buttons do nothing rather than reaching into the sim behind the
+    /// router's back.
+    public PlayerActions? Actions { get; set; }
+
+    /// The message a shared world cannot avoid yet. Loading a machine by hand
+    /// and emptying one are real changes to the world and there is no command
+    /// kind for either (ADR 0037 has six, and these are not among them), so
+    /// they are refused with the reason rather than desyncing the session.
+    private const string NoHandOpsShared =
+        "Loading and emptying a machine by hand do not cross the network yet -- " +
+        "there is no command for them, and doing it locally would put this world " +
+        "out of step with everyone else's. Use a belt or an inserter for now.";
+
     public override void _Ready()
     {
         _title = GetNode<Label>("Margin/Rows/Title");
@@ -176,19 +191,14 @@ public sealed partial class MachinePanel : PanelContainer
     {
         if (_machine is null || row < 0 || row >= _shownRecipes.Count) return;
 
-        var result = _world.TryChangeRecipe(_buildables, _index, _shownRecipes[(int)row],
-                                            out var evicted);
+        if (Actions is null) return;
 
-        _retaskMessage = result switch
-        {
-            RecipeChangeResult.Ok when evicted > 0 =>
-                $"Retasked. {evicted} item(s) came back to you.",
-            RecipeChangeResult.Ok => "Retasked. It was empty, so nothing came back.",
-            RecipeChangeResult.AlreadyRunning => "It already makes that.",
-            RecipeChangeResult.CannotRun => "This machine cannot make that.",
-            RecipeChangeResult.UnknownMachine => "This machine cannot be retasked.",
-            _ => "There is no machine here any more.",
-        };
+        // By tile, not by index: the command layer resolves the machine when it
+        // is applied, so a removal that moved this machine's index in the six
+        // ticks between the click and the change cannot retask the wrong one.
+        Actions.Retask(_placement.X, _placement.Y, _shownRecipes[(int)row]);
+        if (Actions.Shared)
+            _retaskMessage = "Retasking -- waiting for everyone (about 100 ms).";
     }
 
     /// Miners get the same panel. A player should not have to learn two
@@ -407,24 +417,19 @@ public sealed partial class MachinePanel : PanelContainer
     private static readonly string TooFar =
         $"Too far to reach -- walk closer. Your hands go {Sim.Player.HandReachTiles} tiles.";
 
-    private void DeliverByHand()
+    /// Handing what you are carrying to the Uplink.
+    ///
+    /// One `Deliver` command per item the objectives want and the player
+    /// actually has. Both filters are *reads*, not rules: the sim re-checks
+    /// reach, carriage and want when the command lands, and refuses with its
+    /// own reason. They are here so a click on a full pack does not fire forty
+    /// commands, thirty-nine of which come back a tenth of a second later
+    /// saying "you are not carrying that".
+    public int DeliverByHand()
     {
-        if (_machine is null || _world.Research is null) return;
+        if (_machine is null || _world.Research is null || Actions is null) return 0;
 
-        // The Uplink is where research is handed over, so the reach that
-        // matters is the reach to *it* rather than to whatever this panel is
-        // showing -- and the sim's own check is the one that decides, so the
-        // button can never promise a delivery the sim then refuses.
-        if (!_world.TryUplinkInHandReach(out _))
-        {
-            Audio?.Play(Sounds.Cue.Refuse);
-            _retaskMessage = TooFar;
-            return;
-        }
-
-        var accepted = 0;
-        var completed = new System.Collections.Generic.List<string>();
-        var seed = false;
+        var offered = 0;
 
         foreach (var objective in _world.Research.Objectives.ToList())
             foreach (var need in objective.Needs)
@@ -440,22 +445,28 @@ public sealed partial class MachinePanel : PanelContainer
                 {
                     if (!_names.TryGetId(wanted, out var id)) continue;
 
-                    var report = _world.DeliverByHand(id, need.Outstanding);
-                    accepted += report.Accepted;
-                    completed.AddRange(report.Completed);
-                    seed |= report.SeedComplete;
+                    var held = _bag.Count(id);
+                    if (held <= 0) continue;
+
+                    var want = System.Math.Min(held, need.Outstanding);
+                    if (want <= 0) continue;
+
+                    Actions.Deliver(wanted, want, $"Handing over {want} {ItemLabel(wanted)}");
+                    offered++;
                 }
             }
 
-        Audio?.Play(accepted > 0 ? Sounds.Cue.Deliver : Sounds.Cue.Refuse);
+        if (offered == 0)
+        {
+            Audio?.Play(Sounds.Cue.Refuse);
+            _retaskMessage = "You are carrying nothing it wants.";
+            return 0;
+        }
 
-        _retaskMessage = seed
-            ? "The Seed is away."
-            : completed.Count > 0
-                ? $"Delivered {accepted}. Researched: {string.Join(", ", completed)}."
-                : accepted > 0
-                    ? $"Delivered {accepted}."
-                    : "You are carrying nothing it wants.";
+        _retaskMessage = Actions.Shared
+            ? $"Handing over {offered} kind(s) -- waiting for everyone (about 100 ms)."
+            : "";
+        return offered;
     }
 
     private string Missing(Machine machine)
@@ -502,6 +513,13 @@ public sealed partial class MachinePanel : PanelContainer
             return;
         }
 
+        if (Actions is { Shared: true })
+        {
+            Audio?.Play(Sounds.Cue.Refuse);
+            _retaskMessage = NoHandOpsShared;
+            return;
+        }
+
         if (!InReach)
         {
             Audio?.Play(Sounds.Cue.Refuse);
@@ -519,6 +537,13 @@ public sealed partial class MachinePanel : PanelContainer
 
     private void TakeOutput()
     {
+        if (Actions is { Shared: true })
+        {
+            Audio?.Play(Sounds.Cue.Refuse);
+            _retaskMessage = NoHandOpsShared;
+            return;
+        }
+
         if (!InReach)
         {
             Audio?.Play(Sounds.Cue.Refuse);

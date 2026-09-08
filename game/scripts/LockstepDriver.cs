@@ -194,9 +194,24 @@ public sealed class LockstepDriver : IDisposable
     public event Action<World>? Started;
     public event Action<string>? Stopped;
 
-    /// The most recent results of applying a batch, for a UI to speak. Cleared
-    /// every tick; a log would be unbounded.
+    /// What came of every command applied during the most recent `Advance`,
+    /// for a UI to speak.
+    ///
+    /// Cleared once per `Advance`, not once per tick. A frame covers however
+    /// many ticks the clock owes -- up to eight -- and clearing per tick threw
+    /// away the results of every tick but the last, so a player whose build was
+    /// refused on the first of five ticks in a frame was told nothing at all.
+    /// A log rather than a running total would be unbounded; one frame's worth
+    /// is bounded by the catch-up limit.
     public IReadOnlyList<CommandResult> LastResults => _results;
+
+    /// The command this peer issued most recently, exactly as it was stamped.
+    /// A caller needs its sequence number to recognise the answer when it comes
+    /// back six ticks later, and `Issue` returning only the tick is not enough:
+    /// two clicks in one frame share a tick.
+    public PlayerCommand LastIssued { get; private set; }
+
+    public int LastIssuedSequence => LastIssued.Sequence;
 
     public NetStatus Status => new(
         Phase, World?.TickCount ?? 0, _stalledTicks > 0, _stallBlame, _stalledTicks, StopReason);
@@ -291,6 +306,7 @@ public sealed class LockstepDriver : IDisposable
             _outbox[tick] = list = new List<PlayerCommand>();
 
         list.Add(command);
+        LastIssued = command;
         CommandsIssued++;
         return tick;
     }
@@ -316,6 +332,8 @@ public sealed class LockstepDriver : IDisposable
         if (Phase != NetPhase.Running || World is null) return 0;
 
         var ran = 0;
+        _results.Clear();
+
         while (ran < maxTicks)
         {
             if (_net.IsHost) SealWhatWeCan();
@@ -330,7 +348,6 @@ public sealed class LockstepDriver : IDisposable
             _stalledTicks = 0;
             _stallBlame = "";
 
-            _results.Clear();
             World.ApplyCommands(_builds, _catalogue.Recipes, batch, _results);
             World.Tick();
             _batches.Remove(tick);

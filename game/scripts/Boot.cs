@@ -306,6 +306,82 @@ public sealed partial class Boot : Node
         GD.Print($"new game        tick={world.TickCount} machines={world.MachineCount} " +
                  $"carrying={world.PlayerInventory.Contents.Count} kinds");
         GD.Print($"research        {(world.Research is null ? "MISSING" : "present")}");
+
+        // ---- and the solo input path, which is the same path ----------------
+        //
+        // Every mutating click goes through `PlayerActions` now, shared world or
+        // not (docs/0039). Solo it must feel *exactly* as it did: the world
+        // changes inside the click, with no queue and no wait. That is asserted
+        // here rather than assumed, because the obvious way to write one path is
+        // to make the solo one wait for a tick that never comes -- and nothing
+        // else headless drives `GameRoot`'s click handlers on a real new game.
+        var root = _game!;
+        var builds = new Sim.BuildCatalogue(Sim.Data.Catalogue.Instance);
+        var bench = builds.Find("man_manual_crafting");
+        var recipe = bench is null
+            ? null
+            : builds.RecipesFor(bench, world.Research).FirstOrDefault();
+
+        var spoken = new List<string>();
+        var prior = root.Actions.Speak;
+        root.Actions.Speak = m => { prior?.Invoke(m); spoken.Add(m); };
+
+        if (bench is null || recipe is null)
+        {
+            GD.Print("solo input      FAILED: no bench and recipe to click with");
+            GetTree().Quit(1);
+            return;
+        }
+
+        var machinesBefore = world.MachineCount;
+        var tile = (X: world.Player.TileX + 2, Y: world.Player.TileY);
+
+        root.Hold(bench, recipe);
+        root.PlaceHeld(tile.X, tile.Y);
+        var immediately = world.MachineCount;
+
+        root.PlaceHeld(tile.X, tile.Y);          // refused: only one bench carried
+        root.DigOrClose(tile.X + 40, tile.Y + 40);  // bare ground: not an action at all
+        root.RemoveAt(tile.X, tile.Y);              // and take it back
+        var afterRemoval = world.MachineCount;
+
+        GD.Print($"solo input      machines {machinesBefore} -> {immediately} in the click " +
+                 $"-> {afterRemoval} after removal, in flight " +
+                 $"{root.Actions.InFlight.Count}");
+        GD.Print($"solo actions    {root.Actions.Issued} issued, {root.Actions.Applied} " +
+                 $"applied, {root.Actions.Refused} refused: {root.Actions.Tally()}");
+        foreach (var line in spoken) GD.Print($"solo said       \"{Trim(line)}\"");
+
+        if (immediately != machinesBefore + 1)
+        {
+            GD.Print($"solo input      FAILED: a solo build took effect on no tick " +
+                     $"({machinesBefore} -> {immediately}) -- solo must not wait");
+            GetTree().Quit(1);
+            return;
+        }
+
+        if (afterRemoval != machinesBefore)
+        {
+            GD.Print($"solo input      FAILED: removal left {afterRemoval} machines");
+            GetTree().Quit(1);
+            return;
+        }
+
+        if (root.Actions.InFlight.Count != 0)
+        {
+            GD.Print("solo input      FAILED: a solo click queued something");
+            GetTree().Quit(1);
+            return;
+        }
+
+        if (root.Actions.Applied < 2 || root.Actions.Refused < 1 || spoken.Count < 3)
+        {
+            GD.Print($"solo input      FAILED: {root.Actions.Applied} applied, " +
+                     $"{root.Actions.Refused} refused, {spoken.Count} sentences");
+            GetTree().Quit(1);
+            return;
+        }
+
         GD.Print("=== MENU OK ===");
         GetTree().Quit();
     }
@@ -1448,7 +1524,7 @@ public sealed partial class Boot : Node
                          "this check makes is stale");
 
         // ---- and the game itself, driven by a driver -------------------------
-        await RunSharedGameCheck(port + 2, seed, catalogue, failures);
+        await RunSharedInputCheck(port + 2, seed, catalogue, failures);
 
         // ---- the detector, deliberately fired --------------------------------
         var caught = await RunDesyncCheck(port + 1, seed, catalogue, failures);
@@ -1468,17 +1544,90 @@ public sealed partial class Boot : Node
         GetTree().Quit();
     }
 
-    /// The real path, not the harness one: a `GameRoot` with a driver attached,
-    /// running the world off the network clock instead of its own.
+    /// The real path, not the harness one: **two** `GameRoot`s, one per peer,
+    /// each with a driver attached, each acting through the methods a click
+    /// calls.
     ///
-    /// This exists because everything above drives the driver directly, and the
-    /// game failing to launch is not something a driver test can see. It checks
-    /// the three things the attachment changes: the world advances, it advances
-    /// through the driver rather than past it, and the status card is on screen
-    /// saying something.
-    private async System.Threading.Tasks.Task RunSharedGameCheck(
+    /// Everything above this drives `LockstepDriver.Issue` directly, which
+    /// proves the driver and proves nothing about the game. This drives
+    /// `GameRoot.PlaceHeld`, `GameRoot.DigOrClose`, `GameRoot.RemoveAt` and
+    /// `GameRoot.Actions` -- the exact entry points the mouse reaches -- on both
+    /// peers at once, and then insists the two worlds are still the same world.
+    ///
+    /// Three things it is built to catch, because each is a plausible way to
+    /// "finish" this slice wrongly:
+    ///
+    /// * a build applied locally instead of being sent as a command (the
+    ///   machine count moves before the batch lands, and the peers diverge);
+    /// * a refusal that is dropped rather than shown (no sentence is spoken for
+    ///   an action that was refused, and `Lost` counts what was never answered);
+    /// * one peer acting outside the driver (the hashes and the saves part).
+    private async System.Threading.Tasks.Task RunSharedInputCheck(
         int port, int seed, Sim.Data.Catalogue catalogue, List<string> failures)
     {
+        var builds = new Sim.BuildCatalogue(catalogue);
+
+        // A seed with something diggable inside arm's length of spawn, so the
+        // run exercises a dig that *works* rather than only a dig that is
+        // refused. Chosen by looking rather than asserted, and printed: a run
+        // that quietly stopped finding one would otherwise still pass while
+        // testing half of what it says it does.
+        var chosen = seed;
+        var nearOre = (X: 0, Y: 0);
+        var farOre = (X: 0, Y: 0);
+        var found = false;
+
+        var digItem = "";
+
+        // Two passes. The first insists on ore the opening objective *accepts*,
+        // so the dig feeds a delivery that is applied rather than refused; the
+        // second settles for anything diggable. Worldgen deals the guaranteed
+        // patch 12-40 tiles out (ADR 0026), so a wanted ore inside six tiles of
+        // spawn is luck, and a run that failed when it did not get lucky would
+        // be a flaky test rather than a check.
+        for (var pass = 0; pass < 2 && !found; pass++)
+        for (var attempt = 0; attempt < 60 && !found; attempt++)
+        {
+            var probe = Sim.NewGame.Create(seed + attempt, catalogue);
+            var px = probe.Player.TileX;
+            var py = probe.Player.TileY;
+
+            // And not just anything: something the *opening objective* accepts,
+            // so the dig feeds a delivery that is then applied rather than
+            // refused. A run in which every delivery is `NothingWanted`
+            // exercises the refusal and never proves a delivery lands.
+            var wanted = probe.Research!.Objectives
+                .SelectMany(o => o.Needs)
+                .SelectMany(n => n.Accepts)
+                .ToHashSet();
+
+            for (var dy = -3; dy <= 3 && !found; dy++)
+                for (var dx = -3; dx <= 3 && !found; dx++)
+                    if (probe.Ground.TryResourceAt(px + dx, py + dy, out var item, out var left)
+                        && left > 0
+                        && (pass == 1 || wanted.Contains(catalogue.Items.GetName(item))))
+                    {
+                        chosen = seed + attempt;
+                        nearOre = (px + dx, py + dy);
+                        digItem = catalogue.Items.GetName(item);
+                        found = true;
+                    }
+
+            if (!found) continue;
+
+            for (var r = 30; r < 90 && farOre.X == 0; r += 5)
+                for (var dy = -r; dy <= r && farOre.X == 0; dy += 5)
+                    for (var dx = -r; dx <= r && farOre.X == 0; dx += 5)
+                        if (probe.Ground.TryResourceAt(px + dx, py + dy, out _, out var n) && n > 0
+                            && System.Math.Abs(dx) + System.Math.Abs(dy) > 30)
+                            farOre = (px + dx, py + dy);
+        }
+
+        GD.Print($"input seed      {chosen} ({digItem} in reach at {nearOre.X},{nearOre.Y}" +
+                 $"={found}, ore out of reach at {farOre.X},{farOre.Y})");
+        if (!found)
+            failures.Add("no seed in 60 put anything diggable within reach of spawn");
+
         var host = new NetSession { Name = "GameHost" };
         var client = new NetSession { Name = "GameClient" };
         AddChild(host);
@@ -1486,7 +1635,7 @@ public sealed partial class Boot : Node
 
         if (host.Host("Ada", port, maxPlayers: 4) != NetFailure.None)
         {
-            failures.Add("could not host the shared-game check");
+            failures.Add("could not host the shared-input check");
             return;
         }
 
@@ -1496,7 +1645,7 @@ public sealed partial class Boot : Node
         await Frames(() => joined, 900);
         if (!joined)
         {
-            failures.Add("the shared-game check's client never connected");
+            failures.Add("the shared-input check's client never connected");
             return;
         }
 
@@ -1507,40 +1656,295 @@ public sealed partial class Boot : Node
         Sim.World? cw = null;
         hostDriver.Started += w => hw = w;
         clientDriver.Started += w => cw = w;
-        hostDriver.StartAsHost(seed);
+        hostDriver.StartAsHost(chosen);
         await Frames(() => hw is not null && cw is not null, 600);
 
         if (hw is null || cw is null)
         {
-            failures.Add("the shared-game check never got two worlds");
+            failures.Add("the shared-input check never got two worlds");
             return;
         }
 
-        var root = new GameRoot { Name = "SharedGameRoot", InitialWorld = hw, Net = hostDriver };
-        AddChild(root);
+        // Two roots, each looking through its own peer's eyes. Both tick their
+        // own driver in _Process, exactly as a running game does.
+        var hostRoot = new GameRoot { Name = "HostRoot", InitialWorld = hw, Net = hostDriver };
+        var clientRoot = new GameRoot { Name = "ClientRoot", InitialWorld = cw, Net = clientDriver };
+        AddChild(hostRoot);
+        AddChild(clientRoot);
+        await Frames(() => false, 4);
 
-        for (var frame = 0; frame < 400 && hw.TickCount < 120; frame++)
+        var said = new Dictionary<string, List<string>>
         {
-            clientDriver.Advance(8);
+            ["host"] = new(), ["client"] = new(),
+        };
+        Listen(hostRoot, said["host"]);
+        Listen(clientRoot, said["client"]);
+
+        var bench = builds.Find("man_manual_crafting");
+        var uplink = builds.Find(Sim.Research.UplinkItem);
+        if (bench is null || uplink is null)
+        {
+            failures.Add("the shared-input check could not find a bench and an Uplink to place");
+            return;
+        }
+
+        var benchRecipes = builds.RecipesFor(bench, hw.Research);
+        var uplinkRecipe = builds.RecipesFor(uplink, hw.Research).FirstOrDefault();
+        if (benchRecipes.Count < 2 || uplinkRecipe is null)
+        {
+            failures.Add($"the bench offers {benchRecipes.Count} recipes and the Uplink " +
+                         $"{(uplinkRecipe is null ? 0 : 1)}; the check needs two and one");
+            return;
+        }
+
+        var spawnX = hw.Player.TileX;
+        var spawnY = hw.Player.TileY;
+
+        // Each peer builds on its own tile: two players standing on one spawn
+        // clicking one tile is a different test (ADR 0037's total order), and
+        // this one is about routing.
+        var plots = new (GameRoot Root, string Peer, int Dx)[]
+        {
+            (hostRoot, "host", 2), (clientRoot, "client", 4),
+        };
+
+        // ---- one build, watched across the delay it is supposed to have -----
+        var before = (Host: hw.MachineCount, Client: cw.MachineCount);
+        foreach (var (root, _, dx) in plots)
+        {
+            root.Hold(bench, benchRecipes[0]);
+            root.PlaceHeld(spawnX + dx, spawnY);
+        }
+
+        var immediately = (Host: hw.MachineCount, Client: cw.MachineCount);
+        GD.Print($"no prediction   machines {before} before the click, {immediately} in the " +
+                 $"same frame, host in flight {hostRoot.Actions.InFlight.Count}");
+        if (immediately != before)
+            failures.Add($"a build changed the world in the frame it was clicked " +
+                         $"({before} -> {immediately}) -- the local peer acted on its own guess");
+        if (hostRoot.Actions.InFlight.Count != 1 || clientRoot.Actions.InFlight.Count != 1)
+            failures.Add($"a click left {hostRoot.Actions.InFlight.Count}/" +
+                         $"{clientRoot.Actions.InFlight.Count} actions in flight, want 1 each");
+
+        await Step(20);
+
+        GD.Print($"after the wait  machines host {hw.MachineCount} client {cw.MachineCount}, " +
+                 $"in flight {hostRoot.Actions.InFlight.Count}/" +
+                 $"{clientRoot.Actions.InFlight.Count}");
+        if (hw.MachineCount != before.Host + 2)
+            failures.Add($"two builds through the input path produced " +
+                         $"{hw.MachineCount - before.Host} machines");
+
+        // ---- and then the rest of the actions a player can take -------------
+        //
+        // The Uplink onto the bench's tile, not a second bench: a new game
+        // carries exactly one bench, so a second bench click is refused
+        // `NoneCarried` before the tile is ever considered and proves nothing
+        // about occupancy.
+        foreach (var (root, _, dx) in plots)
+        {
+            root.Hold(uplink, uplinkRecipe);
+            root.PlaceHeld(spawnX + dx, spawnY);
+        }
+        await Step(16);
+
+        foreach (var (root, _, dx) in plots)
+            root.Actions.Retask(spawnX + dx, spawnY, benchRecipes[1]);
+        await Step(16);
+
+        foreach (var (root, _, dx) in plots)
+            root.Actions.Retask(spawnX + dx, spawnY + 40, benchRecipes[1]);
+        await Step(16);
+
+        foreach (var (root, _, _) in plots) root.DigOrClose(nearOre.X, nearOre.Y);
+        await Step(16);
+
+        if (farOre.X != 0)
+        {
+            foreach (var (root, _, _) in plots) root.DigOrClose(farOre.X, farOre.Y);
+            await Step(16);
+        }
+
+        foreach (var (root, _, dx) in plots) root.PlaceHeld(spawnX + dx, spawnY + 2);
+        await Step(16);
+
+        // What the ladder actually wants and the player actually has, resolved
+        // the way `MachinePanel` resolves it: a need accepts a *set* of items
+        // and its own key is not an item id (ADR 0030). Hardcoding one item id
+        // here made this step a permanent `NothingWanted`, which exercised the
+        // refusal and never once proved a delivery lands.
+        var wantedItem = digItem.Length > 0 ? digItem : "stone_deposit";
+        GD.Print($"delivering      {wantedItem}, held {Held(hw, wantedItem)}, " +
+                 $"wanted by the ladder={Wanted(hw, wantedItem)}");
+        foreach (var (root, _, _) in plots)
+            root.Actions.Deliver(wantedItem, 3, $"Handing over 3 {wantedItem}");
+        await Step(16);
+
+        foreach (var (root, _, dx) in plots) root.RemoveAt(spawnX + dx, spawnY);
+        await Step(16);
+
+        foreach (var (root, _, dx) in plots) root.RemoveAt(spawnX + dx, spawnY + 9);
+        await Step(24);
+
+        // ---- what each peer did, and what the world said back ---------------
+        foreach (var (root, who, _) in plots)
+        {
+            var a = root.Actions;
+            GD.Print($"{who,-6} issued   builds {a.IssuedOf(Sim.CommandKind.Build)} " +
+                     $"digs {a.IssuedOf(Sim.CommandKind.Dig)} " +
+                     $"removes {a.IssuedOf(Sim.CommandKind.Remove)} " +
+                     $"retasks {a.IssuedOf(Sim.CommandKind.ChangeRecipe)} " +
+                     $"delivers {a.IssuedOf(Sim.CommandKind.Deliver)} " +
+                     $"= {a.Issued} total");
+            GD.Print($"{who,-6} answered {a.Applied} applied, {a.Refused} refused, " +
+                     $"{a.Lost} lost, {a.InFlight.Count} still in flight");
+            GD.Print($"{who,-6} reasons  {a.Tally()}");
+
+            if (a.Issued < 10) failures.Add($"the {who} only issued {a.Issued} actions");
+            if (a.Applied == 0) failures.Add($"the {who} had nothing applied");
+            if (a.Refused == 0)
+                failures.Add($"the {who} was refused nothing, so this run proves " +
+                             "nothing about refusals arriving 100 ms late");
+            if (a.Lost != 0)
+                failures.Add($"{a.Lost} of the {who}'s actions were never answered");
+            if (a.InFlight.Count != 0)
+                failures.Add($"{a.InFlight.Count} of the {who}'s actions never came back");
+            if (a.Applied + a.Refused != a.Issued)
+                failures.Add($"the {who} issued {a.Issued} and heard about " +
+                             $"{a.Applied + a.Refused}");
+
+            // The refusals this run deliberately provokes. Each is a different
+            // sentence in front of a player, and a routing that dropped them
+            // would still leave every hash identical.
+            foreach (var wanted in new[]
+                     {
+                         Sim.CommandOutcome.Blocked,
+                         Sim.CommandOutcome.NothingThere,
+                         Sim.CommandOutcome.NoMachine,
+                     })
+                if (a.CountOf(wanted) == 0)
+                    failures.Add($"the {who} never saw {wanted}, which this run provokes " +
+                                 "on purpose");
+        }
+
+        foreach (var (who, lines) in said)
+        {
+            GD.Print($"{who,-6} said     {lines.Count} sentences, last: " +
+                     $"\"{(lines.Count > 0 ? Trim(lines[^1]) : "")}\"");
+            foreach (var line in lines.Where(l => l.Contains("already there")).Take(1))
+                GD.Print($"{who,-6} refusal  \"{Trim(line)}\"");
+
+            if (lines.Count < 8)
+                failures.Add($"the {who} spoke {lines.Count} sentences for its actions");
+            if (!lines.Any(l => l.Contains("already there")))
+                failures.Add($"the {who} never told the player why a build was refused");
+        }
+
+        var card = hostRoot.GetNodeOrNull<NetStatusPanel>("NetStatusLayer/NetStatus");
+        var markers = hostRoot.GetNodeOrNull<PendingActionsView>("PendingActions");
+        GD.Print($"in game         host tick {hw.TickCount}, client {cw.TickCount}, " +
+                 $"card=\"{card?.TitleText}\" showing={card?.IsShowing} " +
+                 $"body={card?.BodyText.Length ?? -1} chars, " +
+                 $"in-flight markers ever drawn={_markersSeen}");
+
+        if (hw.TickCount < 60) failures.Add($"the host root only reached tick {hw.TickCount}");
+        if (cw.TickCount < 60) failures.Add($"the client root only reached tick {cw.TickCount}");
+        if (card is null || !card.IsShowing || card.BodyText.Length == 0)
+            failures.Add("the shared world drew no net status card");
+        if (markers is null)
+            failures.Add("the shared world has no in-flight marker node");
+        if (_markersSeen == 0)
+            failures.Add("no in-flight marker was ever drawn, so the 100 ms is invisible");
+
+        // ---- and the two worlds, still one world ---------------------------
+        //
+        // Levelled first, with the roots detached. Two roots tick off their own
+        // wall clocks, so one is a few ticks ahead of the other, and a hash
+        // taken at tick 78 against one taken at tick 74 disagrees for a reason
+        // that has nothing to do with this slice. Nothing is *simulated*
+        // differently here -- the laggard is run forward on batches the
+        // sequencer has already broadcast, which is the same catch-up a slow
+        // frame does in play.
+        hostRoot.QueueFree();
+        clientRoot.QueueFree();
+        await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+
+        for (var i = 0; i < 600 && hw.TickCount != cw.TickCount; i++)
+        {
+            if (cw.TickCount < hw.TickCount)
+                clientDriver.Advance((int)(hw.TickCount - cw.TickCount));
+            else
+                hostDriver.Advance((int)(cw.TickCount - hw.TickCount));
+
             await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
         }
 
-        var card = root.GetNodeOrNull<NetStatusPanel>("NetStatusLayer/NetStatus");
-        GD.Print($"in game         GameRoot ran the shared world to tick {hw.TickCount} " +
-                 $"(client at {cw.TickCount}), card=\"{card?.TitleText}\" " +
-                 $"showing={card?.IsShowing} body={card?.BodyText.Length ?? -1} chars");
+        if (hw.TickCount != cw.TickCount)
+            failures.Add($"the two peers never met on one tick ({hw.TickCount} vs " +
+                         $"{cw.TickCount}), so nothing below compares like with like");
 
-        if (hw.TickCount < 60)
-            failures.Add($"GameRoot only reached tick {hw.TickCount} in a shared world");
-        if (cw.TickCount < 60)
-            failures.Add($"the other peer only reached tick {cw.TickCount}");
-        if (card is null || !card.IsShowing || card.BodyText.Length == 0)
-            failures.Add("the shared world drew no net status card");
+        var hostHash = hw.StateHash();
+        var clientHash = cw.StateHash();
+        var hostModel = Sim.Save.SaveGame.Capture(hw);
+        var clientModel = Sim.Save.SaveGame.Capture(cw);
+        hostModel.LocalPlayer = 0;
+        clientModel.LocalPlayer = 0;
+        var identical = string.CompareOrdinal(Sim.Save.SaveGame.ToJson(hostModel),
+                                              Sim.Save.SaveGame.ToJson(clientModel)) == 0;
 
-        root.QueueFree();
+        GD.Print($"after play      hash {hostHash:X16} / {clientHash:X16}, " +
+                 $"digest {hw.CommandDigest:X16} / {cw.CommandDigest:X16}, " +
+                 $"saves identical except for LocalPlayer={identical}");
+        GD.Print($"machines        host {hw.MachineCount} client {cw.MachineCount}, " +
+                 $"carrying stone host {Stone(hw)} client {Stone(cw)}");
+
+        if (hostHash != clientHash)
+            failures.Add("two peers played through the input path and ended on different hashes");
+        if (hw.CommandDigest != cw.CommandDigest)
+            failures.Add("the two peers' command digests differ after playing");
+        if (!identical) failures.Add("the two peers saved different bytes after playing");
+
         host.Close("");
         client.Close("");
+
+        async System.Threading.Tasks.Task Step(int frames)
+        {
+            for (var i = 0; i < frames; i++)
+            {
+                await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+                var view = hostRoot.GetNodeOrNull<PendingActionsView>("PendingActions");
+                if (view is not null) _markersSeen = System.Math.Max(_markersSeen, view.Drawn);
+            }
+        }
+
+        static void Listen(GameRoot root, List<string> into)
+        {
+            var prior = root.Actions.Speak;
+            root.Actions.Speak = message =>
+            {
+                prior?.Invoke(message);
+                into.Add(message);
+            };
+        }
+
+        static bool Wanted(Sim.World world, string item)
+            => world.Research is not null
+               && world.Research.Objectives.SelectMany(o => o.Needs)
+                        .Any(n => !n.Met && n.Accepts.Contains(item));
+
+        static int Held(Sim.World world, string item)
+            => world.Items.TryGetId(item, out var id) ? world.PlayerInventory.Count(id) : -1;
+
+        static int Stone(Sim.World world)
+            => world.Items.TryGetId("stone_deposit", out var id)
+                ? world.PlayerInventory.Count(id)
+                : -1;
     }
+
+    /// The most markers the in-flight view has had on screen at once during the
+    /// input check. Zero means the 100 ms was never drawn, which is half of
+    /// what this slice is.
+    private int _markersSeen;
 
     /// Corrupts one peer by one milli-tile and insists the session notices.
     ///
@@ -1730,8 +2134,111 @@ public sealed partial class Boot : Node
                  $"showing={status.IsShowing}");
         await Capture("desync");
 
+        // The in-flight state, in a real shared world rather than staged.
+        //
+        // Held open by *stalling*: the client's driver is simply not advanced,
+        // so the host cannot seal the tick the click was addressed to and the
+        // action stays in flight for as long as the camera needs. That is a
+        // real state of the running game -- the amber card and the marker
+        // belong on screen together -- and it is the only way to photograph a
+        // window that is otherwise 100 ms wide.
+        await CaptureInFlight(7899);
+
         GD.Print("=== NET SHOT OK ===");
         GetTree().Quit();
+    }
+
+    private async System.Threading.Tasks.Task CaptureInFlight(int port)
+    {
+        // The title screen and the staged status card were the subjects of the
+        // captures above; here they are simply in the way.
+        _menu?.GetParent()?.QueueFree();
+        _menu = null;
+        GetNodeOrNull<CanvasLayer>("NetStatusShot")?.QueueFree();
+        await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+
+        var catalogue = GameSession.Catalogue;
+        var host = new NetSession { Name = "ShotHost" };
+        var client = new NetSession { Name = "ShotClient" };
+        AddChild(host);
+        AddChild(client);
+
+        if (host.Host("Ada", port, maxPlayers: 4) != NetFailure.None)
+        {
+            GD.Print("in flight       FAILED: could not host");
+            return;
+        }
+
+        var joined = false;
+        client.Connected += () => joined = true;
+        client.Join("Grace Hopper", "127.0.0.1", port);
+        await Frames(() => joined, 900);
+        if (!joined)
+        {
+            GD.Print("in flight       FAILED: no client");
+            return;
+        }
+
+        using var hostDriver = new LockstepDriver(host, catalogue);
+        using var clientDriver = new LockstepDriver(client, catalogue);
+
+        Sim.World? hw = null;
+        hostDriver.Started += w => hw = w;
+        hostDriver.StartAsHost(20260908);
+        await Frames(() => hw is not null, 600);
+        if (hw is null)
+        {
+            GD.Print("in flight       FAILED: no world");
+            return;
+        }
+
+        var root = new GameRoot { Name = "ShotRoot", InitialWorld = hw, Net = hostDriver };
+        AddChild(root);
+        await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+        root.ClosePanelsForCapture();
+
+        for (var i = 0; i < 60 && hw.TickCount < 40; i++)
+        {
+            clientDriver.Advance(4);
+            await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+        }
+
+        // One refused action, all the way through: the sentence on screen is a
+        // real refusal that arrived 100 ms after its click, not a caption.
+        root.RemoveAt(hw.Player.TileX + 3, hw.Player.TileY + 3);
+        for (var i = 0; i < 40 && root.Actions.Refused == 0; i++)
+        {
+            clientDriver.Advance(4);
+            await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+        }
+
+        // And one that stays in flight, because the client stops speaking here.
+        var builds = new Sim.BuildCatalogue(catalogue);
+        var bench = builds.Find("man_manual_crafting");
+        var recipe = bench is null
+            ? null
+            : builds.RecipesFor(bench, hw.Research).FirstOrDefault();
+        if (bench is not null && recipe is not null)
+        {
+            root.Hold(bench, recipe);
+            root.PlaceHeld(hw.Player.TileX + 6, hw.Player.TileY - 5);
+        }
+
+        // Terrain streams in over several frames and a capture returns the
+        // frame that was already drawn (docs/0025), so this waits rather than
+        // photographing an empty world with a caption on it.
+        await Frames(() => false, 30);
+
+        var markers = root.GetNodeOrNull<PendingActionsView>("PendingActions");
+        var card = root.GetNodeOrNull<NetStatusPanel>("NetStatusLayer/NetStatus");
+        GD.Print($"in flight       {root.Actions.InFlight.Count} queued, " +
+                 $"{markers?.Drawn ?? -1} markers visible, " +
+                 $"{root.Actions.Refused} refusals spoken, card=\"{card?.TitleText}\"");
+        await Capture("inflight");
+
+        root.QueueFree();
+        host.Close("");
+        client.Close("");
     }
 
     private async System.Threading.Tasks.Task Capture(string name)

@@ -405,11 +405,33 @@ public class CommandTests
         Assert.Equal(5, batch[0].Sequence);
     }
 
+    /// `Say` ends in a `_ =>` fallback, so an outcome added to the enum
+    /// compiles, ships, and tells a player "That cannot be done." when they
+    /// needed to know why. Both halves below catch that -- one outcome falling
+    /// through is named by the fallback check, two collide on distinctness --
+    /// and both name the offending values, because a failure reading
+    /// "expected 30, got 29" sends the next person counting.
     [Fact]
     public void EveryOutcome_HasASentenceOfItsOwn()
     {
-        var said = Enum.GetValues<CommandOutcome>().Select(CommandOutcomes.Say).ToList();
-        Assert.DoesNotContain("That cannot be done.", said);
-        Assert.Equal(said.Count, said.Distinct().Count());
+        const string fallback = "That cannot be done.";
+
+        var said = Enum.GetValues<CommandOutcome>()
+                       .ToDictionary(o => o, CommandOutcomes.Say);
+
+        var generic = said.Where(kv => kv.Value == fallback)
+                          .Select(kv => kv.Key.ToString())
+                          .ToList();
+        Assert.True(generic.Count == 0,
+            "outcomes that fall through to the generic sentence, so a player is " +
+            "refused without being told why: " + string.Join(", ", generic));
+
+        var shared = said.GroupBy(kv => kv.Value)
+                         .Where(g => g.Count() > 1)
+                         .Select(g => $"{string.Join(" and ", g.Select(kv => kv.Key))} both say \"{g.Key}\"")
+                         .ToList();
+        Assert.True(shared.Count == 0,
+            "two refusals sharing one sentence is the same silence the enum " +
+            "exists to prevent: " + string.Join("; ", shared));
     }
 }

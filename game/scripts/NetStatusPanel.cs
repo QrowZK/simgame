@@ -115,7 +115,19 @@ public sealed partial class NetStatusPanel : Control
     /// Draws one status. Called every frame while a session is running; cheap,
     /// and cheaper than the class of bug where a caption is set once and then
     /// describes a stall that ended a minute ago.
-    public void Show(in NetStatus status)
+    public void Show(in NetStatus status) => Show(status, "");
+
+    /// `inFlight` is what this player has asked for and the world has not
+    /// answered yet.
+    ///
+    /// It goes on this card rather than in a corner of its own because both
+    /// bottom corners of the screen are already owned -- the build menu takes
+    /// the left, the machine panel takes the right -- and a caption that is
+    /// behind a panel exactly when the player is building is a caption that
+    /// does not exist. It also belongs here: "your click has not happened yet"
+    /// and "the world is waiting for somebody" are the same fact seen from two
+    /// ends, and this card is where the shared session speaks.
+    public void Show(in NetStatus status, string inFlight)
     {
         if (_title is null) return;
 
@@ -133,11 +145,12 @@ public sealed partial class NetStatusPanel : Control
                 _title.Text = $"Waiting for {status.WaitingFor}";
                 _title.AddThemeColorOverride("font_color", Waiting);
                 _body.AddThemeColorOverride("font_color", Waiting);
-                _body.Text =
+                _body.Text = Fit(
+                    (inFlight.Length > 0 ? "Asked for, not yet done: " + inFlight + "\n" : "") +
                     $"The world is paused at tick {status.Tick} until their commands arrive " +
                     $"-- {status.StalledTicks / 60.0:0.0} seconds so far. Everybody waits: " +
                     "under lockstep nobody may run a tick they do not have every player's " +
-                    "instructions for.";
+                    "instructions for.");
                 Visible = true;
                 break;
 
@@ -145,7 +158,9 @@ public sealed partial class NetStatusPanel : Control
                 _title.Text = "Shared world";
                 _title.AddThemeColorOverride("font_color", Calm);
                 _body.AddThemeColorOverride("font_color", Calm);
-                _body.Text = $"In step at tick {status.Tick}.";
+                _body.Text = Fit($"In step at tick {status.Tick}." +
+                                 (inFlight.Length > 0 ? "\nAsked for, not yet done: " + inFlight
+                                                      : ""));
                 Visible = true;
                 break;
 
