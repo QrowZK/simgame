@@ -148,3 +148,79 @@ public readonly struct DigReport
 
     public int RemainingAfter => RemainingBefore - Taken;
 }
+
+/// Why a hand load did or did not put anything into a machine (ADR 0040).
+///
+/// Five reasons rather than a count, for the same argument `DigResult` makes: a
+/// zero means five different things and the player's next move is different for
+/// each of them. "It is already full" and "you are carrying none of what it
+/// wants" send a player to opposite ends of the base.
+public enum LoadResult
+{
+    Ok,
+
+    /// No machine covers that tile. A belt, a pole, bare ground.
+    NoMachine,
+
+    /// Outside hand reach (ADR 0033) -- the same arms that dig.
+    TooFar,
+
+    /// Another team's machine (ADR 0036). Checked before reach, because
+    /// walking closer will never help.
+    OtherTeam,
+
+    /// It is in reach, it is yours, and it wants nothing: it already holds the
+    /// cycles asked for, or it takes no inputs at all -- a miner digs and an
+    /// Uplink is delivered to.
+    WantsNothing,
+
+    /// It wants something and this player has none of it.
+    NoneCarried,
+}
+
+/// Why a hand take did or did not put anything in the player's pockets.
+public enum TakeResult
+{
+    Ok,
+    NoMachine,
+    TooFar,
+    OtherTeam,
+
+    /// Nothing has finished in there yet. The opposite complaint to
+    /// `LoadResult.WantsNothing`, and worth its own word for that reason.
+    NothingToTake,
+}
+
+/// What one hand load moved. `Wanted` is what a full load would have taken, so
+/// a partial one ("3 of the 12 it wanted") can be spoken without asking the
+/// machine a second question and getting an answer from after the load.
+public readonly struct LoadReport
+{
+    public readonly LoadResult Result;
+    public readonly int Moved;
+    public readonly int Wanted;
+
+    public LoadReport(LoadResult result, int moved = 0, int wanted = 0)
+    {
+        Result = result;
+        Moved = moved;
+        Wanted = wanted;
+    }
+
+    public bool Ok => Result == LoadResult.Ok;
+}
+
+/// What one hand take moved.
+public readonly struct TakeReport
+{
+    public readonly TakeResult Result;
+    public readonly int Taken;
+
+    public TakeReport(TakeResult result, int taken = 0)
+    {
+        Result = result;
+        Taken = taken;
+    }
+
+    public bool Ok => Result == TakeResult.Ok;
+}

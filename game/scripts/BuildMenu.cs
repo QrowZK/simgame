@@ -28,7 +28,11 @@ public sealed partial class BuildMenu : PanelContainer
 
     private BuildCatalogue _catalogue = null!;
     private World _world = null!;
-    private Inventory _bag = null!;
+    /// Read through the world rather than cached at `Bind` time. A cached
+    /// reference is correct until something changes which player this client is
+    /// looking through -- multiplayer does exactly that -- and then the menu
+    /// offers one player's pockets while the build spends another's.
+    private Inventory _bag => _world.PlayerInventory;
     private ItemDatabase _names = null!;
 
     private readonly List<Buildable> _shown = new();
@@ -72,7 +76,6 @@ public sealed partial class BuildMenu : PanelContainer
     {
         _catalogue = catalogue;
         _world = world;
-        _bag = world.PlayerInventory;
         _names = names;
     }
 

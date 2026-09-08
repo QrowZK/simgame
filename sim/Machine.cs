@@ -43,6 +43,10 @@ public enum RecipeChangeResult
     /// The machine could run it, but the tech that unlocks it has not been
     /// researched yet (ADR 0023).
     NotResearched,
+
+    /// Another team built this machine (ADR 0036). A teammate's is fine --
+    /// a team shares its factory -- so this is only ever a rival's.
+    OtherTeam,
 }
 
 public sealed class Machine

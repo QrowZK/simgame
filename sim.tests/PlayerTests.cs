@@ -512,7 +512,9 @@ public class PlayerTests
     [Fact]
     public void TheSaveVersionMoved_AndThirteenIsRefused()
     {
-        Assert.Equal(14, Sim.Save.SaveFile.CurrentVersion);
+        // 15 since teams landed (ADR 0036); 14 is what this test was written
+        // against and is still refused, which is the property it guards.
+        Assert.Equal(16, Sim.Save.SaveFile.CurrentVersion);
 
         var save = Sim.Save.SaveGame.Capture(NewWorld());
         save.Version = 13;

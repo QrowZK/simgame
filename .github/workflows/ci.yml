@@ -168,6 +168,32 @@ jobs:
       # The save loop as a player takes it: new game, save to disk, list it,
       # load it back, and stay identical after running on. The unit tests stop
       # at the sim boundary and never touch the file layer.
+      - name: Teams and save format 15
+        run: |
+          dotnet run --project sim.harness -- --teams-test | tee teams.log
+          grep -q -- "--- teams ok ---" teams.log
+
+      - name: Lockstep determinism (two peers, shuffled commands)
+        run: |
+          dotnet run --project sim.harness -- --lockstep-test | tee lockstep.log
+          grep -q "first tick the two peers disagreed on: expected -1, got -1" lockstep.log
+          # A determinism harness that never issues a command cannot prove that
+          # command deterministic, so the new hand kinds must actually appear.
+          grep -qE "^by kind .*Load=[1-9][0-9]* Take=[1-9][0-9]*" lockstep.log
+
+      - name: Lockstep over the wire (host and client, one world)
+        working-directory: game
+        run: |
+          GODOT=~/godot/Godot_v${GODOT_VERSION}_mono_linux_x86_64/Godot_v${GODOT_VERSION}_mono_linux.x86_64
+          "$GODOT" --headless -- --net-lockstep-test | tee netlockstep.log
+          grep -q "=== NET LOCKSTEP OK ===" netlockstep.log
+          grep -q "mismatches 0" netlockstep.log
+          grep -q "both peers stopped on their own comparison (host True, client True)" netlockstep.log
+          grep -q "no prediction   machines (0, 0) before the click, (0, 0) in the same frame" netlockstep.log
+          # Two peers loading one furnace on the same tick resolve identically,
+          # by the total order rather than by whose packet arrived first.
+          grep -q "contested load  won by \[host\], refused for \[client\]" netlockstep.log
+
       - name: Save/load session test
         working-directory: game
         run: |
@@ -192,6 +218,39 @@ jobs:
           grep -q "=== GUIDE OK ===" guide.log
           grep -qE "ladder          [6-9] of 9 steps done" guide.log
 
+      # The multiplayer transport: a host and a client in one process, over a
+      # real loopback socket. Everything asserted here is a COUNT -- rosters on
+      # both sides, three messages each way in order, departures seen -- because
+      # a silent zero looks exactly like the absence it replaced.
+      - name: Two peers connect, talk and part
+        working-directory: game
+        run: |
+          GODOT=~/godot/Godot_v${GODOT_VERSION}_mono_linux_x86_64/Godot_v${GODOT_VERSION}_mono_linux.x86_64
+          "$GODOT" --headless -- --net-test | tee net.log
+          grep -q "=== NET OK ===" net.log
+          # Both sides must agree there are two players, by name and id. A
+          # roster the host alone believes in is the desync this slice exists
+          # to make impossible later.
+          grep -qE "host roster     2: Ada \(#1\) host, Grace \(#[0-9]+\)" net.log
+          grep -qE "client roster   2: Ada \(#1\) host, Grace \(#[0-9]+\)" net.log
+          # Messages, both ways, in order. One message each way would pass a
+          # weaker check while having lost the ordering lockstep needs.
+          grep -qE "host -> client  sent 3 received 3: 1:host-1 1:host-2 1:host-3" net.log
+          grep -qE "client -> host  sent 3 received 3: [0-9]+:client-1 [0-9]+:client-2 [0-9]+:client-3" net.log
+          # A clean parting, not a stall: the roster shrinks and the host is
+          # told about it exactly once.
+          grep -qE "after leaving   host roster 1: Ada \(#1\) host, departures 1" net.log
+          # Every refusal carries a sentence naming the cause (ADR 0035). These
+          # are the lines that go quiet if a NetFailure ever degrades to a bool.
+          grep -q "version 0.2.1   VersionMismatch|" net.log
+          grep -q "full host       HostFull|" net.log
+          grep -q "dead port       NoAnswer|" net.log
+          grep -q "bad address     BadAddress" net.log
+          grep -q "bad port        BadPort" net.log
+          # And the lobby draws a row per peer. A roster nothing renders is the
+          # sounds-0-of-4 defect in a different costume.
+          awk '/^lobby rows/ { if ($3 + 0 < 1 || $3 != $5) { print "::error::" $0; exit 1 } }' net.log
+
       # New Game, through the menu, with the seed the menu invents. Everything
       # else builds its world directly and skips the button entirely, which is
       # how a release shipped that could not start one (ADR 0027).
@@ -202,6 +261,9 @@ jobs:
           "$GODOT" --headless -- --menu-test | tee menu.log
           grep -q "=== MENU OK ===" menu.log
           grep -q "research        present" menu.log
+          # Solo play goes through the same command path as a shared world, and
+          # unlike a shared world it must answer inside the click.
+          grep -qE "solo input      machines [0-9]+ -> [0-9]+ in the click" menu.log
           # Not seed 0 every time: the "surprise me" seed used to overflow to
           # zero, so every random world was the same world.
           grep -qE "menu seed       [1-9][0-9]+" menu.log

@@ -1,0 +1,121 @@
+[gd_scene load_steps=4 format=3 uid="uid://dlobby00001"]
+
+[ext_resource type="Script" path="res://scripts/Lobby.cs" id="1_lobby"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_card"]
+bg_color = Color(0.09, 0.102, 0.122, 0.97)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.33, 0.36, 0.42, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_well"]
+bg_color = Color(0.059, 0.071, 0.086, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.22, 0.25, 0.3, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[node name="Lobby" type="Control"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_lobby")
+
+[node name="Backdrop" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.11, 0.12, 0.14, 1)
+
+[node name="Card" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -320.0
+offset_top = -230.0
+offset_right = 320.0
+offset_bottom = 230.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_card")
+
+[node name="Margin" type="MarginContainer" parent="Card"]
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 24
+
+[node name="Rows" type="VBoxContainer" parent="Card/Margin"]
+theme_override_constants/separation = 14
+
+[node name="Head" type="HBoxContainer" parent="Card/Margin/Rows"]
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="Card/Margin/Rows/Head"]
+theme_override_font_sizes/font_size = 20
+text = "Session"
+
+[node name="Where" type="Label" parent="Card/Margin/Rows/Head"]
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.6, 0.64, 0.7, 1)
+text = ""
+
+[node name="Spacer" type="Control" parent="Card/Margin/Rows/Head"]
+size_flags_horizontal = 3
+
+[node name="Count" type="Label" parent="Card/Margin/Rows/Head"]
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.6, 0.64, 0.7, 1)
+text = ""
+
+[node name="Body" type="HBoxContainer" parent="Card/Margin/Rows"]
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+
+[node name="Well" type="PanelContainer" parent="Card/Margin/Rows/Body"]
+size_flags_horizontal = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_well")
+
+[node name="Scroll" type="ScrollContainer" parent="Card/Margin/Rows/Body/Well"]
+horizontal_scroll_mode = 0
+
+[node name="Slots" type="VBoxContainer" parent="Card/Margin/Rows/Body/Well/Scroll"]
+size_flags_horizontal = 3
+theme_override_constants/separation = 0
+
+[node name="Status" type="Label" parent="Card/Margin/Rows"]
+custom_minimum_size = Vector2(0, 70)
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.6, 0.64, 0.7, 1)
+autowrap_mode = 2
+clip_text = true
+text = ""
+
+[node name="Foot" type="HBoxContainer" parent="Card/Margin/Rows"]
+theme_override_constants/separation = 12
+
+[node name="Leave" type="Button" parent="Card/Margin/Rows/Foot"]
+text = "Leave"
+
+[node name="Spacer" type="Control" parent="Card/Margin/Rows/Foot"]
+size_flags_horizontal = 3
+
+[node name="Start" type="Button" parent="Card/Margin/Rows/Foot"]
+custom_minimum_size = Vector2(150, 34)
+text = "Start"

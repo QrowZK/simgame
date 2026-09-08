@@ -2,7 +2,7 @@ namespace Sim;
 
 /// Deterministic simulation root. Owns all machines and advances them one fixed
 /// 60 UPS tick at a time. No wall-clock time, no unseeded randomness.
-public sealed class World
+public sealed partial class World
 {
     private readonly List<Machine> _machines = new();
     private readonly List<Miner> _miners = new();
@@ -23,14 +23,92 @@ public sealed class World
     /// two parts of the game disagree about what item 47 is.
     public ItemDatabase Items { get; }
 
-    /// What the player is carrying. Hand-loading a machine is a world state
-    /// change, so it lives on the same side of the engine boundary as the tick.
-    public Inventory PlayerInventory { get; } = new();
+    private readonly List<Team> _teams = new();
+    private readonly List<Player> _players = new();
 
-    /// Where the player is standing (ADR 0033). Simulation state, not camera
-    /// state: it ticks with the world, it is saved, and it decides whether the
-    /// hands and the build cursor can touch a tile at all.
-    public Player Player { get; } = new();
+    /// The teams in this world (ADR 0036). Never empty: a world always has at
+    /// least team 0, so "which team's research is this" always has an answer
+    /// and no caller has to null-check the single-player case.
+    ///
+    /// Index equals `Team.Id`, and teams are never removed, because ownership
+    /// on every building and in every save is stored as that number.
+    public IReadOnlyList<Team> Teams => _teams;
+
+    /// The roster. Index equals `Player.Id`, for the same reason: slice 3's
+    /// lockstep commands name their issuer by number.
+    public IReadOnlyList<Player> Players => _players;
+
+    /// Which player this process's keyboard is driving. On a dedicated server
+    /// or in a replay this is still a real index -- there is always somebody
+    /// the local UI is looking through -- so it is an index rather than a
+    /// nullable one.
+    public int LocalIndex { get; private set; }
+
+    /// The local player. This is what `World.Player` has always meant and
+    /// still means: 293 call sites across 24 files say "the player" when they
+    /// mean "the one at this keyboard", and every one of them is still right.
+    /// Anything that means *the acting player* takes one as a parameter
+    /// instead.
+    public Player Player => _players[LocalIndex];
+
+    /// What the local player is carrying.
+    public Inventory PlayerInventory => Player.Inventory;
+
+    /// The local player's team. The alias that keeps ownership from having to
+    /// be threaded through code that only ever deals with one team.
+    public Team LocalTeam => _teams[Player.TeamId];
+
+    /// The team a player is on.
+    public Team TeamOf(Player player) => _teams[player.TeamId];
+
+    /// The first player on a team, in roster order.
+    ///
+    /// This is where an unattended reward lands, because a belt has no hands
+    /// (see `DrainUplink`). Roster order rather than "nearest" so the answer
+    /// does not depend on where anybody is standing, which would make the same
+    /// commands produce different inventories on two peers. A team with no
+    /// players falls back to the local player, which only a save that emptied
+    /// a team could produce and which is better than throwing during a tick.
+    public Player FirstPlayerOf(Team team)
+    {
+        for (var i = 0; i < _players.Count; i++)
+            if (_players[i].TeamId == team.Id) return _players[i];
+        return Player;
+    }
+
+    /// Adds a team. Returns it, so a caller can hand it its research in one
+    /// expression. Not removable: see `Team.Id`.
+    public Team AddTeam(string name, Research? research = null)
+    {
+        var team = new Team(_teams.Count, name, research);
+        _teams.Add(team);
+        return team;
+    }
+
+    /// Adds a player to a team, standing where a new game starts. Returns the
+    /// player so a caller can walk them somewhere else immediately.
+    public Player AddPlayer(string name, int teamId)
+    {
+        if (teamId < 0 || teamId >= _teams.Count)
+            throw new ArgumentOutOfRangeException(nameof(teamId),
+                $"no team {teamId}; this world has {_teams.Count}");
+
+        var player = new Player(_players.Count, name, teamId);
+        _players.Add(player);
+        return player;
+    }
+
+    /// Points the local view at a different player. For the headless harnesses
+    /// and for a client that is not player 0; it moves nothing and changes no
+    /// simulation state, which is why it is safe to call on a loaded world.
+    public void SetLocalPlayer(int index)
+    {
+        if (index < 0 || index >= _players.Count)
+            throw new ArgumentOutOfRangeException(nameof(index),
+                $"no player {index}; this world has {_players.Count}");
+
+        LocalIndex = index;
+    }
 
     /// Belts, splitters and inserters. Owned here so the whole world advances
     /// under one deterministic tick.
@@ -53,7 +131,17 @@ public sealed class World
     /// Nullable, and null means an ungated world. Headless throughput analysis
     /// and the demo world build machines directly and want the whole recipe
     /// graph; a played game always has one.
-    public Research? Research { get; set; }
+    ///
+    /// Team-owned since ADR 0036; this property is the local player's team's,
+    /// which is what every existing call site meant.
+    public Research? Research
+    {
+        get => LocalTeam.Research;
+        set => LocalTeam.Research = value;
+    }
+
+    /// The research a player's deliveries feed. Null for an ungated team.
+    public Research? ResearchOf(Player player) => TeamOf(player).Research;
 
     /// Indices of the machines that are Uplinks. Kept as a set rather than
     /// re-tested each tick: recognising one means comparing a recipe id, and
@@ -64,23 +152,28 @@ public sealed class World
 
     public IReadOnlyCollection<int> Uplinks => _uplinks;
 
-    private int _unattendedDeliveries;
-
-    /// How many items have reached research without passing through the
-    /// player's hands. Saved, because it is progress: it is what proves the
-    /// first automated line ran.
-    public int UnattendedDeliveries => _unattendedDeliveries;
+    /// How many items have reached the local team's research without passing
+    /// through a player's hands. Team-owned state (`Team.UnattendedDeliveries`);
+    /// this is the alias for the team the local player is on.
+    public int UnattendedDeliveries => LocalTeam.UnattendedDeliveries;
 
     /// For the save loader. Not a setter: restoring a count is not the same
     /// operation as scoring one, and a settable property invites a caller to
     /// fake the milestone.
-    public void RestoreUnattendedDeliveries(int count) => _unattendedDeliveries = count;
+    public void RestoreUnattendedDeliveries(int count)
+        => LocalTeam.RestoreUnattendedDeliveries(count);
 
     public World(int seed, ItemDatabase? items = null, WorldGen? gen = null)
     {
         Seed = seed;
         Items = items ?? new ItemDatabase();
         Ground = new Ground(gen ?? new WorldGen(seed, Array.Empty<OreSpec>()));
+
+        // Every world starts with one team and one player on it. A world with
+        // an empty roster would make `World.Player` a null check at 293 call
+        // sites; a world with no team would do the same to `World.Research`.
+        AddTeam("Team 1");
+        AddPlayer("Player 1", 0);
     }
 
     /// Hands items to the research state and grants whatever a completed tech
@@ -90,16 +183,23 @@ public sealed class World
     /// player's hands, on a belt or under a drone, so the three routes cannot
     /// drift apart.
     public DeliveryReport DeliverToUplink(ItemId item, int count)
-    {
-        if (Research is null || count <= 0) return new DeliveryReport();
+        => DeliverToUplink(item, count, LocalTeam, PlayerInventory);
 
-        var report = Research.Deliver(Items.GetName(item), count);
+    /// The team-aware version. `team` decides which tech ladder is credited and
+    /// `rewardTo` decides whose pockets the payout lands in -- two different
+    /// questions, because a belt delivery credits a team with no player
+    /// standing anywhere near it.
+    public DeliveryReport DeliverToUplink(ItemId item, int count, Team team, Inventory rewardTo)
+    {
+        if (team.Research is not { } research || count <= 0) return new DeliveryReport();
+
+        var report = research.Deliver(Items.GetName(item), count);
 
         foreach (var tech in report.Completed)
-            foreach (var reward in Research.RewardsFor(tech))
+            foreach (var reward in research.RewardsFor(tech))
                 if (Items.TryGetId(reward.Item, out var id))
                 {
-                    PlayerInventory.Add(id, reward.Count);
+                    rewardTo.Add(id, reward.Count);
                     report.Granted.Add(reward);
                 }
 
@@ -108,21 +208,26 @@ public sealed class World
 
     /// Delivers straight out of the player's inventory. The hand version of
     /// walking a hull to the Uplink, and the only route available before belts.
-    public DeliveryReport DeliverByHand(ItemId item, int count)
+    public DeliveryReport DeliverByHand(ItemId item, int count, Player? actor = null)
     {
+        var player = actor ?? Player;
+
         // Reach first, and before the inventory check: "walk over to it" is the
         // answer whether or not you happen to be carrying the right thing, and
         // a player standing 200 tiles from their Uplink should be told that
         // rather than told their pockets are empty.
-        if (!TryUplinkInHandReach(out _))
+        //
+        // "Their" Uplink: a rival team's Uplink in reach is not one you can put
+        // anything into, so it does not count as one being near (ADR 0036).
+        if (!TryUplinkInHandReach(out _, player))
             return new DeliveryReport { Refusal = DeliveryRefusal.NoUplinkInReach };
 
-        var have = Math.Min(count, PlayerInventory.Count(item));
+        var have = Math.Min(count, player.Inventory.Count(item));
         if (have <= 0)
             return new DeliveryReport { Refusal = DeliveryRefusal.NotCarried };
 
-        var report = DeliverToUplink(item, have);
-        PlayerInventory.Take(item, report.Accepted);
+        var report = DeliverToUplink(item, have, TeamOf(player), player.Inventory);
+        player.Inventory.Take(item, report.Accepted);
         if (report.Accepted == 0) report.Refusal = DeliveryRefusal.NothingWanted;
         return report;
     }
@@ -749,15 +854,19 @@ public sealed class World
     /// 0021) -- but a build with no recipe is still a build with nothing
     /// chosen, and is still refused.
     public BuildResult TryBuild(BuildCatalogue catalogue, ItemId item, int x, int y,
-                                Recipe? recipe = null, Direction facing = Direction.East)
+                                Recipe? recipe = null, Direction facing = Direction.East,
+                                Player? actor = null)
     {
+        var player = actor ?? Player;
+        var team = TeamOf(player);
+
         if (!catalogue.TryGet(item, out var buildable))
             return BuildResult.NotBuildable;
 
         if (buildable.Kind == BuildKind.NotPlaceable)
             return BuildResult.NotPlaceableYet;
 
-        if (PlayerInventory.Count(item) <= 0)
+        if (player.Inventory.Count(item) <= 0)
             return BuildResult.NoneCarried;
 
         var placement = buildable.PlacementAt(x, y);
@@ -765,7 +874,7 @@ public sealed class World
         // Reach before the footprint checks: what is under a tile you cannot
         // walk to is not the problem you have, and "something is already there"
         // would send the player looking for a machine they cannot even see.
-        if (!InBuildReach(placement))
+        if (!InBuildReach(placement, player))
             return BuildResult.TooFar;
 
         if (!CanPlace(placement) || CoversFluidNode(placement) || CoversBeltTile(placement))
@@ -779,7 +888,7 @@ public sealed class World
             // Separated from the check above so the refusal can say which
             // problem it is: "pick a recipe" and "that one is not researched
             // yet" send the player to two different places.
-            if (Research is not null && !Research.IsUnlocked(recipe))
+            if (team.Research is { } gate && !gate.IsUnlocked(recipe))
                 return BuildResult.NotResearched;
         }
 
@@ -838,8 +947,8 @@ public sealed class World
                 _ => BuildResult.Blocked,
             };
 
-        PlayerInventory.Take(item, 1);
-        RegisterBuilt(x, y, item);
+        player.Inventory.Take(item, 1);
+        RegisterBuilt(x, y, item, team.Id);
         return BuildResult.Ok;
     }
 
@@ -1026,14 +1135,23 @@ public sealed class World
     /// of thing that loses a save's worth of trust, so the count is part of
     /// the result rather than something the caller has to work out.
     public RecipeChangeResult TryChangeRecipe(BuildCatalogue catalogue, int index,
-                                              Recipe recipe, out int evicted)
+                                              Recipe recipe, out int evicted,
+                                              Player? actor = null)
     {
         evicted = 0;
+        var player = actor ?? Player;
 
         if (index < 0 || index >= _machines.Count)
             return RecipeChangeResult.NoMachine;
 
         var machine = _machines[index];
+
+        // Ownership before anything else about the machine. A rival's assembler
+        // is not yours to retask however long you stand in front of it, and the
+        // in-flight batch it would evict is not yours to be handed either.
+        if (_placed[index] &&
+            !MayAct(player, _placements[index].X, _placements[index].Y))
+            return RecipeChangeResult.OtherTeam;
 
         // Re-picking what it already makes must cost nothing. A picker that
         // dumps the machine when a player clicks the highlighted row is a trap.
@@ -1046,10 +1164,10 @@ public sealed class World
         if (!catalogue.CanRun(buildable, recipe))
             return RecipeChangeResult.CannotRun;
 
-        if (Research is not null && !Research.IsUnlocked(recipe))
+        if (TeamOf(player).Research is { } gate && !gate.IsUnlocked(recipe))
             return RecipeChangeResult.NotResearched;
 
-        evicted = machine.SetRecipe(recipe, PlayerInventory);
+        evicted = machine.SetRecipe(recipe, player.Inventory);
         _states[index] = machine.State;
         return RecipeChangeResult.Ok;
     }
@@ -1064,9 +1182,54 @@ public sealed class World
     /// back off the thing itself.
     private readonly Dictionary<long, ItemId> _builtFrom = new();
 
-    /// Records what a placement was paid for with. Public because the save has
-    /// to put it back: everything else goes through `TryBuild`.
-    public void RegisterBuilt(int x, int y, ItemId item) => _builtFrom[Key(x, y)] = item;
+    /// Which team paid for the building anchored on a tile, keyed the same way
+    /// and for the same reason (ADR 0036). A parallel map rather than a field
+    /// on each system's own record, because "who owns this" has to be
+    /// answerable for a belt tile, a pipe and a 3x3 assembler alike, and the
+    /// anchor is the one thing all three have.
+    ///
+    /// A tile with no entry is `Team.NoTeam`: unowned, which is what a machine
+    /// placed outside `TryBuild` -- demo world, headless analysis -- is. An
+    /// unowned building is nobody's to protect, so ownership refuses nothing
+    /// about it, which keeps those worlds behaving exactly as they did.
+    private readonly Dictionary<long, int> _ownedBy = new();
+
+    /// Records what a placement was paid for with, and by whom. Public because
+    /// the save has to put it back: everything else goes through `TryBuild`.
+    public void RegisterBuilt(int x, int y, ItemId item, int teamId = Team.NoTeam)
+    {
+        _builtFrom[Key(x, y)] = item;
+        if (teamId != Team.NoTeam) _ownedBy[Key(x, y)] = teamId;
+        else _ownedBy.Remove(Key(x, y));
+    }
+
+    /// Which team owns the building anchored on a tile, or `Team.NoTeam`.
+    /// Takes the *anchor*, not any covered tile: use `TryRemovableAt` to find
+    /// the anchor from a clicked tile.
+    public int OwnerOfAnchor(int x, int y)
+        => _ownedBy.TryGetValue(Key(x, y), out var team) ? team : Team.NoTeam;
+
+    /// Which team owns whatever is standing on a tile, anchor or not.
+    /// `Team.NoTeam` for bare ground as well as for an unowned building --
+    /// telling those two apart is `TryRemovableAt`'s job, not this one's.
+    public int OwnerAt(int x, int y)
+        => TryRemovableAt(x, y, out _, out var ax, out var ay) ? OwnerOfAnchor(ax, ay)
+                                                              : OwnerOfAnchor(x, y);
+
+    /// Every recorded (anchor, team), in coordinate order so a save written
+    /// twice from the same world is byte-identical.
+    public IEnumerable<(int X, int Y, int Team)> OwnedBy
+        => _ownedBy.Select(kv => ((int)(kv.Key >> 32), (int)(uint)kv.Key, kv.Value))
+                   .OrderBy(e => e.Item1).ThenBy(e => e.Item2);
+
+    /// Whether `player` is allowed to act on the building anchored on a tile.
+    /// Unowned buildings are everyone's; a teammate's is yours, which is what
+    /// makes a team a team.
+    public bool MayAct(Player player, int anchorX, int anchorY)
+    {
+        var owner = OwnerOfAnchor(anchorX, anchorY);
+        return owner == Team.NoTeam || owner == player.TeamId;
+    }
 
     /// Every recorded (anchor, item), in a fixed order so a save written twice
     /// from the same world is byte-identical.
@@ -1116,8 +1279,10 @@ public sealed class World
     /// together comes up as readily as it went down: the whole reason this
     /// exists is that a misplacement was permanent, and a removal that refuses
     /// while the factory is running is a removal you cannot use.
-    public RemovalReport TryRemove(int x, int y)
+    public RemovalReport TryRemove(int x, int y, Player? actor = null)
     {
+        var player = actor ?? Player;
+
         if (!TryRemovableAt(x, y, out var item, out var anchorX, out var anchorY))
         {
             // Told apart deliberately: an empty tile is the player's aim being
@@ -1128,10 +1293,18 @@ public sealed class World
                                               : RemoveResult.NothingThere);
         }
 
+        // Ownership *before* reach, which is the opposite of the usual order
+        // here. Reach is checked first everywhere else because walking closer
+        // is a thing the player can go and do; walking closer to a rival's
+        // smelter is not. Telling them "walk twelve tiles" and then "that is
+        // not yours" is one wasted trip per refusal (ADR 0036).
+        if (!MayAct(player, anchorX, anchorY))
+            return new RemovalReport(RemoveResult.OtherTeam);
+
         // Reach measured against the building's own anchor, not the clicked
         // tile: clicking the far corner of a 3x3 you are standing beside must
         // not refuse what clicking its near corner allows.
-        if (!InBuildReach(anchorX, anchorY) && !InBuildReach(x, y))
+        if (!InBuildReach(anchorX, anchorY, player) && !InBuildReach(x, y, player))
             return new RemovalReport(RemoveResult.TooFar);
 
         var returned = 0;
@@ -1143,12 +1316,12 @@ public sealed class World
             // The same eviction retasking uses, for the same reason: the input
             // buffer is theirs, the output buffer is paid for, and the batch in
             // flight has consumed its inputs without producing anything yet.
-            returned += found.SetRecipe(found.Recipe, PlayerInventory);
+            returned += found.SetRecipe(found.Recipe, player.Inventory);
             RemoveMachineAt(machineIndex);
         }
         else if (TryMinerAt(anchorX, anchorY, out var mined, out var minerIndex))
         {
-            returned += Drain(mined.Item, mined.Pull(mined.Buffered));
+            returned += Drain(player, mined.Item, mined.Pull(mined.Buffered));
             Unmark(_minerPlacements[minerIndex]);
             SwapRemove(_miners, _minerPlacements, minerIndex, MinerIndexBase);
         }
@@ -1166,7 +1339,7 @@ public sealed class World
             // out as power, so refunding it would create energy from nothing --
             // which is exactly why a machine's in-flight batch *is* refunded
             // and this is not.
-            returned += Drain(burner.Fuel, burner.TakeFuel());
+            returned += Drain(player, burner.Fuel, burner.TakeFuel());
             Unmark(Power.GeneratorPlacements[generatorIndex]);
             var moved = Power.RemoveGenerator(generatorIndex);
             if (moved >= 0) Mark(Power.GeneratorPlacements[generatorIndex],
@@ -1203,7 +1376,7 @@ public sealed class World
             var tiles = BeltMap.TilesEmptiedByRemoving(anchorX, anchorY);
             foreach (var carried in BeltMap.TakeItemsOn(Belts, tiles))
             {
-                PlayerInventory.Add(carried, 1);
+                player.Inventory.Add(carried, 1);
                 returned++;
             }
 
@@ -1211,7 +1384,8 @@ public sealed class World
         }
 
         _builtFrom.Remove(Key(anchorX, anchorY));
-        PlayerInventory.Add(item, 1);
+        _ownedBy.Remove(Key(anchorX, anchorY));
+        player.Inventory.Add(item, 1);
 
         // Every removal changes what a belt or an inserter is looking at: an
         // endpoint holds a machine's *index*, and the indices above a removed
@@ -1226,9 +1400,9 @@ public sealed class World
                                  anchorX, anchorY);
     }
 
-    private int Drain(ItemId item, int count)
+    private static int Drain(Player player, ItemId item, int count)
     {
-        if (count > 0) PlayerInventory.Add(item, count);
+        if (count > 0) player.Inventory.Add(item, count);
         return count;
     }
 
@@ -1314,16 +1488,29 @@ public sealed class World
     /// buffer rather than destroyed. A misrouted belt therefore backs up and
     /// stops, which is a problem a player can see and undo -- the alternative,
     /// silently eating it, is the same bug as a machine that voids its input.
-    private void DrainUplink(Machine machine)
+    private void DrainUplink(Machine machine, int index)
     {
-        if (Research is null) return;
+        // Whose ladder this Uplink feeds is decided by who built it, not by
+        // who is at the keyboard. Two teams' belts running into two Uplinks a
+        // tile apart credit two different tech trees (ADR 0036).
+        var placement = _placements[index];
+        var owner = _placed[index] ? OwnerOfAnchor(placement.X, placement.Y) : Team.NoTeam;
+        var team = owner == Team.NoTeam ? LocalTeam : _teams[owner];
+
+        if (team.Research is null) return;
+
+        // The payout of an unattended delivery has nobody's hands to land in.
+        // It goes to the team's first player in roster order -- deterministic,
+        // and named as a limitation rather than hidden: there is no team chest
+        // yet, so a reward earned by a belt lands with whoever joined first.
+        var recipient = FirstPlayerOf(team).Inventory;
 
         // Snapshotted and ordered, so the credit order does not depend on
         // dictionary iteration order and two identical worlds stay identical.
         foreach (var (item, count) in machine.InputContents.OrderBy(kv => kv.Key.Value))
         {
             if (count <= 0) continue;
-            var report = DeliverToUplink(item, count);
+            var report = DeliverToUplink(item, count, team, recipient);
             if (report.Accepted <= 0) continue;
 
             machine.TakeInput(item, report.Accepted);
@@ -1334,7 +1521,7 @@ public sealed class World
             // "the factory delivered that, not you", which is the moment the
             // opening is built around and the one thing about it a guide
             // cannot infer from anything else (docs/0030).
-            _unattendedDeliveries += report.Accepted;
+            team.ScoreUnattendedDelivery(report.Accepted);
         }
 
         machine.SetIdle();
@@ -1361,16 +1548,18 @@ public sealed class World
     /// Whether the player's hands can touch a tile. Digging, hand-loading and
     /// hand-delivering all ask this; *looking* never does, because inspection
     /// is not physical (ADR 0033).
-    public bool InHandReach(int x, int y) => Player.CanReachTile(x, y, Sim.Player.HandReachTiles);
+    public bool InHandReach(int x, int y, Player? actor = null)
+        => (actor ?? Player).CanReachTile(x, y, Sim.Player.HandReachTiles);
 
-    public bool InHandReach(in MachinePlacement placement)
-        => Player.CanReach(placement, Sim.Player.HandReachTiles);
+    public bool InHandReach(in MachinePlacement placement, Player? actor = null)
+        => (actor ?? Player).CanReach(placement, Sim.Player.HandReachTiles);
 
     /// Whether the player could set something down on a tile.
-    public bool InBuildReach(int x, int y) => Player.CanReachTile(x, y, Sim.Player.BuildReachTiles);
+    public bool InBuildReach(int x, int y, Player? actor = null)
+        => (actor ?? Player).CanReachTile(x, y, Sim.Player.BuildReachTiles);
 
-    public bool InBuildReach(in MachinePlacement placement)
-        => Player.CanReach(placement, Sim.Player.BuildReachTiles);
+    public bool InBuildReach(in MachinePlacement placement, Player? actor = null)
+        => (actor ?? Player).CanReach(placement, Sim.Player.BuildReachTiles);
 
     /// Digs a tile by hand, with the reach check and every refusal named.
     ///
@@ -1379,8 +1568,10 @@ public sealed class World
     /// tested by launching a renderer. They are here now: `HandOps.Mine` stays
     /// the unchecked primitive that miners and worldgen analysis use, and this
     /// is what a pair of hands does.
-    public DigReport TryDigByHand(int x, int y, int amount)
+    public DigReport TryDigByHand(int x, int y, int amount, Player? actor = null)
     {
+        var player = actor ?? Player;
+
         if (!Ground.TryPatchAt(x, y, out var patch))
             return new DigReport(DigResult.NothingThere, default, 0, 0);
 
@@ -1389,7 +1580,7 @@ public sealed class World
         // Reach before the state of the patch: a player who cannot get to a
         // tile has one thing to do about it, and knowing the patch under it is
         // empty does not change that.
-        if (!InHandReach(x, y))
+        if (!InHandReach(x, y, player))
             return new DigReport(DigResult.TooFar, patch.Item, remaining, 0);
 
         if (patch.IsFluid)
@@ -1398,26 +1589,139 @@ public sealed class World
         if (remaining <= 0)
             return new DigReport(DigResult.WorkedOut, patch.Item, 0, 0);
 
-        var dug = HandOps.Mine(Ground, x, y, PlayerInventory, amount);
+        // Ore is not owned. The ground belongs to nobody, so two teams mining
+        // one patch race for it -- which is the only competition between teams
+        // this design has, and it is deliberate.
+        var dug = HandOps.Mine(Ground, x, y, player.Inventory, amount);
         return new DigReport(DigResult.Ok, patch.Item, remaining, dug);
+    }
+
+    /// Loads a machine by hand: `cycles` cycles' worth of everything it is
+    /// short of, out of this player's own pockets (ADR 0040).
+    ///
+    /// **Hand reach, not build reach.** Loading is moving items between your
+    /// pockets and a machine's hopper with your arms, which is what digging and
+    /// hand-delivering are, and they go six tiles. Building reaches twelve
+    /// because setting a hull down is a throw. A player who can load a furnace
+    /// from twelve tiles away never has to stand next to anything in the first
+    /// hour, and standing next to the furnace is the first hour.
+    ///
+    /// Ownership before reach, deliberately: walking closer never makes a
+    /// rival's machine yours, and being told the wrong one of those two things
+    /// sends the player on a walk for nothing.
+    public LoadReport TryLoadByHand(int x, int y, int cycles, Player? actor = null)
+    {
+        var player = actor ?? Player;
+
+        if (!TryMachineAt(x, y, out var machine, out var index))
+        {
+            // A miner on the tile is not "no machine there" -- the player can
+            // see it perfectly well. It simply eats nothing.
+            if (TryMinerAt(x, y, out _, out var minerIndex))
+            {
+                var minerPlacement = MinerPlacements[minerIndex];
+                if (!MayAct(player, minerPlacement.X, minerPlacement.Y))
+                    return new LoadReport(LoadResult.OtherTeam);
+                return new LoadReport(!InHandReach(minerPlacement, player)
+                                          ? LoadResult.TooFar
+                                          : LoadResult.WantsNothing);
+            }
+
+            return new LoadReport(LoadResult.NoMachine);
+        }
+
+        var placement = PlacementOf(index);
+        if (!MayAct(player, placement.X, placement.Y))
+            return new LoadReport(LoadResult.OtherTeam);
+
+        if (!InHandReach(placement, player))
+            return new LoadReport(LoadResult.TooFar);
+
+        // Recipe.Inputs is a list in data order on every peer, so the items are
+        // considered in one fixed order and a player whose pockets can only
+        // cover part of a load covers the same part everywhere.
+        var wanted = 0;
+        var moved = 0;
+        foreach (var input in machine.Recipe.Inputs)
+        {
+            var short_ = machine.InputPerCycle(input.Item) * cycles
+                         - machine.GetInputCount(input.Item);
+            if (short_ <= 0) continue;
+            wanted += short_;
+            moved += HandOps.Insert(player.Inventory, machine, input.Item, short_);
+        }
+
+        if (wanted == 0) return new LoadReport(LoadResult.WantsNothing);
+        if (moved == 0) return new LoadReport(LoadResult.NoneCarried, 0, wanted);
+        return new LoadReport(LoadResult.Ok, moved, wanted);
+    }
+
+    /// Empties a machine's output buffer, or a miner's hopper, into the
+    /// player's pockets (ADR 0040). Hand reach, for the same reason as loading.
+    public TakeReport TryTakeByHand(int x, int y, Player? actor = null)
+    {
+        var player = actor ?? Player;
+
+        if (TryMachineAt(x, y, out var machine, out var index))
+        {
+            var placement = PlacementOf(index);
+            if (!MayAct(player, placement.X, placement.Y))
+                return new TakeReport(TakeResult.OtherTeam);
+            if (!InHandReach(placement, player))
+                return new TakeReport(TakeResult.TooFar);
+
+            // By item id, never by the buffer's enumeration order: a dictionary
+            // makes no promise about that, and the order items land in a
+            // player's inventory is state two peers must agree on.
+            var taken = 0;
+            foreach (var (item, count) in machine.OutputContents.OrderBy(kv => kv.Key.Value))
+                taken += HandOps.Extract(machine, player.Inventory, item, count);
+
+            return taken > 0 ? new TakeReport(TakeResult.Ok, taken)
+                             : new TakeReport(TakeResult.NothingToTake);
+        }
+
+        if (TryMinerAt(x, y, out var miner, out var minerIndex))
+        {
+            var placement = MinerPlacements[minerIndex];
+            if (!MayAct(player, placement.X, placement.Y))
+                return new TakeReport(TakeResult.OtherTeam);
+            if (!InHandReach(placement, player))
+                return new TakeReport(TakeResult.TooFar);
+
+            // Emptying a miner by hand is how the first ore moves, before there
+            // is an inserter to do it.
+            var pulled = miner.Pull(int.MaxValue);
+            if (pulled > 0) player.Inventory.Add(miner.Item, pulled);
+            return pulled > 0 ? new TakeReport(TakeResult.Ok, pulled)
+                              : new TakeReport(TakeResult.NothingToTake);
+        }
+
+        return new TakeReport(TakeResult.NoMachine);
     }
 
     /// The Uplink the player could reach out and put something into, if any.
     /// Nearest first, so two Uplinks in reach resolve the same way every time
     /// rather than by list order.
-    public bool TryUplinkInHandReach(out int index)
+    public bool TryUplinkInHandReach(out int index, Player? actor = null)
     {
+        var player = actor ?? Player;
         index = -1;
         var best = long.MaxValue;
 
         foreach (var candidate in _uplinks)
         {
             var placement = _placements[candidate];
-            if (!InHandReach(placement)) continue;
+            if (!InHandReach(placement, player)) continue;
 
-            var x = Math.Clamp(Player.TileX, placement.X, placement.X + placement.Size - 1);
-            var y = Math.Clamp(Player.TileY, placement.Y, placement.Y + placement.Size - 1);
-            var distance = Player.DistanceSquaredToTile(x, y);
+            // A rival's Uplink is not somewhere you can put anything, so it is
+            // skipped rather than found and then refused: there is exactly one
+            // sentence to say, and it is "no Uplink of yours is in reach".
+            if (!MayAct(player, placement.X, placement.Y)) continue;
+
+            var x = Math.Clamp(player.TileX, placement.X, placement.X + placement.Size - 1);
+            var y = Math.Clamp(player.TileY, placement.Y, placement.Y + placement.Size - 1);
+            var distance = player.DistanceSquaredToTile(x, y);
 
             // Ties broken by index, so the answer does not depend on the set's
             // enumeration order -- which is not a promise HashSet makes.
@@ -1438,7 +1742,11 @@ public sealed class World
         // happens between ticks -- so the order is a choice rather than a
         // constraint, and the top is where a thing that nothing depends on
         // belongs: it can never see half-advanced world state.
-        Player.Tick();
+        // In roster order, which is the order the save writes and restores
+        // them in, so two peers running the same commands walk the same
+        // players the same distance in the same tick.
+        for (var i = 0; i < _players.Count; i++)
+            _players[i].Tick();
 
         // Power first: generators burn and the networks are shared out before
         // anything tries to run, so a machine's power state this tick reflects
@@ -1465,7 +1773,7 @@ public sealed class World
 
             if (_uplinks.Contains(i))
             {
-                DrainUplink(machine);
+                DrainUplink(machine, i);
                 _states[i] = machine.State;
                 continue;
             }

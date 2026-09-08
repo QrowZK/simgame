@@ -42,6 +42,39 @@ public sealed class Player
     /// Fixed-point scale. One tile is this many position units.
     public const int MilliPerTile = 1000;
 
+    /// Stable for the life of the world, and equal to the index in
+    /// `World.Players`. Stable because a command in deterministic lockstep
+    /// (ADR 0022, slice 3) names the player who issued it by number, and a
+    /// number that shifted when somebody joined would apply one player's build
+    /// with another player's hands. Players are therefore never removed from
+    /// the roster; a disconnected one is a player standing still.
+    public int Id { get; }
+
+    /// What to call this player in a refusal sentence. "That belongs to the
+    /// Blue Team" is a different message from "that is not yours", and only
+    /// the first one is any use in a world with three teams in it.
+    public string Name { get; set; }
+
+    /// Which team this player is on -- an index into `World.Teams`, and the
+    /// answer to "whose research does what I deliver feed" and "whose machine
+    /// is this". Settable so an invite (slice 4) is a field assignment rather
+    /// than a rebuild of the roster: nothing else about a player changes when
+    /// they change team, because nothing else about a player is team-shaped.
+    public int TeamId { get; set; }
+
+    /// This player's pockets. Per player, not per team: a team shares what it
+    /// has *researched*, and shares nothing it is carrying. Hand-loading a
+    /// machine is a world state change, so it lives on the same side of the
+    /// engine boundary as the tick.
+    public Inventory Inventory { get; } = new();
+
+    public Player(int id = 0, string name = "Player 1", int teamId = 0)
+    {
+        Id = id;
+        Name = name;
+        TeamId = teamId;
+    }
+
     /// Walk speed: 6 tiles a second at 60 UPS, so 100 milli-tiles a tick.
     ///
     /// Chosen against the map rather than against a feeling. The guaranteed
@@ -193,8 +226,15 @@ public static class Walk
     /// -1 if it never arrived.
     public static int To(World world, int tileX, int tileY,
                          int withinTiles = 0, int maxTicks = 20_000)
+        => To(world, world.Player, tileX, tileY, withinTiles, maxTicks);
+
+    /// Walks a *named* player. Every other player in the world keeps whatever
+    /// intent they were holding and walks alongside, because the world ticks:
+    /// a harness that moved one player by freezing everyone else would not be
+    /// testing the same sim the game runs.
+    public static int To(World world, Player player, int tileX, int tileY,
+                         int withinTiles = 0, int maxTicks = 20_000)
     {
-        var player = world.Player;
 
         for (var tick = 0; tick <= maxTicks; tick++)
         {

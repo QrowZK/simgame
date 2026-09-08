@@ -24,6 +24,24 @@ dotnet test       # sim + data invariant tests
 ./tools/check-no-godot-reference.sh
 ```
 
+Some headless checks belong to the sim rather than to the renderer, and live in
+a small console project so they run on a machine with no display driver:
+
+```
+dotnet run --project sim.harness -- --teams-test     # teams, roster, ownership, save
+dotnet run --project sim.harness -- --lockstep-test  # two peers, one shuffled command stream
+```
+
+`--lockstep-test` takes `--ticks=N` (default 10,000). It runs two worlds from
+one seed, feeds them one command stream with one peer's batches shuffled, and
+compares state hashes every 60 ticks and saves at the end. See
+`docs/0037-commands-the-total-order-and-the-state-hash.md`.
+
+It exits 0 on success and 1 on any failed check, so CI needs no grep. The
+scenario is `Sim.TeamSession.Run`, which `sim.tests` drives as well, so the
+headless run and the test suite cannot disagree about what passing means.
+See `docs/0036-teams-own-progression.md`.
+
 ## Game data
 
 `data/*.json` is **generated**. Edit `data/spec/progression.json`, then:
@@ -67,7 +85,12 @@ Headless flags, all of which live in `game/scripts/Boot.cs` and
 | `--shore-shot` | capture framed on the nearest coastline -- spawn is deliberately inland, so no other capture contains water |
 | `--build-shot` | capture with build mode open and a ghost placed |
 | `--menu-shot`, `--start-shot`, `--editor-shot` | title screen, a new game, the script editor |
+| `--net-test` | a host and a client in one process: roster, messages both ways, clean parting, and every refusal with its reason (ADR 0035) |
+| `--net-lockstep-test` | a host and a client in one process playing **one world** for 3,000 ticks: hashes compared throughout, saves compared at the end, then two `GameRoot`s building, digging, removing, retasking and delivering through the real input path (ADR 0039), then one peer corrupted by a milli-tile to prove the desync detector fires (ADR 0038) |
+| `--net-shot` | capture the host, join and lobby screens, both states of the in-game net status card, and a real shared world with an action in flight (ADR 0039) |
 | `--machines=N`, `--seed=N` | size and seed the placeholder factory |
+| `--net-port=N` | the port `--net-test` uses (it also uses N+1 and N+2) |
+| `--net-ticks=N` | how many ticks `--net-lockstep-test` plays (default 3,000) |
 
 Godot ignores an unrecognised flag silently, so a capture that looks like the
 default usually means the flag name is wrong.

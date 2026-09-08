@@ -46,6 +46,12 @@ public sealed partial class MachinePanel : PanelContainer
     private World _world = null!;
     private BuildCatalogue _buildables = null!;
 
+    /// Where a mutating click goes. Set by `GameRoot`; when it is null this
+    /// panel is a read-only preview (the art harness, a capture rig) and its
+    /// action buttons do nothing rather than reaching into the sim behind the
+    /// router's back.
+    public PlayerActions? Actions { get; set; }
+
     public override void _Ready()
     {
         _title = GetNode<Label>("Margin/Rows/Title");
@@ -176,19 +182,14 @@ public sealed partial class MachinePanel : PanelContainer
     {
         if (_machine is null || row < 0 || row >= _shownRecipes.Count) return;
 
-        var result = _world.TryChangeRecipe(_buildables, _index, _shownRecipes[(int)row],
-                                            out var evicted);
+        if (Actions is null) return;
 
-        _retaskMessage = result switch
-        {
-            RecipeChangeResult.Ok when evicted > 0 =>
-                $"Retasked. {evicted} item(s) came back to you.",
-            RecipeChangeResult.Ok => "Retasked. It was empty, so nothing came back.",
-            RecipeChangeResult.AlreadyRunning => "It already makes that.",
-            RecipeChangeResult.CannotRun => "This machine cannot make that.",
-            RecipeChangeResult.UnknownMachine => "This machine cannot be retasked.",
-            _ => "There is no machine here any more.",
-        };
+        // By tile, not by index: the command layer resolves the machine when it
+        // is applied, so a removal that moved this machine's index in the six
+        // ticks between the click and the change cannot retask the wrong one.
+        Actions.Retask(_placement.X, _placement.Y, _shownRecipes[(int)row]);
+        if (Actions.Shared)
+            _retaskMessage = "Retasking -- waiting for everyone (about 100 ms).";
     }
 
     /// Miners get the same panel. A player should not have to learn two
@@ -265,7 +266,13 @@ public sealed partial class MachinePanel : PanelContainer
             "Takes exactly one cycle's worth of inputs out of your pockets and\n" +
             "puts them in this machine. One cycle, so the progress bar moves\n" +
             "once and you can see what the machine does with them.";
-        _title.Text = $"{machine.Recipe.Id}   [{_placement.Size}x{_placement.Size}]";
+        // The machine's name, never its recipe's data id. This line used to
+        // read "build_man_furnace   [1x1]": a key out of `data/` on the screen
+        // of a person who has never seen the file it is a key in. The id is
+        // what the recipe graph is filed under and nobody outside the code
+        // should ever read one -- the same defect this project has now shipped
+        // twice, both times found by looking rather than by a test.
+        _title.Text = $"{MachineName(machine)}   [{_placement.Size}x{_placement.Size}]";
 
         // A parallel machine's real per-cycle amounts, not the recipe card's.
         // Showing the card would make the panel lie about the machine it is on.
@@ -390,41 +397,29 @@ public sealed partial class MachinePanel : PanelContainer
         _retask.Text = _retaskMessage;
     }
 
-    /// Hand-delivers everything the player is carrying that research wants.
-    /// The `Load` button, on the one machine where "load one cycle" means
-    /// nothing -- an Uplink has no cycle.
     /// The noises this panel makes. Set by `GameRoot`; null in a headless run
     /// and in the art preview harness, and every call site tolerates that.
     public Sounds? Audio { get; set; }
 
-    /// Whether the player could put a hand on what this panel is showing.
+    /// Handing what you are carrying to the Uplink -- the `Load` button on the
+    /// one machine where "load one cycle" means nothing, since an Uplink has no
+    /// cycle.
     ///
-    /// Only the *actions* ask. Opening the panel never does: looking is not
-    /// touching, so a machine across the map can be inspected from anywhere and
-    /// only its Load and Take buttons refuse (ADR 0033).
-    private bool InReach => _world.InHandReach(_placement);
-
-    private static readonly string TooFar =
-        $"Too far to reach -- walk closer. Your hands go {Sim.Player.HandReachTiles} tiles.";
-
-    private void DeliverByHand()
+    /// Reach is not asked about here, and looking is not touching: a machine
+    /// across the map can be inspected from anywhere, and only its Load and
+    /// Take buttons refuse, in the sim, with a reason (ADR 0033, ADR 0040).
+    ///
+    /// One `Deliver` command per item the objectives want and the player
+    /// actually has. Both filters are *reads*, not rules: the sim re-checks
+    /// reach, carriage and want when the command lands, and refuses with its
+    /// own reason. They are here so a click on a full pack does not fire forty
+    /// commands, thirty-nine of which come back a tenth of a second later
+    /// saying "you are not carrying that".
+    public int DeliverByHand()
     {
-        if (_machine is null || _world.Research is null) return;
+        if (_machine is null || _world.Research is null || Actions is null) return 0;
 
-        // The Uplink is where research is handed over, so the reach that
-        // matters is the reach to *it* rather than to whatever this panel is
-        // showing -- and the sim's own check is the one that decides, so the
-        // button can never promise a delivery the sim then refuses.
-        if (!_world.TryUplinkInHandReach(out _))
-        {
-            Audio?.Play(Sounds.Cue.Refuse);
-            _retaskMessage = TooFar;
-            return;
-        }
-
-        var accepted = 0;
-        var completed = new System.Collections.Generic.List<string>();
-        var seed = false;
+        var offered = 0;
 
         foreach (var objective in _world.Research.Objectives.ToList())
             foreach (var need in objective.Needs)
@@ -440,22 +435,28 @@ public sealed partial class MachinePanel : PanelContainer
                 {
                     if (!_names.TryGetId(wanted, out var id)) continue;
 
-                    var report = _world.DeliverByHand(id, need.Outstanding);
-                    accepted += report.Accepted;
-                    completed.AddRange(report.Completed);
-                    seed |= report.SeedComplete;
+                    var held = _bag.Count(id);
+                    if (held <= 0) continue;
+
+                    var want = System.Math.Min(held, need.Outstanding);
+                    if (want <= 0) continue;
+
+                    Actions.Deliver(wanted, want, $"Handing over {want} {ItemLabel(wanted)}");
+                    offered++;
                 }
             }
 
-        Audio?.Play(accepted > 0 ? Sounds.Cue.Deliver : Sounds.Cue.Refuse);
+        if (offered == 0)
+        {
+            Audio?.Play(Sounds.Cue.Refuse);
+            _retaskMessage = "You are carrying nothing it wants.";
+            return 0;
+        }
 
-        _retaskMessage = seed
-            ? "The Seed is away."
-            : completed.Count > 0
-                ? $"Delivered {accepted}. Researched: {string.Join(", ", completed)}."
-                : accepted > 0
-                    ? $"Delivered {accepted}."
-                    : "You are carrying nothing it wants.";
+        _retaskMessage = Actions.Shared
+            ? $"Handing over {offered} kind(s) -- waiting for everyone (about 100 ms)."
+            : "";
+        return offered;
     }
 
     private string Missing(Machine machine)
@@ -480,6 +481,25 @@ public sealed partial class MachinePanel : PanelContainer
     /// runtime id; research speaks in data ids, so this is the other direction.
     private static string ItemLabel(string itemId) => ItemText.Of(itemId);
 
+    /// What this machine is called: the buildable it was placed from, which is
+    /// the name the build menu offered it under. A machine placed by a scenario
+    /// rather than by a player has no source item, so it falls back to the
+    /// readable form of its recipe id rather than to the id itself.
+    private string MachineName(Machine machine)
+    {
+        if (machine.SourceItem is { } item && _buildables.TryGet(item, out var buildable))
+            return buildable.DisplayName;
+
+        // No source item: placed by a scenario rather than bought from the
+        // build menu. `ItemText` is keyed by *item* id and a recipe id is not
+        // one, so handing it `build_man_furnace` hands it straight back --
+        // which is how a raw data id reached the panel title. What the recipe
+        // makes is an item and does have a name, so ask for that instead.
+        return machine.Recipe.Outputs.Count > 0
+            ? ItemText.Of(_names, machine.Recipe.Outputs[0].Item)
+            : ItemText.Of(machine.Recipe.Id);
+    }
+
     /// The name a player reads, not the key the data is filed under.
     ///
     /// This used to hand back the item's data id, so a panel that had every
@@ -492,9 +512,16 @@ public sealed partial class MachinePanel : PanelContainer
     /// Loads exactly one cycle's worth from the player's inventory -- the
     /// smallest useful unit of hand-feeding, and the one that makes the progress
     /// bar move exactly once so the machine's behaviour is legible.
+    ///
+    /// A `Load` command, solo and shared alike (ADR 0040). It used to reach into
+    /// `HandOps` directly, which is why a shared world had to refuse it: a local
+    /// mutation nobody else applies is a desync. The reach check and every
+    /// refusal now live in `World.TryLoadByHand`, so there is one rule and one
+    /// sentence rather than one of each per mode.
     private void LoadOneCycle()
     {
         if (_machine is null) return;      // nothing to hand-load into a miner
+        if (Actions is null) return;       // read-only preview
 
         if (IsUplink)
         {
@@ -502,39 +529,26 @@ public sealed partial class MachinePanel : PanelContainer
             return;
         }
 
-        if (!InReach)
-        {
-            Audio?.Play(Sounds.Cue.Refuse);
-            _retaskMessage = TooFar;
-            return;
-        }
-
-        foreach (var input in _machine.Recipe.Inputs)
-        {
-            var want = _machine.InputPerCycle(input.Item) - _machine.GetInputCount(input.Item);
-            if (want > 0)
-                HandOps.Insert(_bag, _machine, input.Item, want);
-        }
+        Actions.Load(_placement.X, _placement.Y, 1, Subject());
+        _retaskMessage = Actions.Shared ? Waiting : "";
     }
 
     private void TakeOutput()
     {
-        if (!InReach)
-        {
-            Audio?.Play(Sounds.Cue.Refuse);
-            _retaskMessage = TooFar;
-            return;
-        }
+        if (Actions is null) return;
+        if (_machine is null && _miner is null) return;
 
-        if (_machine is not null)
-            HandOps.ExtractAll(_machine, _bag);
-
-        // Emptying a miner by hand is how the first ore moves, before there is
-        // an inserter to do it.
-        if (_miner is not null)
-        {
-            var taken = _miner.Pull(int.MaxValue);
-            if (taken > 0) _bag.Add(_miner.Item, taken);
-        }
+        Actions.Take(_placement.X, _placement.Y, Subject());
+        _retaskMessage = Actions.Shared ? Waiting : "";
     }
+
+    /// What the sentence is about. A refusal arrives 100 ms after the click in
+    /// a shared world, by which time the player has moved the mouse, so it has
+    /// to name what it is about (ADR 0039).
+    private string Subject()
+        => _miner is not null
+            ? $"The miner at {_placement.X},{_placement.Y}"
+            : $"The machine at {_placement.X},{_placement.Y}";
+
+    private const string Waiting = "Asked for -- waiting for everyone (about 100 ms).";
 }

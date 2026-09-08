@@ -16,6 +16,63 @@ public sealed partial class GameRoot : Node3D
     /// game, or one restored from a save.
     public World? InitialWorld { get; set; }
 
+    /// The lockstep driver, when this world is a shared one. Null for a solo
+    /// game, and the only thing that changes about the loop when it is not:
+    /// the driver owns the clock and the player's input (ADR 0038).
+    public LockstepDriver? Net { get; set; }
+
+    private NetStatusPanel? _netStatus;
+
+    /// Every mutating thing a player can ask for, solo or shared, through one
+    /// path: build, dig, remove, retask and hand delivery all become
+    /// `PlayerCommand`s and are applied by `World.ApplyCommands`. Solo they are
+    /// stamped for the current tick and applied inside the click; shared they
+    /// go to the driver and land six ticks later on every peer. See
+    /// `PlayerActions` and docs/0039.
+    ///
+    /// No click in this file may be answered by calling `TryBuild`, `TryDig`,
+    /// `TryRemove`, `TryChangeRecipe` or `DeliverByHand` directly. Two call
+    /// sites for one rule is two sets of rules within a release or two. (The
+    /// capture scaffolding below, which stages a scene for a screenshot rather
+    /// than acting for a player, is not a click and is exempt.)
+    public PlayerActions Actions => _actions;
+
+    private PlayerActions _actions = null!;
+
+    /// Builds the router for the world this root is now running. Called again
+    /// after a quick load, because the router holds the world it applies to and
+    /// one bound to the world that has been swapped out would apply a player's
+    /// clicks to a world nobody is looking at.
+    private void RebuildActions()
+    {
+        _actions = new PlayerActions(_world, _buildables,
+                                     Sim.Data.Catalogue.Instance.Recipes, Net)
+        {
+            Speak = Say,
+            Sound = ok => _sounds?.Play(ok ? Sounds.Cue.Place : Sounds.Cue.Refuse),
+        };
+    }
+
+    /// Hands the player something to place. Public for the headless runs, which
+    /// have to go through the same routing a click does rather than reaching
+    /// past it into the sim.
+    public void Hold(Buildable buildable, Recipe? recipe) => OnBuildSelected(buildable, recipe);
+
+    private PendingActionsView _inFlight = null!;
+
+    /// What the player has asked for and the world has not answered yet.
+    ///
+    /// Shown on the shared-session card, not on the HUD and not in a corner:
+    /// the HUD has exactly three lines before it collides with the guide, and
+    /// both bottom corners are taken by the build menu and the machine panel --
+    /// a caption behind the build menu while the player is building is no
+    /// caption at all. Both were seen in a capture; neither was visible to a
+    /// test.
+    private string InFlightText()
+        => _actions is null || _actions.InFlight.Count == 0
+            ? ""
+            : string.Join("  |  ", _actions.InFlight.Select(p => p.Label));
+
     /// The world this root is actually running, once _Ready has built it. Used
     /// by the headless menu test, which has to inspect what the New Game button
     /// produced rather than what it was handed.
@@ -109,8 +166,12 @@ public sealed partial class GameRoot : Node3D
         // Before the panel: the panel binds to it, and a null catalogue there
         // silently costs the recipe picker.
         _buildables = new BuildCatalogue(Sim.Data.Catalogue.Instance);
+        RebuildActions();
+        _inFlight = new PendingActionsView { Name = "PendingActions" };
+        AddChild(_inFlight);
         _panel = BuildPanel();
         _panel.Audio = _sounds;
+        _panel.Actions = _actions;
         _build = BuildBuildMenu();
         _ghost = new BuildGhost { Name = "BuildGhost" };
         AddChild(_ghost);
@@ -120,6 +181,18 @@ public sealed partial class GameRoot : Node3D
         _progression = BuildProgressionPanel();
         _survey = BuildSurveyPanel();
         _editor = BuildScriptEditor();
+
+        // Only in a shared world: a solo game has nothing to wait for and no
+        // peer to disagree with, and a permanent "in step at tick N" caption
+        // over a single-player game would be noise.
+        if (Net is not null)
+        {
+            _netStatus = new NetStatusPanel { Name = "NetStatus" };
+            var layer = new CanvasLayer { Name = "NetStatusLayer" };
+            layer.AddChild(_netStatus);
+            AddChild(layer);
+            Net.Stopped += _ => _netStatus?.Show(Net.Status);
+        }
 
         // A brand new game, and only a brand new game: the premise is shown at
         // tick zero on an untouched world, so a loaded save never replays it.
@@ -235,24 +308,51 @@ public sealed partial class GameRoot : Node3D
             return;
         }
 
-        // The walk intent, set once per frame from the keyboard and consumed
-        // by however many ticks this frame happens to cover. Never scaled by
-        // delta: how far a player walks is decided in the sim, in integers, so
-        // a slow frame costs a stutter rather than a different position.
-        _world.Player.Intent = ReadWalkIntent();
-
-        _accumulator += delta;
-
-        var ticks = 0;
-        while (_accumulator >= SecondsPerTick && ticks < MaxCatchUpTicks)
+        // In a shared world the clock is not ours. The driver owns both halves
+        // of this: the walk keys become a Move command scheduled six ticks out,
+        // and a tick only runs when the batch for it has arrived. Setting
+        // `Intent` here as well would be applying a local command early, which
+        // is the desync this whole design exists to avoid.
+        if (Net is not null)
         {
-            _world.Tick();
-            _accumulator -= SecondsPerTick;
-            ticks++;
+            Net.SetIntent(ReadWalkIntent());
+
+            _accumulator += delta;
+            var want = 0;
+            while (_accumulator >= SecondsPerTick && want < MaxCatchUpTicks)
+            {
+                _accumulator -= SecondsPerTick;
+                want++;
+            }
+
+            if (_accumulator > SecondsPerTick * MaxCatchUpTicks) _accumulator = 0;
+            Net.Advance(want);
+            _actions.Collect();
+            _netStatus?.Show(Net.Status, InFlightText());
+        }
+        else
+        {
+            // The walk intent, set once per frame from the keyboard and consumed
+            // by however many ticks this frame happens to cover. Never scaled by
+            // delta: how far a player walks is decided in the sim, in integers, so
+            // a slow frame costs a stutter rather than a different position.
+            _world.Player.Intent = ReadWalkIntent();
+
+            _accumulator += delta;
+
+            var ticks = 0;
+            while (_accumulator >= SecondsPerTick && ticks < MaxCatchUpTicks)
+            {
+                _world.Tick();
+                _accumulator -= SecondsPerTick;
+                ticks++;
+            }
+
+            if (_accumulator > SecondsPerTick * MaxCatchUpTicks)
+                _accumulator = 0;
         }
 
-        if (_accumulator > SecondsPerTick * MaxCatchUpTicks)
-            _accumulator = 0;
+        _inFlight?.Show(_actions.InFlight, _renderer.TileSize);
 
         if (!_cameraPinned) _rig.Follow(PlayerPoint(), (float)delta);
         PlaceAvatar();
@@ -906,33 +1006,19 @@ public sealed partial class GameRoot : Node3D
     /// everywhere else: a fluid deposit says the hands cannot lift it and names
     /// what can, and a worked-out patch says it is finished rather than doing
     /// nothing and looking broken.
-    private void DigOrClose(int tileX, int tileY)
+    public void DigOrClose(int tileX, int tileY)
     {
-        var report = _world.TryDigByHand(tileX, tileY, HandMinePerClick);
-
-        if (report.Result == DigResult.NothingThere)
+        // Clicking bare ground closes the panel and is not an action at all --
+        // it changes nothing, so it neither becomes a command nor waits 100 ms
+        // for one. The sim still answers `NothingThere` if the ground turns out
+        // to be empty by the time a command lands; this is a read, not a rule.
+        if (!_world.Ground.TryResourceAt(tileX, tileY, out _, out _))
         {
             _panel.Close();
             return;
         }
 
-        var name = _world.Items.GetName(report.Item);
-
-        _sounds.Play(report.Taken > 0 ? Sounds.Cue.Dig : Sounds.Cue.Refuse);
-
-        Say(report.Result switch
-        {
-            DigResult.TooFar =>
-                $"Too far to reach -- walk closer. Your hands go {Sim.Player.HandReachTiles} tiles.",
-            DigResult.CannotLiftFluid =>
-                $"{name} is a fluid -- hands cannot lift it. It needs a derrick standing on it.",
-            DigResult.WorkedOut =>
-                $"This {name} patch is worked out. Press P to survey for another.",
-            _ when report.Taken == 0 => $"Nothing came out of this {name}.",
-            _ => $"Dug {report.Taken} {name}. " +
-                 $"Carrying {_world.PlayerInventory.Count(report.Item)}. " +
-                 $"({report.RemainingAfter} left here.)",
-        });
+        _actions.Dig(tileX, tileY, HandMinePerClick);
     }
 
     /// Opens the panel on a running machine, falling back to any machine at
@@ -960,6 +1046,16 @@ public sealed partial class GameRoot : Node3D
         layer.AddChild(menu);
         AddChild(layer);
         return menu;
+    }
+
+    /// Closes whatever full-screen panel a new game opened, for a capture that
+    /// is about the world rather than about the panel. A new game opens the
+    /// premise over everything, which is right in play and wrong in front of a
+    /// camera pointed at the ground.
+    public void ClosePanelsForCapture()
+    {
+        _progression.Close();
+        _panel.Close();
     }
 
     public void StartBuilding()
@@ -1081,37 +1177,15 @@ public sealed partial class GameRoot : Node3D
     /// from one that ate them.
     public void RemoveAt(int tileX, int tileY)
     {
-        var report = _world.TryRemove(tileX, tileY);
+        _actions.Remove(tileX, tileY);
 
-        var name = report.Ok && _buildables.TryGet(report.Item, out var buildable)
-            ? buildable.DisplayName
-            : "building";
-
-        Say(report.Result switch
-        {
-            RemoveResult.Ok => Removed(name, report),
-            RemoveResult.NothingThere => "Nothing of yours is there.",
-            RemoveResult.UnknownBuilding =>
-                "That was not built from anything you carried, so there is nothing to give back.",
-            RemoveResult.TooFar =>
-                $"Too far to reach -- walk closer. You can take back what is within " +
-                $"{Sim.Player.BuildReachTiles} tiles.",
-            _ => "That cannot be removed.",
-        });
-
-        // The panel may have been showing the machine that just went, or one
-        // whose index moved when the arrays closed up behind it.
+        // The panel may have been showing the machine that is about to go, or
+        // one whose index moves when the arrays close up behind it. Closed on
+        // the click rather than on the answer: an index held across six ticks
+        // is exactly the stale reference `CommandKind.Remove` names a tile to
+        // avoid.
         _panel.Close();
         _build.Refresh();
-    }
-
-    private static string Removed(string name, RemovalReport report)
-    {
-        var text = $"Took back the {name}";
-        if (report.Returned > 0) text += $" and {report.Returned} item(s) inside it";
-        if (report.FluidVoided > 0) text += $"; {report.FluidVoided} fluid drained away";
-        if (report.Spilled > 0) text += $"; {report.Spilled} item(s) fell off the belt";
-        return text + ".";
     }
 
     private bool TileUnderCursor(out int tileX, out int tileY)
@@ -1142,29 +1216,7 @@ public sealed partial class GameRoot : Node3D
             return;
         }
 
-        var result = _world.TryBuild(_buildables, _holding.Item, tileX, tileY,
-                                     _holdingRecipe, _facing);
-
-        _sounds.Play(result == BuildResult.Ok ? Sounds.Cue.Place : Sounds.Cue.Refuse);
-
-        Say(result switch
-        {
-            BuildResult.Ok => $"Built {_holding.DisplayName} at {tileX},{tileY}.",
-            BuildResult.Blocked => "Something is already there.",
-            BuildResult.TooFar =>
-                $"Too far to reach -- walk closer. You can build {Sim.Player.BuildReachTiles} " +
-                "tiles from where you are standing.",
-            BuildResult.NoneCarried => $"You have no {_holding.DisplayName} left.",
-            BuildResult.NoResource => "A miner needs ore under it.",
-            BuildResult.NoFluid => "A pump needs water or a fluid deposit under it.",
-            BuildResult.TooFarToTunnel =>
-                $"Too far: a {_holding.DisplayName} tunnels {_holding.UndergroundReach} tiles.",
-            BuildResult.NeedsRecipe => $"Choose what the {_holding.DisplayName} should make.",
-            BuildResult.NotResearched =>
-                "Not researched yet -- deliver the tier's machine hulls to the Uplink.",
-            BuildResult.NotPlaceableYet => $"Nothing places a {_holding.DisplayName} yet.",
-            _ => $"Cannot build a {_holding.DisplayName}.",
-        });
+        _actions.Build(_holding, _holdingRecipe, tileX, tileY, _facing);
 
         // Refresh either way: a successful build changes the count beside the
         // entry, and a failed one may have been the last of its kind anyway.
@@ -1366,6 +1418,17 @@ public sealed partial class GameRoot : Node3D
 
     private void QuickLoad()
     {
+        // Not in a shared world. Loading swaps this peer's world for one nobody
+        // else has, which is a desync on the next hash comparison rather than a
+        // load. Refused with the reason, as everything else here is.
+        if (Net is not null)
+        {
+            Say("A shared world cannot be loaded into from here -- it would replace " +
+                "your copy of the world with one nobody else has. The host starts a " +
+                "new session instead.");
+            return;
+        }
+
         try
         {
             var path = GameSession.PathFor("quicksave");
@@ -1375,8 +1438,10 @@ public sealed partial class GameRoot : Node3D
             // scene: the renderer holds no state of its own, so this is safe and
             // keeps the camera where the player left it.
             _world = world;
+            RebuildActions();
             _panel.Close();
             _panel.Bind(_world.Items, _world.PlayerInventory, _world, _buildables);
+            _panel.Actions = _actions;
             _build.Bind(_buildables, _world, _world.Items);
             _progression.Bind(_world);
             _seedAnnounced = _world.Research?.SeedDelivered ?? false;

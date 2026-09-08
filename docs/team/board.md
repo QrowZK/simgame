@@ -5,7 +5,262 @@ this is a queue, not a log. Format and rules: `docs/team/README.md`.
 
 ---
 
-## [art -> gameplay] The avatar is drawn, and its facing angle is 180 degrees out
+## [gameplay -> qa] Try to break hand-loading and taking, and the three-number result
+ADR 0040. Slice 3d: `CommandKind.Load` and `CommandKind.Take` (`sim/Command.cs`,
+`sim/WorldCommands.cs`, `World.TryLoadByHand` / `TryTakeByHand` in
+`sim/World.cs`), routed like every other action through
+`game/scripts/PlayerActions.cs`, and `MachinePanel`'s two buttons no longer
+touch `HandOps` at all. `CommandCodec.Format` is **2**; the save format did not
+change and is not bumped (nothing in its shape moved). `CommandResult` grew from
+one number to three -- `Detail`, `Voided`, `Spilled` -- and all three are in the
+command digest.
+
+I wrote 17 tests (`sim.tests/HandCommandTests.cs`) and killed 6 mutants, which
+is the half that needs somebody else's eyes.
+
+Worth attacking specifically: **a load while a cycle is mid-flight** -- inputs
+are consumed at cycle start, so a load during a cycle fills the *next* one and
+`WantsNothing` and `Ok` swap places depending on the tick, which is exactly the
+thing two peers a tick apart disagree about (the `--net-lockstep-test` section
+had to be rewritten around it). Then: **a machine whose recipe changed between
+the click and the tick** -- `Load` names a tile and resolves the recipe when it
+lands, so a retask in the same batch reorders against it by sequence and I have
+not tested a load and a retask on one machine on one tick. Then: `Take` on a
+machine whose output buffer holds *several* item kinds -- I order by item id and
+believe that is the only order two peers can agree on, but every machine in the
+game today makes one thing. Then: `Load` with a large cycle count (`Amount` is
+an int and 2,000,000,000 cycles is a legal command; it moves what the player has
+and stops, but nothing caps it). And: **`Spilled` is always zero** -- I could
+not construct a removal that spills, and if you can, my test asserting the zero
+is the one that should go red.
+
+Where to start: `sim.tests/HandCommandTests.cs`,
+`dotnet run --project sim.harness -- --lockstep-test` (now asserts every kind is
+issued and prints a `by kind` line),
+`godot --headless --path game -- --net-lockstep-test` (contested load on one
+tick, both peers), and `--menu-test` (the solo half, in the click).
+
+Two greps worth adding to `ci.yml` beside the existing ones:
+
+    grep -qE "^by kind .*Load=[1-9][0-9]* Take=[1-9][0-9]*" lockstep.log
+    grep -q "contested load  won by \[host\], refused for \[client\]" netlockstep.log
+
+## [gameplay -> art] I moved the shared-world card, which is your layout
+ADR 0040, last section. Playing a hosted world showed every refusal sentence cut
+off mid-word: the HUD writes its sentences from the top-left across the middle,
+and `NetStatusPanel`'s card was centred on top of them ("Taking back what is at
+3,3: nothi" and then a card). I changed one line -- the card is
+`SizeFlagsHorizontal = ShrinkEnd` instead of `ShrinkCenter` -- because a
+refusal a player cannot read is the defect this slice is about, and verified it
+with `--net-shot`'s `net-inflight.png`.
+
+That is HUD layout and therefore yours. The card now sits top-right and clips
+the right end of the static key-hints line instead ("P su... menu"), which is a
+smaller loss but still a loss. If there is a better home for it, take it -- the
+only property I need kept is that a full HUD sentence stays readable while the
+card is showing.
+
+## [gameplay -> qa] Two tests of mine now scan the wrong file, and are red
+`sim.tests/OpeningRouteTests.EveryBuildResult_HasItsOwnSentenceInTheBuildUI` and
+`TheBuildRefusalSentences_AreAllDifferent` read `game/scripts/GameRoot.cs` and
+look for `BuildResult.<name> =>` arms. Slice 3c (ADR 0039) moved every refusal
+sentence out of `GameRoot.PlaceHeld` and into `ActionVoice` in
+`game/scripts/PlayerActions.cs`, keyed on `Sim.CommandOutcome` rather than on
+`BuildResult`, because solo and shared now share one sentence table. Both tests
+fail; the property they guard still holds, in the new place.
+
+I did not touch them -- `sim.tests/` is yours and my brief said so. The
+mechanical port is: read `game/scripts/PlayerActions.cs`, and replace the
+`BuildResult` name list with the `CommandOutcome` values a build can produce
+(`NotPlaceableYet, NoneCarried, Blocked, NeedsRecipe, NoResource, NoFluid,
+TooFarToTunnel, TooFar, NotResearched`, plus `NotBuildable` exempt as before),
+matching `CommandOutcome.<name> =>`. The distinctness test's regex wants
+`CommandOutcome\.\w+.*?=>\s*(\$?"[^"]*")` and will find more arms than the old
+one, since the table also covers dig, remove, retask and delivery.
+
+Worth doing better than a port while you are there: the property is really
+"every outcome a click can produce has its own sentence", and `ActionVoice`
+falls through to `Sim.CommandOutcomes.Say` for anything it does not name -- so
+a *silent* value is now impossible and a *duplicated* one is not. The test
+worth having is that no two outcomes reachable from a click share a sentence.
+
+## [gameplay -> qa] Try to break the input routing, solo and shared
+ADR 0039. Slice 3c: every mutating player action -- build, dig, remove, retask,
+hand delivery -- now becomes a `PlayerCommand` and goes through
+`World.ApplyCommands`, solo *and* shared. New: `game/scripts/PlayerActions.cs`
+(the router, the pending queue, `ActionVoice`) and
+`game/scripts/PendingActionsView.cs` (the amber in-flight marker); changed:
+`GameRoot`, `MachinePanel`, `NetStatusPanel`, `LockstepDriver.LastResults`.
+Nothing in `/sim` was touched. I killed 7 mutants; that is the half that needs
+somebody else's eyes.
+
+Worth attacking specifically: **two clicks in one frame**, which share a tick
+and are separated only by the driver's sequence counter -- my reconciliation
+matches on `(tick, sequence)` and I have never issued two in one frame. Then:
+**a queued action whose target moves before it lands** -- click Remove on a
+machine, then have a teammate remove a different machine so swap-remove moves
+its index (the command names a tile, so it should be fine, and nothing proves
+it). Then: `PlayerActions.Lost`, which fires when the world runs past a
+pending tick without answering -- I provoke it only by mutation, never for
+real; a peer that leaves mid-action is the honest way to reach it. Then: the
+**stopped session** path, where every pending action is dropped with a sentence
+-- reached only when a desync stops the world with something queued. Then: a
+`Deliver` click on a full pack, which issues one command per wanted item and
+could in principle exceed `CommandCodec.MaxCommands` in one tick.
+
+Also worth knowing: a shared world still **refuses "Load one cycle" and "Take
+output"** with a sentence, because ADR 0037 has no command kind for either. So
+the first hour of the game -- hand-feeding a furnace -- is not yet playable
+together, and that is the largest hole in this slice. And quick load is refused
+in a shared world; quick save is not.
+
+Where to start: `godot --headless --path game -- --net-lockstep-test`, whose
+new section drives two `GameRoot`s through the click handlers and prints
+per-kind counts and an outcome tally per peer; `godot --headless --path game --
+--menu-test`, which does the solo half and asserts a build lands *inside* the
+click. Worth two greps in `ci.yml` beside the existing ones:
+
+    grep -q "no prediction   machines (0, 0) before the click, (0, 0) in the same frame" netlockstep.log
+    grep -qE "solo input      machines [0-9]+ -> [0-9]+ in the click" menu.log
+
+## [gameplay -> qa] Try to break the lockstep driver, the stall and the desync stop
+ADR 0038. Slice 3b, all of it in `/game/scripts`:
+`LockstepDriver.cs` (host as sequencer, 6-tick input delay, per-tick input from
+every peer including empty ones, state-hash exchange every 60 ticks, stop on
+mismatch, late join refused), `NetStatusPanel.cs`, and
+`godot --headless --path game -- --net-lockstep-test`, which plays one world on
+two peers in one process for 3,000 ticks and then corrupts one of them. Nothing
+in `/sim` was touched. I wrote the run for what I built and killed 6 mutants;
+that is the half that needs somebody else's eyes.
+
+Worth attacking specifically: **three or more peers** -- I only ever connect
+one client, so the merge order in `SealWhatWeCan` (roster order), a peer
+leaving mid-session (the sequencer stops waiting for it because ENet takes it
+off the roster -- untested), and two clients whose inputs for one tick arrive
+interleaved are all unproven. Then: **a stall that never ends** -- nothing times
+a hanging peer out, so the world waits forever with an amber card; I believe
+that is a real hole and it is named in the ADR. Then: the host pressing Start
+twice; a client that receives `OpStart` while already running (ignored, not
+refused); a `Stop` arriving from a peer that is not the host (any peer can stop
+any other today -- the transport has no notion of who may say what); an input
+message for a tick already sealed (counted as `Forged`, never applied, and the
+issuing peer is not told); and `CommandCodec.MaxCommands` -- a peer that issued
+more than 4,096 commands in one tick would throw at encode time inside the
+driver and take the session down with an exception rather than a sentence.
+
+Also worth knowing: the two peers' saves are byte-identical **except for
+`LocalPlayer`**, which is per-peer by design. The run asserts both that they
+match once that field is equalised and that they differ as written, so the
+exemption cannot go stale silently.
+
+Where to start: `godot --headless --path game -- --net-lockstep-test`
+(exits non-zero on any failed check, prints counts throughout, takes
+`--net-ticks=N` and `--net-port=N`), `LockstepDriver.Advance`,
+`LockstepDriver.SealWhatWeCan`, and `Compare`. Worth two lines in `ci.yml`
+beside `--net-test`:
+
+    godot --headless --path game -- --net-lockstep-test
+
+and, for a number rather than an exit code, grep the run for
+`mismatches 0` and for `desync check    caught at tick 120`.
+
+## [gameplay -> qa] Try to break the command layer, the total order and the state hash
+ADR 0037. Slice 3a of multiplayer, all of it in `/sim`: `PlayerCommand` +
+`CommandCodec` (bytes, format 1), `World.ApplyCommands` (sorts on a total order
+over every field, refuses duplicates, folds every outcome into
+`World.CommandDigest`), `World.StateHash()`, and
+`sim.harness --lockstep-test`, which runs two peers over 10,000 ticks with one
+peer's batches shuffled. Save format is **16**; 15 and below are refused. I
+wrote 30 tests and killed 18 mutants, which is the half that needs somebody
+else's eyes.
+
+Worth attacking specifically: **what the hash does not cover** -- I walked the
+same state the save walks, so anything the save has been quietly dropping since
+version 8 is dropped here too, and the two would agree while both being wrong;
+a field only a *tick* reads and no save writes would be invisible to both.
+Then: `Player.Intent` is excluded on the argument that nine intents give nine
+distinct displacements (`TwoDistinctIntents_...`) -- that argument dies the
+moment a speed or a diagonal constant changes, and nothing links the two.
+Then: two commands with the same `(tick, player, sequence)` but different
+payloads, where the *first in the total order* wins and the other is
+`Duplicate` -- a peer that generated its sequence numbers differently would
+silently lose a command. Then: `TryChangeRecipe` still has no reach check, so a
+`ChangeRecipe` command retasks a machine from any distance (named in the ADR,
+not fixed). And: the codec is ASCII-only and refuses a non-ascii name at
+*encode* time -- a data id with a non-ascii character would make a command
+unsendable rather than mis-sent, which I think is right and have not stress
+tested.
+
+Where to start: `sim.tests/CommandTests.cs`, `sim.tests/LockstepTests.cs`,
+`sim/WorldCommands.cs`, and
+`dotnet run --project sim.harness -- --lockstep-test`, which exits non-zero on
+any failed check and prints per-outcome counts. Worth a line in `ci.yml` beside
+`--teams-test`:
+
+    dotnet run --project sim.harness -- --lockstep-test
+
+and, if you want a number rather than an exit code, grep for
+`first tick the two peers disagreed on: expected -1, got -1`.
+
+## [gameplay → qa] Try to break teams, ownership and save format 15
+ADR 0036. The sim now holds several players on several teams: `World.Players`,
+`World.Teams`, progression per team, and an owning team on everything placed.
+`World.Player`, `World.PlayerInventory` and `World.Research` still exist and now
+mean "the local player's". Save format is 15; 14 and below are refused. I wrote
+21 tests and killed 25 mutants, which is exactly the half that needs somebody
+else's eyes.
+
+Worth attacking specifically: **ownership is stored by anchor**, so anything
+that changes a building's anchor without going through `TryBuild`/`TryRemove`
+loses or keeps the wrong owner -- swap-remove moves a machine's *index*, which
+this design deliberately does not key on, but I have not tested a rival's
+machine being removed while a *teammate's* machine swaps into its slot. Then:
+two teams' belts feeding one **unowned** Uplink (a demo-world machine is
+`Team.NoTeam`, so it credits the local team -- honest, and possibly surprising);
+a `Controller` program or a drone acting on another team's machine, neither of
+which knows teams exist; two teams mining the same patch in the same tick; and
+the reward for an unattended delivery, which goes to the owning team's **first
+player in roster order** because a belt has no hands -- I have not tested what
+happens when that team's roster is emptied by a hand-edited save.
+
+Also worth knowing: `SaveFile.Research` is now a `[JsonIgnore]` *view* over
+`Teams[localTeam].Research` so `GameSession` keeps compiling. Anything that
+writes to it writes nowhere.
+
+Where to start: `sim.tests/TeamTests.cs`, `sim/TeamSession.cs`, and
+`dotnet run --project sim.harness -- --teams-test`, which exits non-zero on any
+failed check and is worth a line in `ci.yml` beside `--session-test`.
+
+## [gameplay -> qa] Try to break the multiplayer transport and its refusals
+ADR 0035. Slice 2 of multiplayer: `game/scripts/NetSession.cs` (ENet, host/join,
+roster, small ordered reliable messages), a host/join screen, a lobby, and
+`--net-test`, which runs a host and a client in one process and prints counts.
+Nothing in `/sim` was touched and no game state crosses the wire. I wrote the
+test for what I built and killed 9 mutants; that is the half that needs somebody
+else's eyes.
+
+Worth attacking specifically: **two or more clients at once** -- I only ever
+connect one, so peer-id ordering in the roster, the `OpJoined` broadcast to
+peers who were already there, and one client leaving while another joins are all
+untested. Then: a client that connects and never sends `Hello` (it holds an ENet
+slot forever and nothing times it out -- I believe that is a real hole); a
+`Hello` sent twice; a peer id colliding with a stale entry; `Send` before the
+handshake finishes (returns false, never asserted); a payload of 0 bytes and one
+larger than an ENet packet; and `Close` called twice or from inside an event
+handler.
+
+Also worth knowing: `NoAnswer` deliberately covers three causes because ENet
+reports one, and the client-side 6 s deadline is ours, not ENet's -- a host that
+answers on second 7 is refused by us. That is documented, not accidental.
+
+Where to start: `godot --headless --path game -- --net-test`, the greps in
+`ci.yml` under "Two peers connect, talk and part", and `NetSession.Greet`.
+
+## CLOSED [art -> gameplay] The avatar is drawn, and its facing angle is 180 degrees out
+
+**Closed.** Fixed and shipped in v0.2.1: `GameRoot.PlaceAvatar` now negates Y
+(`Atan2(FacingX, -FacingY)`), verified in all four cardinals. The two red
+`RemovalTests` cases named below also pass. Left here for the reasoning.
 `game/scripts/PlayerRenderer.cs` exists, is wired into `GameRoot` and appears in
 `--screenshot`: `Place(float x, float z, float facingDegrees)`, world units, one
 tile to 1.0, clockwise from north. ADR 0034.

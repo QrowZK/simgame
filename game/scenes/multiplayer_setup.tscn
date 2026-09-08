@@ -1,0 +1,155 @@
+[gd_scene load_steps=3 format=3 uid="uid://dmpsetup001"]
+
+[ext_resource type="Script" path="res://scripts/MultiplayerSetup.cs" id="1_mpsetup"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_card"]
+bg_color = Color(0.09, 0.102, 0.122, 0.97)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.33, 0.36, 0.42, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[node name="MultiplayerSetup" type="Control"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_mpsetup")
+
+[node name="Backdrop" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.11, 0.12, 0.14, 1)
+
+[node name="Card" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -290.0
+offset_top = -220.0
+offset_right = 290.0
+offset_bottom = 220.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_card")
+
+[node name="Margin" type="MarginContainer" parent="Card"]
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 24
+
+[node name="Rows" type="VBoxContainer" parent="Card/Margin"]
+theme_override_constants/separation = 14
+
+[node name="Head" type="HBoxContainer" parent="Card/Margin/Rows"]
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="Card/Margin/Rows/Head"]
+theme_override_font_sizes/font_size = 20
+text = "Host a multiplayer world"
+
+[node name="Blurb" type="Label" parent="Card/Margin/Rows"]
+custom_minimum_size = Vector2(0, 48)
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.6, 0.64, 0.7, 1)
+autowrap_mode = 2
+clip_text = true
+text = ""
+
+[node name="Fields" type="VBoxContainer" parent="Card/Margin/Rows"]
+theme_override_constants/separation = 10
+
+[node name="NameRow" type="HBoxContainer" parent="Card/Margin/Rows/Fields"]
+theme_override_constants/separation = 12
+
+[node name="Key" type="Label" parent="Card/Margin/Rows/Fields/NameRow"]
+custom_minimum_size = Vector2(130, 0)
+theme_override_colors/font_color = Color(0.6, 0.64, 0.7, 1)
+text = "Your name"
+
+[node name="Value" type="LineEdit" parent="Card/Margin/Rows/Fields/NameRow"]
+size_flags_horizontal = 3
+placeholder_text = "Player"
+
+[node name="AddressRow" type="HBoxContainer" parent="Card/Margin/Rows/Fields"]
+theme_override_constants/separation = 12
+
+[node name="Key" type="Label" parent="Card/Margin/Rows/Fields/AddressRow"]
+custom_minimum_size = Vector2(130, 0)
+theme_override_colors/font_color = Color(0.6, 0.64, 0.7, 1)
+text = "Address"
+
+[node name="Value" type="LineEdit" parent="Card/Margin/Rows/Fields/AddressRow"]
+size_flags_horizontal = 3
+placeholder_text = "127.0.0.1"
+
+[node name="PortRow" type="HBoxContainer" parent="Card/Margin/Rows/Fields"]
+theme_override_constants/separation = 12
+
+[node name="Key" type="Label" parent="Card/Margin/Rows/Fields/PortRow"]
+custom_minimum_size = Vector2(130, 0)
+theme_override_colors/font_color = Color(0.6, 0.64, 0.7, 1)
+text = "Port"
+
+[node name="Value" type="LineEdit" parent="Card/Margin/Rows/Fields/PortRow"]
+size_flags_horizontal = 3
+placeholder_text = "7777"
+
+[node name="SeedRow" type="HBoxContainer" parent="Card/Margin/Rows/Fields"]
+theme_override_constants/separation = 12
+
+[node name="Key" type="Label" parent="Card/Margin/Rows/Fields/SeedRow"]
+custom_minimum_size = Vector2(130, 0)
+theme_override_colors/font_color = Color(0.6, 0.64, 0.7, 1)
+text = "Seed"
+
+[node name="Value" type="LineEdit" parent="Card/Margin/Rows/Fields/SeedRow"]
+size_flags_horizontal = 3
+placeholder_text = "blank for random"
+
+[node name="PlayersRow" type="HBoxContainer" parent="Card/Margin/Rows/Fields"]
+theme_override_constants/separation = 12
+
+[node name="Key" type="Label" parent="Card/Margin/Rows/Fields/PlayersRow"]
+custom_minimum_size = Vector2(130, 0)
+theme_override_colors/font_color = Color(0.6, 0.64, 0.7, 1)
+text = "Max players"
+
+[node name="Value" type="LineEdit" parent="Card/Margin/Rows/Fields/PlayersRow"]
+size_flags_horizontal = 3
+placeholder_text = "8"
+
+[node name="Grow" type="Control" parent="Card/Margin/Rows"]
+size_flags_vertical = 3
+
+[node name="Status" type="Label" parent="Card/Margin/Rows"]
+custom_minimum_size = Vector2(0, 70)
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.9, 0.75, 0.25, 1)
+autowrap_mode = 2
+clip_text = true
+text = ""
+
+[node name="Foot" type="HBoxContainer" parent="Card/Margin/Rows"]
+theme_override_constants/separation = 12
+
+[node name="Back" type="Button" parent="Card/Margin/Rows/Foot"]
+text = "Back"
+
+[node name="Spacer" type="Control" parent="Card/Margin/Rows/Foot"]
+size_flags_horizontal = 3
+
+[node name="Go" type="Button" parent="Card/Margin/Rows/Foot"]
+custom_minimum_size = Vector2(150, 34)
+text = "Open the port"
