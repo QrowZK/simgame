@@ -122,14 +122,42 @@ public static class NewGame
         var gen = new WorldGen(seed, OreSpecs(catalogue));
         var world = new World(seed, catalogue.Items, gen);
 
-        foreach (var (item, count) in StarterKit)
-            if (catalogue.Items.TryGetId(item, out var id))
-                world.PlayerInventory.Add(id, count);
+        GrantStarterKit(world.Player, catalogue);
 
         // A played world is gated; the four Manual techs are open from here
         // (ADR 0023), which is exactly the opening route and nothing more.
         world.Research = new Research(catalogue);
 
         return world;
+    }
+
+    /// Puts the starter kit in one player's pockets.
+    ///
+    /// Per player rather than per team (ADR 0036): a team shares what it has
+    /// researched and shares nothing it is carrying, so a second player joining
+    /// a team lands with their own hands, their own prospector and their own
+    /// Uplink rather than dividing a teammate's.
+    public static void GrantStarterKit(Player player, Catalogue catalogue)
+    {
+        foreach (var (item, count) in StarterKit)
+            if (catalogue.Items.TryGetId(item, out var id))
+                player.Inventory.Add(id, count);
+    }
+
+    /// Adds a team to an existing world, gated exactly as team 0 is.
+    ///
+    /// Its own `Research`, never a shared one: two teams racing the same ladder
+    /// with one unlock list between them would be one team with two names.
+    public static Team AddTeam(World world, Catalogue catalogue, string name)
+        => world.AddTeam(name, new Research(catalogue));
+
+    /// Adds a player to a team, kitted and standing at spawn. The caller walks
+    /// them somewhere else -- `Walk.To(world, player, x, y)` -- because where a
+    /// second player starts is a game-mode decision, not a sim one.
+    public static Player AddPlayer(World world, Catalogue catalogue, string name, int teamId)
+    {
+        var player = world.AddPlayer(name, teamId);
+        GrantStarterKit(player, catalogue);
+        return player;
     }
 }

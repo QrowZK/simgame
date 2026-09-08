@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Sim.Save;
 
 /// The on-disk shape of a save. Plain data with public setters, because
@@ -82,7 +84,14 @@ public sealed class SaveFile
     /// save describes the world rather than the keyboard. Byte-identical
     /// round-tripping therefore holds for a stopped player and, for a walking
     /// one, holds for the position and not for the walk.
-    public const int CurrentVersion = 14;
+    /// 15 made progression team-owned and the world multi-player (ADR 0036).
+    /// The single player at the top of the file became a roster, and the single
+    /// research state became one per team. A version 14 file has one player's
+    /// pocket and one unlock list with nothing saying whose they are; loading
+    /// one as 15 is not the problem -- writing a 15 and reading it as 14 is,
+    /// because a 14 loader would take the first team's research as the world's
+    /// and hand a rival's unlocks to everybody on the map. Refused, as always.
+    public const int CurrentVersion = 15;
 
     public int Version { get; set; } = CurrentVersion;
     public int Seed { get; set; }
@@ -93,16 +102,37 @@ public sealed class SaveFile
     /// remaps those indices onto whatever ids the running game has assigned.
     public List<string> Items { get; set; } = new();
 
-    public List<StackSave> Player { get; set; } = new();
+    /// The teams, in id order. Never empty: index is `Team.Id` and ownership
+    /// everywhere else in the file is that number.
+    public List<TeamSave> Teams { get; set; } = new();
 
-    /// The player's feet in milli-tiles, and the direction they last walked.
-    /// Raw fixed-point rather than a tile, because a tile is lossy: saving
-    /// mid-stride and reloading would snap you to the tile centre, which over a
-    /// long game is a save that quietly moves you.
-    public int PlayerX { get; set; }
-    public int PlayerY { get; set; }
-    public int PlayerFacingX { get; set; }
-    public int PlayerFacingY { get; set; } = 1;
+    /// The roster, in id order. Never empty.
+    public List<PlayerSave> Players { get; set; } = new();
+
+    /// Which player the local view was looking through. Saved because a client
+    /// reopening its own file should be the same person it was, and because a
+    /// world where it is not restored would silently move a player's pockets.
+    public int LocalPlayer { get; set; }
+
+    /// The local player's team's research, for readers that predate teams.
+    ///
+    /// Not serialised -- `Teams` is the storage, and two places to write one
+    /// fact is how a field gets dropped from one of them. This is a view over
+    /// it, so it can neither drift nor be written stale.
+    [JsonIgnore]
+    public ResearchSave Research
+        => Teams.Count == 0 ? new ResearchSave()
+                            : Teams[TeamOfLocalPlayer].Research;
+
+    private int TeamOfLocalPlayer
+    {
+        get
+        {
+            if (LocalPlayer < 0 || LocalPlayer >= Players.Count) return 0;
+            var team = Players[LocalPlayer].Team;
+            return team >= 0 && team < Teams.Count ? team : 0;
+        }
+    }
 
     /// Which item paid for the building anchored on each tile. Written in
     /// coordinate order rather than in build order, so the same world saved
@@ -125,8 +155,35 @@ public sealed class SaveFile
     public List<ControllerSave> Controllers { get; set; } = new();
     public BeltNetworkSave Belts { get; set; } = new();
     public List<FluidNetworkSave> Fluids { get; set; } = new();
+}
 
+/// One team: its name and its own progression (ADR 0036).
+public sealed class TeamSave
+{
+    public string Name { get; set; } = "";
     public ResearchSave Research { get; set; } = new();
+}
+
+/// One player: who they are, where they are standing, whose side they are on,
+/// and what is in their pockets.
+///
+/// Position is raw milli-tiles rather than a tile, because a tile is lossy:
+/// saving mid-stride and reloading would snap you to the tile centre, which
+/// over a long game is a save that quietly moves you. The walk *intent* is
+/// still not saved -- see the note on `CurrentVersion` 14.
+public sealed class PlayerSave
+{
+    public string Name { get; set; } = "";
+
+    /// Index into `SaveFile.Teams`.
+    public int Team { get; set; }
+
+    public int X { get; set; }
+    public int Y { get; set; }
+    public int FacingX { get; set; }
+    public int FacingY { get; set; } = 1;
+
+    public List<StackSave> Inventory { get; set; } = new();
 }
 
 /// Research state. Techs and objectives are stored by their data ids rather
@@ -236,6 +293,13 @@ public sealed class BuiltSave
     public int X { get; set; }
     public int Y { get; set; }
     public int Item { get; set; }
+
+    /// Which team paid for it, or -1 for a building placed outside `TryBuild`.
+    /// Stored on the same record as the item, because the two facts are
+    /// written and dropped together: a removal hands the item back *to* the
+    /// team, and a save that kept one without the other would give a rival's
+    /// factory away on the first reload.
+    public int Team { get; set; } = -1;
 }
 
 public sealed class PoleSave

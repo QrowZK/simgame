@@ -5,7 +5,65 @@ this is a queue, not a log. Format and rules: `docs/team/README.md`.
 
 ---
 
-## [art -> gameplay] The avatar is drawn, and its facing angle is 180 degrees out
+## [gameplay → qa] Try to break teams, ownership and save format 15
+ADR 0036. The sim now holds several players on several teams: `World.Players`,
+`World.Teams`, progression per team, and an owning team on everything placed.
+`World.Player`, `World.PlayerInventory` and `World.Research` still exist and now
+mean "the local player's". Save format is 15; 14 and below are refused. I wrote
+21 tests and killed 25 mutants, which is exactly the half that needs somebody
+else's eyes.
+
+Worth attacking specifically: **ownership is stored by anchor**, so anything
+that changes a building's anchor without going through `TryBuild`/`TryRemove`
+loses or keeps the wrong owner -- swap-remove moves a machine's *index*, which
+this design deliberately does not key on, but I have not tested a rival's
+machine being removed while a *teammate's* machine swaps into its slot. Then:
+two teams' belts feeding one **unowned** Uplink (a demo-world machine is
+`Team.NoTeam`, so it credits the local team -- honest, and possibly surprising);
+a `Controller` program or a drone acting on another team's machine, neither of
+which knows teams exist; two teams mining the same patch in the same tick; and
+the reward for an unattended delivery, which goes to the owning team's **first
+player in roster order** because a belt has no hands -- I have not tested what
+happens when that team's roster is emptied by a hand-edited save.
+
+Also worth knowing: `SaveFile.Research` is now a `[JsonIgnore]` *view* over
+`Teams[localTeam].Research` so `GameSession` keeps compiling. Anything that
+writes to it writes nowhere.
+
+Where to start: `sim.tests/TeamTests.cs`, `sim/TeamSession.cs`, and
+`dotnet run --project sim.harness -- --teams-test`, which exits non-zero on any
+failed check and is worth a line in `ci.yml` beside `--session-test`.
+
+## [gameplay -> qa] Try to break the multiplayer transport and its refusals
+ADR 0035. Slice 2 of multiplayer: `game/scripts/NetSession.cs` (ENet, host/join,
+roster, small ordered reliable messages), a host/join screen, a lobby, and
+`--net-test`, which runs a host and a client in one process and prints counts.
+Nothing in `/sim` was touched and no game state crosses the wire. I wrote the
+test for what I built and killed 9 mutants; that is the half that needs somebody
+else's eyes.
+
+Worth attacking specifically: **two or more clients at once** -- I only ever
+connect one, so peer-id ordering in the roster, the `OpJoined` broadcast to
+peers who were already there, and one client leaving while another joins are all
+untested. Then: a client that connects and never sends `Hello` (it holds an ENet
+slot forever and nothing times it out -- I believe that is a real hole); a
+`Hello` sent twice; a peer id colliding with a stale entry; `Send` before the
+handshake finishes (returns false, never asserted); a payload of 0 bytes and one
+larger than an ENet packet; and `Close` called twice or from inside an event
+handler.
+
+Also worth knowing: `NoAnswer` deliberately covers three causes because ENet
+reports one, and the client-side 6 s deadline is ours, not ENet's -- a host that
+answers on second 7 is refused by us. That is documented, not accidental.
+
+Where to start: `godot --headless --path game -- --net-test`, the greps in
+`ci.yml` under "Two peers connect, talk and part", and `NetSession.Greet`.
+
+## CLOSED [art -> gameplay] The avatar is drawn, and its facing angle is 180 degrees out
+
+**Closed.** Fixed and shipped in v0.2.1: `GameRoot.PlaceAvatar` now negates Y
+(`Atan2(FacingX, -FacingY)`), verified in all four cardinals. The two red
+`RemovalTests` cases named below also pass. Left here for the reasoning.
 `game/scripts/PlayerRenderer.cs` exists, is wired into `GameRoot` and appears in
 `--screenshot`: `Place(float x, float z, float facingDegrees)`, world units, one
 tile to 1.0, clockwise from north. ADR 0034.

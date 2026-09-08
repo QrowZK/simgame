@@ -28,6 +28,17 @@ public enum RemoveResult
     /// down takes it back: a rule where you can place at twelve tiles and only
     /// unplace at six would mean building a mistake you then have to walk to.
     TooFar,
+
+    /// Another team built it (ADR 0036). Its own reason rather than
+    /// `NothingThere`, because the player can see it perfectly well and the
+    /// answer is not "aim better"; and checked before `TooFar`, because
+    /// walking closer will never help.
+    ///
+    /// A *teammate's* building is not this: a team shares what it has built,
+    /// so dismantling a teammate's smelter succeeds and only a rival's is
+    /// refused. The two sentences a UI says are therefore "removed" and "that
+    /// belongs to another team", which is the distinction that matters.
+    OtherTeam,
 }
 
 /// What a removal gave back, and what it could not.

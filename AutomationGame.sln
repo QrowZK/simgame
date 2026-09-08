@@ -5,6 +5,8 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sim", "sim\Sim.csproj", "{DDA0E099-AB5B-4E0E-B9FC-973E221B6AF3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sim.Harness", "sim.harness\Sim.Harness.csproj", "{7B4C6F21-9A55-4E3D-8C10-2F6D51A9C3E8}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sim.Tests", "sim.tests\Sim.Tests.csproj", "{F248EE50-703B-413C-BBA9-1BD34EDA290A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Data.Tests", "data.tests\Data.Tests.csproj", "{AFB95E45-0ED5-44E2-B1F3-D0995E34F195}"
@@ -25,6 +27,7 @@ Global
 		{DDA0E099-AB5B-4E0E-B9FC-973E221B6AF3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DDA0E099-AB5B-4E0E-B9FC-973E221B6AF3}.Release|Any CPU.Build.0 = Release|Any CPU
 		{F248EE50-703B-413C-BBA9-1BD34EDA290A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+	{7B4C6F21-9A55-4E3D-8C10-2F6D51A9C3E8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{F248EE50-703B-413C-BBA9-1BD34EDA290A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F248EE50-703B-413C-BBA9-1BD34EDA290A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F248EE50-703B-413C-BBA9-1BD34EDA290A}.Release|Any CPU.Build.0 = Release|Any CPU

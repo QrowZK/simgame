@@ -38,17 +38,42 @@ public static class SaveGame
             Seed = world.Seed,
             Tick = world.TickCount,
             Items = world.Items.Names.ToList(),
-            PlayerX = world.Player.X,
-            PlayerY = world.Player.Y,
-            PlayerFacingX = world.Player.FacingX,
-            PlayerFacingY = world.Player.FacingY,
+            LocalPlayer = world.LocalIndex,
         };
 
-        foreach (var (item, count) in world.PlayerInventory.Contents.OrderBy(kv => kv.Key.Value))
-            save.Player.Add(new StackSave { Item = item.Value, Count = count });
+        // Teams before players, in id order, because a player names its team by
+        // index. Both lists are written in roster order rather than in any
+        // order derived from a dictionary, so the same world saved twice is
+        // byte-identical -- which is also the desync detector slice 3 needs.
+        foreach (var team in world.Teams)
+            save.Teams.Add(new TeamSave { Name = team.Name, Research = CaptureResearch(team) });
+
+        foreach (var player in world.Players)
+        {
+            var entry = new PlayerSave
+            {
+                Name = player.Name,
+                Team = player.TeamId,
+                X = player.X,
+                Y = player.Y,
+                FacingX = player.FacingX,
+                FacingY = player.FacingY,
+            };
+
+            foreach (var (item, count) in player.Inventory.Contents.OrderBy(kv => kv.Key.Value))
+                entry.Inventory.Add(new StackSave { Item = item.Value, Count = count });
+
+            save.Players.Add(entry);
+        }
 
         foreach (var (x, y, item) in world.BuiltFrom)
-            save.Built.Add(new BuiltSave { X = x, Y = y, Item = item.Value });
+            save.Built.Add(new BuiltSave
+            {
+                X = x,
+                Y = y,
+                Item = item.Value,
+                Team = world.OwnerOfAnchor(x, y),
+            });
 
         for (var i = 0; i < world.MachineCount; i++)
             save.Machines.Add(CaptureMachine(world, i));
@@ -201,22 +226,27 @@ public static class SaveGame
                 Amount = network.Amount,
             });
 
-        if (world.Research is { } research)
-        {
-            save.Research.Enabled = true;
-            save.Research.SeedDelivered = research.SeedDelivered;
-            save.Research.UnattendedDeliveries = world.UnattendedDeliveries;
-            save.Research.Unlocked = research.UnlockedInOrder.ToList();
-            foreach (var (objective, item, count) in research.Progress)
-                save.Research.Progress.Add(new ResearchProgressSave
-                {
-                    Objective = objective,
-                    Item = item,
-                    Count = count,
-                });
-        }
-
         return save;
+    }
+
+    private static ResearchSave CaptureResearch(Team team)
+    {
+        var entry = new ResearchSave();
+        if (team.Research is not { } research) return entry;
+
+        entry.Enabled = true;
+        entry.SeedDelivered = research.SeedDelivered;
+        entry.UnattendedDeliveries = team.UnattendedDeliveries;
+        entry.Unlocked = research.UnlockedInOrder.ToList();
+        foreach (var (objective, item, count) in research.Progress)
+            entry.Progress.Add(new ResearchProgressSave
+            {
+                Objective = objective,
+                Item = item,
+                Count = count,
+            });
+
+        return entry;
     }
 
     private static MachineSave CaptureMachine(World world, int index)
@@ -338,6 +368,54 @@ public static class SaveGame
         return save;
     }
 
+    /// Rebuilds teams and the roster.
+    ///
+    /// A `World` is born with one team and one player, so the first of each is
+    /// overwritten in place rather than added -- adding would leave a phantom
+    /// "Team 1" at index 0 and shift every ownership id in the file by one.
+    private static void RestoreRoster(World world, SaveFile save)
+    {
+        for (var i = 0; i < save.Teams.Count; i++)
+        {
+            var entry = save.Teams[i];
+            var team = i < world.Teams.Count ? world.Teams[i] : world.AddTeam(entry.Name);
+            team.Name = entry.Name;
+
+            if (entry.Research.Enabled)
+            {
+                var research = new Research(Sim.Data.GameData.Instance);
+                research.Restore(entry.Research.Unlocked,
+                                 entry.Research.Progress.Select(p => (p.Objective, p.Item, p.Count)),
+                                 entry.Research.SeedDelivered);
+                team.Research = research;
+            }
+            else
+            {
+                team.Research = null;
+            }
+
+            team.RestoreUnattendedDeliveries(entry.Research.UnattendedDeliveries);
+        }
+
+        for (var i = 0; i < save.Players.Count; i++)
+        {
+            var entry = save.Players[i];
+            if (i < world.Players.Count)
+            {
+                world.Players[i].Name = entry.Name;
+                world.Players[i].TeamId = entry.Team;
+            }
+            else
+            {
+                // AddPlayer takes the team, so there is nothing to set after it.
+                world.AddPlayer(entry.Name, entry.Team);
+            }
+        }
+
+        // After the roster, because it is an index into it.
+        world.SetLocalPlayer(save.LocalPlayer);
+    }
+
     private static EndpointSave ToSave(Endpoint endpoint) =>
         new() { Kind = endpoint.Kind, Index = endpoint.Index, Lane = endpoint.Lane };
 
@@ -370,25 +448,21 @@ public static class SaveGame
         var world = new World(save.Seed, items, gen);
         world.RestoreTick(save.Tick);
 
-        // Research before machines: placing an Uplink registers it, and a
-        // delivery arriving on the first tick after load must land on the same
-        // objectives it would have before the save.
-        if (save.Research.Enabled)
-        {
-            var research = new Research(Sim.Data.GameData.Instance);
-            research.Restore(save.Research.Unlocked,
-                             save.Research.Progress.Select(p => (p.Objective, p.Item, p.Count)),
-                             save.Research.SeedDelivered);
-            world.Research = research;
-            world.RestoreUnattendedDeliveries(save.Research.UnattendedDeliveries);
-        }
+        // Teams and the roster before machines: placing an Uplink registers it,
+        // and a delivery arriving on the first tick after load must land on the
+        // same team's objectives it would have before the save.
+        RestoreRoster(world, save);
 
         world.Ground.Restore(save.Depletion.Select(d => (d.X, d.Y, d.Taken)));
 
-        world.PlayerInventory.Restore(save.Player.Select(s => (Item(s.Item, save), s.Count)).ToList());
-
-        world.Player.Restore(save.PlayerX, save.PlayerY,
-                             save.PlayerFacingX, save.PlayerFacingY);
+        for (var i = 0; i < save.Players.Count; i++)
+        {
+            var entry = save.Players[i];
+            var player = world.Players[i];
+            player.Inventory.Restore(
+                entry.Inventory.Select(st => (Item(st.Item, save), st.Count)).ToList());
+            player.Restore(entry.X, entry.Y, entry.FacingX, entry.FacingY);
+        }
 
         foreach (var entry in save.Machines)
             RestoreMachine(world, entry, recipes, save);
@@ -477,7 +551,7 @@ public static class SaveGame
         // and a record for a building that failed to load would be a promise to
         // hand back something that is not there.
         foreach (var entry in save.Built)
-            world.RegisterBuilt(entry.X, entry.Y, Item(entry.Item, save));
+            world.RegisterBuilt(entry.X, entry.Y, Item(entry.Item, save), entry.Team);
 
         for (var i = 0; i < save.Fluids.Count && i < world.Fluids.NetworkCount; i++)
         {

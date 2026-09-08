@@ -168,6 +168,11 @@ jobs:
       # The save loop as a player takes it: new game, save to disk, list it,
       # load it back, and stay identical after running on. The unit tests stop
       # at the sim boundary and never touch the file layer.
+      - name: Teams and save format 15
+        run: |
+          dotnet run --project sim.harness -- --teams-test | tee teams.log
+          grep -q -- "--- teams ok ---" teams.log
+
       - name: Save/load session test
         working-directory: game
         run: |

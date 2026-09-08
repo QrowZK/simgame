@@ -24,6 +24,18 @@ dotnet test       # sim + data invariant tests
 ./tools/check-no-godot-reference.sh
 ```
 
+Some headless checks belong to the sim rather than to the renderer, and live in
+a small console project so they run on a machine with no display driver:
+
+```
+dotnet run --project sim.harness -- --teams-test    # teams, roster, ownership, save
+```
+
+It exits 0 on success and 1 on any failed check, so CI needs no grep. The
+scenario is `Sim.TeamSession.Run`, which `sim.tests` drives as well, so the
+headless run and the test suite cannot disagree about what passing means.
+See `docs/0036-teams-own-progression.md`.
+
 ## Game data
 
 `data/*.json` is **generated**. Edit `data/spec/progression.json`, then:
