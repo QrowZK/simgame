@@ -15641,7 +15641,7 @@
         "count": 1
       }
     ],
-    "unlocked_by": "tech_man_fabrication"
+    "unlocked_by": "tech_start_haulage"
   },
   {
     "id": "build_vlt_transport_belt",
@@ -16169,7 +16169,7 @@
         "count": 1
       }
     ],
-    "unlocked_by": "tech_man_fabrication"
+    "unlocked_by": "tech_start_smelting"
   },
   {
     "id": "build_vlt_inserter",

@@ -59,6 +59,18 @@ public sealed class World
 
     public IReadOnlyCollection<int> Uplinks => _uplinks;
 
+    private int _unattendedDeliveries;
+
+    /// How many items have reached research without passing through the
+    /// player's hands. Saved, because it is progress: it is what proves the
+    /// first automated line ran.
+    public int UnattendedDeliveries => _unattendedDeliveries;
+
+    /// For the save loader. Not a setter: restoring a count is not the same
+    /// operation as scoring one, and a settable property invites a caller to
+    /// fake the milestone.
+    public void RestoreUnattendedDeliveries(int count) => _unattendedDeliveries = count;
+
     public World(int seed, ItemDatabase? items = null, WorldGen? gen = null)
     {
         Seed = seed;
@@ -79,12 +91,12 @@ public sealed class World
         var report = Research.Deliver(Items.GetName(item), count);
 
         foreach (var tech in report.Completed)
-        {
-            if (!Sim.Research.Kits.TryGetValue(tech, out var kit)) continue;
-            foreach (var (name, amount) in kit)
-                if (Items.TryGetId(name, out var id))
-                    PlayerInventory.Add(id, amount);
-        }
+            foreach (var reward in Research.RewardsFor(tech))
+                if (Items.TryGetId(reward.Item, out var id))
+                {
+                    PlayerInventory.Add(id, reward.Count);
+                    report.Granted.Add(reward);
+                }
 
         return report;
     }
@@ -164,11 +176,8 @@ public sealed class World
         if (!CanPlace(placement))
             return null;
 
-        Power.AddAccumulator(accumulator, placement);
-
-        for (var dy = 0; dy < placement.Size; dy++)
-            for (var dx = 0; dx < placement.Size; dx++)
-                _occupancy[Key(placement.X + dx, placement.Y + dy)] = GeneratorIndexBase;
+        var index = Power.AddAccumulator(accumulator, placement);
+        Mark(placement, AccumulatorIndexBase + index);
 
         return accumulator;
     }
@@ -229,19 +238,36 @@ public sealed class World
         if (!CanPlace(placement))
             return null;
 
-        Power.AddGenerator(generator, placement);
-
-        for (var dy = 0; dy < placement.Size; dy++)
-            for (var dx = 0; dx < placement.Size; dx++)
-                _occupancy[Key(placement.X + dx, placement.Y + dy)] = GeneratorIndexBase;
+        var index = Power.AddGenerator(generator, placement);
+        Mark(placement, GeneratorIndexBase + index);
 
         return generator;
     }
 
-    /// Occupancy marker for generators. They are not addressed by index through
-    /// the grid the way machines and miners are -- nothing clicks through to a
-    /// generator yet -- so one marker is enough to keep their tiles reserved.
+    /// Occupancy marker ranges. One grid answers "what is on this tile" for
+    /// every kind of building, by which band the stored value falls in.
+    ///
+    /// Generators, accumulators and poles used to share a single marker with no
+    /// index in it, because nothing clicked through to them. Removal does: a
+    /// click has to resolve to *which* pole, so each kind now carries its index
+    /// the way machines and miners always have.
     public const int GeneratorIndexBase = 1 << 25;
+    public const int AccumulatorIndexBase = 1 << 27;
+    public const int PoleIndexBase = 1 << 28;
+
+    private void Mark(in MachinePlacement placement, int slot)
+    {
+        for (var dy = 0; dy < placement.Size; dy++)
+            for (var dx = 0; dx < placement.Size; dx++)
+                _occupancy[Key(placement.X + dx, placement.Y + dy)] = slot;
+    }
+
+    private void Unmark(in MachinePlacement placement)
+    {
+        for (var dy = 0; dy < placement.Size; dy++)
+            for (var dx = 0; dx < placement.Size; dx++)
+                _occupancy.Remove(Key(placement.X + dx, placement.Y + dy));
+    }
 
     private void RefreshFluidCache()
     {
@@ -602,7 +628,8 @@ public sealed class World
 
     public bool TryExtractorAt(int x, int y, out FluidExtractor extractor, out int index)
     {
-        if (_occupancy.TryGetValue(Key(x, y), out var slot) && slot >= ExtractorIndexBase)
+        if (_occupancy.TryGetValue(Key(x, y), out var slot) &&
+            slot >= ExtractorIndexBase && slot < AccumulatorIndexBase)
         {
             index = slot - ExtractorIndexBase;
             extractor = _extractors[index];
@@ -792,6 +819,7 @@ public sealed class World
             };
 
         PlayerInventory.Take(item, 1);
+        RegisterBuilt(x, y, item);
         return BuildResult.Ok;
     }
 
@@ -820,15 +848,90 @@ public sealed class World
     }
 
     private bool AddBuiltPole(Buildable buildable, in MachinePlacement placement)
+        => AddPole(new Pole(placement.X, placement.Y,
+                            buildable.PoleSupplyRadius, buildable.PoleWireRadius),
+                   placement);
+
+    /// Puts a pole on the grid *and* on the occupancy map.
+    ///
+    /// The save used to restore poles straight into `Power`, which left their
+    /// tiles unreserved: a loaded pole could be built straight over. Restoring
+    /// through here instead is what makes a reloaded factory the same factory.
+    public bool AddPole(in Pole pole, in MachinePlacement placement)
     {
-        Power.AddPole(new Pole(placement.X, placement.Y,
-                               buildable.PoleSupplyRadius, buildable.PoleWireRadius));
+        if (!CanPlace(placement)) return false;
+        AddSavedPole(pole, placement);
+        return true;
+    }
+
+    /// Restores a pole without the "is that tile free" check, and claims only
+    /// the tiles that are actually free.
+    ///
+    /// Save surface only, and the reason is the same as `AddSavedMiner`'s: a
+    /// world built before poles reserved tiles at all can hold a pole standing
+    /// on a generator, and a load that refused it would delete a working
+    /// factory's power grid without a word. What it must not do is steal the
+    /// generator's tile, or clicking it would resolve to the wrong building.
+    public void AddSavedPole(in Pole pole, in MachinePlacement placement)
+    {
+        var index = Power.AddPole(pole);
+        _polePlacements.Add(placement);
 
         for (var dy = 0; dy < placement.Size; dy++)
             for (var dx = 0; dx < placement.Size; dx++)
-                _occupancy[Key(placement.X + dx, placement.Y + dy)] = GeneratorIndexBase;
+            {
+                var key = Key(placement.X + dx, placement.Y + dy);
+                if (!_occupancy.ContainsKey(key)) _occupancy[key] = PoleIndexBase + index;
+            }
+    }
 
-        return true;
+    /// Footprints of the poles, parallel to `Power.Poles`. Poles are 1x1 in the
+    /// data, but the occupancy grid is written from the footprint and clearing
+    /// it has to read back exactly what was written.
+    private readonly List<MachinePlacement> _polePlacements = new();
+
+    public bool TryPoleAt(int x, int y, out Pole pole, out int index)
+    {
+        if (_occupancy.TryGetValue(Key(x, y), out var slot) && slot >= PoleIndexBase)
+        {
+            index = slot - PoleIndexBase;
+            pole = Power.Poles[index];
+            return true;
+        }
+
+        pole = default;
+        index = -1;
+        return false;
+    }
+
+    public bool TryGeneratorAt(int x, int y, out Generator generator, out int index)
+    {
+        if (_occupancy.TryGetValue(Key(x, y), out var slot) &&
+            slot >= GeneratorIndexBase && slot < ExtractorIndexBase)
+        {
+            index = slot - GeneratorIndexBase;
+            generator = Power.Generators[index];
+            return true;
+        }
+
+        generator = null!;
+        index = -1;
+        return false;
+    }
+
+    public bool TryAccumulatorAt(int x, int y, out Accumulator accumulator, out int index)
+    {
+        if (_occupancy.TryGetValue(Key(x, y), out var slot) &&
+            slot >= AccumulatorIndexBase && slot < PoleIndexBase)
+        {
+            index = slot - AccumulatorIndexBase;
+            accumulator = Power.Accumulators[index];
+            return true;
+        }
+
+        accumulator = null!;
+        index = -1;
+        return false;
     }
 
     /// What a newly built generator expects to burn. Coal if the data has it,
@@ -931,6 +1034,231 @@ public sealed class World
         return RecipeChangeResult.Ok;
     }
 
+    /// Which item paid for the building anchored on a tile.
+    ///
+    /// Keyed by the anchor -- the south-west corner a placement is held by --
+    /// because that is the one tile every kind of building has, from a 1x1 belt
+    /// to a 3x3 assembler. Recorded rather than derived: a splitter tile knows
+    /// its facing and nothing else, and two tiers of belt at the same speed are
+    /// indistinguishable on the map, so "what did this cost you" cannot be read
+    /// back off the thing itself.
+    private readonly Dictionary<long, ItemId> _builtFrom = new();
+
+    /// Records what a placement was paid for with. Public because the save has
+    /// to put it back: everything else goes through `TryBuild`.
+    public void RegisterBuilt(int x, int y, ItemId item) => _builtFrom[Key(x, y)] = item;
+
+    /// Every recorded (anchor, item), in a fixed order so a save written twice
+    /// from the same world is byte-identical.
+    public IEnumerable<(int X, int Y, ItemId Item)> BuiltFrom
+        => _builtFrom.Select(kv => ((int)(kv.Key >> 32), (int)(uint)kv.Key, kv.Value))
+                     .OrderBy(e => e.Item1).ThenBy(e => e.Item2);
+
+    /// What removing the building on a tile would hand back, without removing
+    /// it. This is what the build ghost previews: the anchor says where the
+    /// footprint sits, the item says which one to draw.
+    public bool TryRemovableAt(int x, int y, out ItemId item, out int anchorX, out int anchorY)
+    {
+        item = default;
+        anchorX = x;
+        anchorY = y;
+
+        if (TryMachineAt(x, y, out _, out var machine))
+            (anchorX, anchorY) = (_placements[machine].X, _placements[machine].Y);
+        else if (TryMinerAt(x, y, out _, out var miner))
+            (anchorX, anchorY) = (_minerPlacements[miner].X, _minerPlacements[miner].Y);
+        else if (TryExtractorAt(x, y, out _, out var extractor))
+            (anchorX, anchorY) = (_extractorPlacements[extractor].X, _extractorPlacements[extractor].Y);
+        else if (TryGeneratorAt(x, y, out _, out var generator))
+            (anchorX, anchorY) = (Power.GeneratorPlacements[generator].X,
+                                  Power.GeneratorPlacements[generator].Y);
+        else if (TryAccumulatorAt(x, y, out _, out var accumulator))
+            (anchorX, anchorY) = (Power.AccumulatorPlacements[accumulator].X,
+                                  Power.AccumulatorPlacements[accumulator].Y);
+        else if (TryPoleAt(x, y, out var pole, out _))
+            (anchorX, anchorY) = (pole.X, pole.Y);
+        else if (!BeltMap.HasAnythingAt(x, y) && !Fluids.HasNodeAt(x, y))
+            return false;
+
+        return _builtFrom.TryGetValue(Key(anchorX, anchorY), out item);
+    }
+
+    /// Takes back something the player built: the building itself plus
+    /// everything inside it (ADR 0028).
+    ///
+    /// Deliberately one entry point for every kind. The alternative -- a remove
+    /// call per system -- would put the "and clear the occupancy grid, and mark
+    /// the belts dirty, and drop the built-from record" checklist at nine call
+    /// sites, and the ninth would forget one.
+    ///
+    /// Nothing is refused for being busy. A machine mid-cycle hands the batch
+    /// back the way retasking does, and a pole holding a factory's power
+    /// together comes up as readily as it went down: the whole reason this
+    /// exists is that a misplacement was permanent, and a removal that refuses
+    /// while the factory is running is a removal you cannot use.
+    public RemovalReport TryRemove(int x, int y)
+    {
+        if (!TryRemovableAt(x, y, out var item, out var anchorX, out var anchorY))
+        {
+            // Told apart deliberately: an empty tile is the player's aim being
+            // off, and a building with no record is the game's limitation.
+            var occupied = _occupancy.ContainsKey(Key(x, y))
+                           || BeltMap.HasAnythingAt(x, y) || Fluids.HasNodeAt(x, y);
+            return new RemovalReport(occupied ? RemoveResult.UnknownBuilding
+                                              : RemoveResult.NothingThere);
+        }
+
+        var returned = 0;
+        var voided = 0;
+        var spilledBefore = BeltMap.SpilledOnRemoval;
+
+        if (TryMachineAt(anchorX, anchorY, out var found, out var machineIndex))
+        {
+            // The same eviction retasking uses, for the same reason: the input
+            // buffer is theirs, the output buffer is paid for, and the batch in
+            // flight has consumed its inputs without producing anything yet.
+            returned += found.SetRecipe(found.Recipe, PlayerInventory);
+            RemoveMachineAt(machineIndex);
+        }
+        else if (TryMinerAt(anchorX, anchorY, out var mined, out var minerIndex))
+        {
+            returned += Drain(mined.Item, mined.Pull(mined.Buffered));
+            Unmark(_minerPlacements[minerIndex]);
+            SwapRemove(_miners, _minerPlacements, minerIndex, MinerIndexBase);
+        }
+        else if (TryExtractorAt(anchorX, anchorY, out var pumped, out var extractorIndex))
+        {
+            // Fluid, not items: nothing to hand it back to, so it drains away
+            // and is counted.
+            voided += pumped.Pull(int.MaxValue);
+            Unmark(_extractorPlacements[extractorIndex]);
+            SwapRemove(_extractors, _extractorPlacements, extractorIndex, ExtractorIndexBase);
+        }
+        else if (TryGeneratorAt(anchorX, anchorY, out var burner, out var generatorIndex))
+        {
+            // Whole fuel units only. The unit part-burnt has already been paid
+            // out as power, so refunding it would create energy from nothing --
+            // which is exactly why a machine's in-flight batch *is* refunded
+            // and this is not.
+            returned += Drain(burner.Fuel, burner.TakeFuel());
+            Unmark(Power.GeneratorPlacements[generatorIndex]);
+            var moved = Power.RemoveGenerator(generatorIndex);
+            if (moved >= 0) Mark(Power.GeneratorPlacements[generatorIndex],
+                                 GeneratorIndexBase + generatorIndex);
+        }
+        else if (TryAccumulatorAt(anchorX, anchorY, out _, out var accumulatorIndex))
+        {
+            // Its charge is energy, not an item, and goes the way a machine's
+            // energy buffer goes on a retask: nowhere.
+            Unmark(Power.AccumulatorPlacements[accumulatorIndex]);
+            var moved = Power.RemoveAccumulator(accumulatorIndex);
+            if (moved >= 0) Mark(Power.AccumulatorPlacements[accumulatorIndex],
+                                 AccumulatorIndexBase + accumulatorIndex);
+        }
+        else if (TryPoleAt(anchorX, anchorY, out _, out var poleIndex))
+        {
+            Unmark(_polePlacements[poleIndex]);
+            var last = _polePlacements.Count - 1;
+            _polePlacements[poleIndex] = _polePlacements[last];
+            _polePlacements.RemoveAt(last);
+            var moved = Power.RemovePole(poleIndex);
+            if (moved >= 0) Mark(_polePlacements[poleIndex], PoleIndexBase + poleIndex);
+        }
+        else if (Fluids.HasNodeAt(anchorX, anchorY))
+        {
+            Fluids.RemoveNode(anchorX, anchorY, out voided);
+        }
+        else
+        {
+            // Belts last, and only after a sync: the tunnel span whose items
+            // are about to be collected is rebuild output, and a map that has
+            // not compiled since the tunnel was placed does not know it exists.
+            SyncBelts();
+            var tiles = BeltMap.TilesEmptiedByRemoving(anchorX, anchorY);
+            foreach (var carried in BeltMap.TakeItemsOn(Belts, tiles))
+            {
+                PlayerInventory.Add(carried, 1);
+                returned++;
+            }
+
+            BeltMap.Remove(anchorX, anchorY);
+        }
+
+        _builtFrom.Remove(Key(anchorX, anchorY));
+        PlayerInventory.Add(item, 1);
+
+        // Every removal changes what a belt or an inserter is looking at: an
+        // endpoint holds a machine's *index*, and the indices above a removed
+        // machine have just moved. Recompiling now rather than at the next tick
+        // means nothing is ever handed to the wrong machine.
+        BeltMap.MarkDirty();
+        SyncBelts();
+        InvalidateNetworkCaches();
+
+        return new RemovalReport(RemoveResult.Ok, item, returned,
+                                 BeltMap.SpilledOnRemoval - spilledBefore, voided,
+                                 anchorX, anchorY);
+    }
+
+    private int Drain(ItemId item, int count)
+    {
+        if (count > 0) PlayerInventory.Add(item, count);
+        return count;
+    }
+
+    /// Takes a machine out of the dense arrays by moving the last one into its
+    /// slot.
+    ///
+    /// Swap-remove rather than a tombstone. A tombstone would keep the arrays
+    /// the renderer streams from stable, at the price of drawing a hull that is
+    /// no longer there unless every consumer learned to skip holes -- and the
+    /// renderer reads these arrays in bulk precisely so it never has to test
+    /// anything per machine. One moved index costs one occupancy repaint.
+    private void RemoveMachineAt(int index)
+    {
+        var last = _machines.Count - 1;
+        if (_placed[index]) Unmark(_placements[index]);
+
+        _machines[index] = _machines[last];
+        _machines.RemoveAt(last);
+        _placements[index] = _placements[last];
+        _states[index] = _states[last];
+        _placed[index] = _placed[last];
+
+        // An Uplink is recognised by index, so the set has to move with the
+        // machine. Getting this wrong would leave a plain assembler being
+        // drained into research every tick.
+        var movedUplink = _uplinks.Remove(last);
+        _uplinks.Remove(index);
+        if (index != last && movedUplink) _uplinks.Add(index);
+
+        if (index != last && _placed[index]) Mark(_placements[index], index);
+    }
+
+    private void SwapRemove<T>(List<T> items, List<MachinePlacement> placements,
+                               int index, int markerBase)
+    {
+        var last = items.Count - 1;
+        items[index] = items[last];
+        items.RemoveAt(last);
+        placements[index] = placements[last];
+        placements.RemoveAt(last);
+        if (index != last) Mark(placements[index], markerBase + index);
+    }
+
+    /// Forces the power and fluid network caches to be recomputed.
+    ///
+    /// They are keyed on counts and version numbers, and a removal followed by
+    /// a build inside one tick leaves both unchanged while the layout is
+    /// completely different.
+    private void InvalidateNetworkCaches()
+    {
+        _cachedMachines = -1;
+        _cachedMiners = -1;
+        _cachedFluidVersion = -1;
+        _cachedExtractors = -1;
+    }
+
     /// Adds a machine with no position. Used by tests and by headless analysis,
     /// where a machine's throughput is the question and its tile is not.
     public Machine AddMachine(Recipe recipe, int outputCapacityPerItem = 100)
@@ -950,10 +1278,7 @@ public sealed class World
         machine.SourceItem = sourceItem;
         var index = _machines.Count - 1;
         _placed[index] = true;
-
-        for (var dy = 0; dy < placement.Size; dy++)
-            for (var dx = 0; dx < placement.Size; dx++)
-                _occupancy[Key(placement.X + dx, placement.Y + dy)] = index;
+        Mark(placement, index);
 
         return machine;
     }
@@ -973,7 +1298,17 @@ public sealed class World
         {
             if (count <= 0) continue;
             var report = DeliverToUplink(item, count);
-            if (report.Accepted > 0) machine.TakeInput(item, report.Accepted);
+            if (report.Accepted <= 0) continue;
+
+            machine.TakeInput(item, report.Accepted);
+
+            // Nothing put this in the Uplink's buffer but a belt, an inserter
+            // or a drone -- a hand delivery goes straight to `Research` and
+            // never touches a machine. So this counter is the world state for
+            // "the factory delivered that, not you", which is the moment the
+            // opening is built around and the one thing about it a guide
+            // cannot infer from anything else (docs/0030).
+            _unattendedDeliveries += report.Accepted;
         }
 
         machine.SetIdle();

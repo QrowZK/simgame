@@ -48,8 +48,8 @@ godot --path game --headless -- --smoke        # headless verification
 godot --path game --headless -- --machines=100000   # stress the renderer
 ```
 
-Controls: WASD pan, Q/E rotate yaw, mouse wheel zoom, B build, R rotate,
-F5 save, F9 load, F1 script editor, Esc menu.
+Controls: WASD pan, Q/E rotate yaw, mouse wheel zoom, B build, X remove,
+R rotate, F5 save, F9 load, F1 script editor, Esc menu.
 
 ```
 xvfb-run -a godot --path game --rendering-driver opengl3 -- --screenshot
@@ -64,6 +64,7 @@ Headless flags, all of which live in `game/scripts/Boot.cs` and
 | `--session-test` | play every loop end to end: save, build, belts, power, fluids |
 | `--screenshot` | capture the world with a machine panel open |
 | `--belt-shot` | capture framed on the belt line |
+| `--shore-shot` | capture framed on the nearest coastline -- spawn is deliberately inland, so no other capture contains water |
 | `--build-shot` | capture with build mode open and a ghost placed |
 | `--menu-shot`, `--start-shot`, `--editor-shot` | title screen, a new game, the script editor |
 | `--machines=N`, `--seed=N` | size and seed the placeholder factory |

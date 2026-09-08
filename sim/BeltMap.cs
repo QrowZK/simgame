@@ -417,6 +417,116 @@ public sealed class BeltMap
         return true;
     }
 
+    /// Takes whatever the player placed on a tile off the map.
+    ///
+    /// One entry point for all four kinds rather than four: the caller has a
+    /// tile and wants it clear, and a "which of these is it" switch at every
+    /// call site is four chances to forget splitters. Returns false when the
+    /// tile holds none of them.
+    ///
+    /// The topology is not repaired here. Marking the map dirty makes the next
+    /// rebuild recompile every run and re-pair every tunnel from the tiles that
+    /// are left, which is the same path placing a belt takes -- so a cut in the
+    /// middle of a run splits it, and pulling one end of a tunnel frees its
+    /// partner to be paired again.
+    public bool Remove(int x, int y)
+    {
+        var key = Key(x, y);
+
+        if (_beltAt.TryGetValue(key, out var belt))
+            return SwapRemove(_belts, _beltAt, belt, b => Key(b.X, b.Y));
+        if (_inserterAt.TryGetValue(key, out var inserter))
+            return SwapRemove(_inserters, _inserterAt, inserter, i => Key(i.X, i.Y));
+        if (_undergroundAt.TryGetValue(key, out var end))
+            return SwapRemove(_undergrounds, _undergroundAt, end, u => Key(u.X, u.Y));
+        if (_splitterAt.TryGetValue(key, out var splitter))
+            return SwapRemove(_splitters, _splitterAt, splitter, p => Key(p.X, p.Y));
+
+        return false;
+    }
+
+    private bool SwapRemove<T>(List<T> items, Dictionary<long, int> byTile, int index,
+                               Func<T, long> keyOf)
+    {
+        var last = items.Count - 1;
+        byTile.Remove(keyOf(items[index]));
+        items[index] = items[last];
+        items.RemoveAt(last);
+        if (index != last) byTile[keyOf(items[index])] = index;
+        _dirty = true;
+        return true;
+    }
+
+    /// Every tile whose contents removing this one would strand: the tile
+    /// itself, plus the buried span of a tunnel when one of its ends is being
+    /// pulled up.
+    ///
+    /// The buried span is the case that is easy to miss. Items inside a tunnel
+    /// are not standing on any tile the player can see or click, so a removal
+    /// that only looked at the clicked tile would silently destroy everything
+    /// in flight underground and count it as spillage.
+    public List<(int X, int Y)> TilesEmptiedByRemoving(int x, int y)
+    {
+        var tiles = new List<(int X, int Y)> { (x, y) };
+
+        if (!_undergroundAt.TryGetValue(Key(x, y), out var end)) return tiles;
+
+        var partner = PartnerOf(end);
+        if (partner < 0 || partner >= _undergrounds.Count) return tiles;
+
+        var a = _undergrounds[end];
+        var b = _undergrounds[partner];
+        var (dx, dy) = Directions.Delta(a.Facing);
+        var steps = Math.Abs((b.X - a.X) * dx + (b.Y - a.Y) * dy);
+
+        // Between the ends, exclusive: the partner end is a tile of its own and
+        // is not being removed, so what is standing on it stays where it is.
+        var sign = (b.X - a.X) * dx + (b.Y - a.Y) * dy >= 0 ? 1 : -1;
+        for (var d = 1; d < steps; d++)
+            tiles.Add((a.X + dx * d * sign, a.Y + dy * d * sign));
+
+        return tiles;
+    }
+
+    /// Lifts every item riding the given tiles off the belts and returns them,
+    /// leaving everything else exactly where it was standing.
+    ///
+    /// Built on the same snapshot/restore the rebuild uses rather than a second
+    /// path into the lanes: a lane stores gaps relative to the item ahead, so
+    /// plucking one item out of the middle by hand means recomputing the gap of
+    /// the one behind it, which is precisely what `Restore` already does.
+    public List<ItemId> TakeItemsOn(BeltNetwork network, IReadOnlyList<(int X, int Y)> tiles)
+    {
+        var taken = new List<ItemId>();
+        if (tiles.Count == 0) return taken;
+
+        var wanted = new HashSet<long>();
+        foreach (var (x, y) in tiles) wanted.Add(Key(x, y));
+
+        var carried = Snapshot(network);
+        var kept = new List<Riding>();
+        foreach (var riding in carried)
+        {
+            if (wanted.Contains(Key(riding.X, riding.Y))) taken.Add(riding.Item);
+            else kept.Add(riding);
+        }
+
+        if (taken.Count == 0) return taken;
+
+        // Emptied first: `Restore` only writes the lanes it has items for, so a
+        // lane whose every item was just picked up would otherwise keep them.
+        foreach (var segment in network.Segments)
+            for (var lane = 0; lane < BeltSegment.LaneCount; lane++)
+                segment.LaneAt(lane).Restore(Array.Empty<ItemId>(), Array.Empty<int>());
+
+        Restore(network, kept);
+
+        // Deterministic order, so two identical worlds hand the two identical
+        // players their items in the same order and the saves stay identical.
+        taken.Sort((a, b) => a.Value.CompareTo(b.Value));
+        return taken;
+    }
+
     /// The compiled segment carrying a tile, or -1. Rendering and inserter
     /// wiring both ask this; it is only meaningful after a rebuild.
     public int SegmentAt(int x, int y)

@@ -56,6 +56,13 @@ and every visual regression unprovable.
 Water is varied at about a third of the strength, and neither ore patches nor
 the shoreline were touched: they were not what read as flat.
 
+**Superseded in part by ADR 0029.** The shoreline and the flat plane it names
+as untouched here are exactly what that one does: water is recessed into real
+pools with land-tile side walls for banks, and the flat colour bands this
+section blended are now read off a continuous ramp instead of a `TerrainType`
+switch. The reasoning about seed-derived variation and about caching a rebuild
+by tile is unchanged and still applies.
+
 **The rebuild is now cached by tile.** Shading needs `HeightAt` as well as
 `TerrainAt`, which evaluates the fractal twice per tile, and a rebuild is
 triggered by the camera crossing a *single* tile boundary and then re-evaluates

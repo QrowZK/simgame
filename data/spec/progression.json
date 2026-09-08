@@ -4595,6 +4595,41 @@
       ]
     }
   ],
+  "_intro_comment": "The opening ladder, ahead of the tier techs. The four tier-1 lines all want a Steam Machine Hull, which is an hour from a new player's hands, so at tick zero the objectives panel used to open on four impossible tasks. These four rungs are the first five minutes: each is satisfied by world state (something arrived in the Uplink), each asks for one, then three, then six, then twelve, and each pays out the capability the next one needs. 'requires_group' names a set of items any of which counts, because which ore is near spawn is a property of the seed. See docs/0030.",
+  "intro_techs": [
+    {
+      "id": "tech_start_uplink",
+      "name": "Uplink Online",
+      "requires_group": {"key": "any raw ore", "select": "man_ore"},
+      "count": 1,
+      "unlocks": [],
+      "rewards": [{"item": "man_furnace", "count": 1}]
+    },
+    {
+      "id": "tech_start_smelting",
+      "name": "First Metal",
+      "requires_group": {"key": "any metal ingot", "select": "man_ingot"},
+      "count": 3,
+      "unlocks": ["build_stm_inserter"],
+      "rewards": [{"item": "stm_inserter", "count": 2}]
+    },
+    {
+      "id": "tech_start_haulage",
+      "name": "Mechanised Haulage",
+      "requires_group": {"key": "any metal ingot", "select": "man_ingot"},
+      "count": 6,
+      "unlocks": ["build_stm_transport_belt"],
+      "rewards": [{"item": "stm_transport_belt", "count": 8}]
+    },
+    {
+      "id": "tech_start_line",
+      "name": "The Line Runs",
+      "requires_group": {"key": "any metal ingot", "select": "man_ingot"},
+      "count": 12,
+      "unlocks": [],
+      "rewards": []
+    }
+  ],
   "_techs_comment": "Four tech lines run the length of the ladder. Each tier's metallurgy node is gated on physically holding that tier's machine hull, which is what makes progression component-gated rather than points-gated.",
   "tech_lines": [
     {

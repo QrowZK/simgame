@@ -81,6 +81,17 @@ public sealed class Generator
         _fuelStock += count;
     }
 
+    /// Empties the fuel hopper, returning what was in it. The unit already
+    /// burning is not in it: `Tick` took that one out of stock when the burn
+    /// started and it has been paying out power ever since, so handing it back
+    /// on removal would mint energy from nothing.
+    public int TakeFuel()
+    {
+        var stock = _fuelStock;
+        _fuelStock = 0;
+        return stock;
+    }
+
     /// Advances one tick and returns the energy produced.
     ///
     /// Fuel is consumed at the moment a burn starts, not spread across it, so a
@@ -226,6 +237,52 @@ public sealed class PowerGrid
         _dirty = true;
         Version++;
         return _generators.Count - 1;
+    }
+
+    /// Takes a pole out of the grid, moving the last one into its slot.
+    ///
+    /// Swap-remove rather than shifting: pole indices are held in the world's
+    /// occupancy grid, and shifting would invalidate every index above the hole
+    /// where swapping invalidates exactly one. Returns the index that moved, or
+    /// -1 when the removed one was already the last, so the caller repoints one
+    /// entry rather than rescanning the map.
+    ///
+    /// Networks are not repaired here: they are recomputed from scratch on the
+    /// next `Rebuild`, the same path a newly built pole takes. Pulling the pole
+    /// that joined two halves of a factory therefore splits them exactly as
+    /// never having built it would have.
+    public int RemovePole(int index)
+    {
+        if (index < 0 || index >= _poles.Count) return -1;
+        return SwapRemove(_poles, _poleNetwork, index);
+    }
+
+    public int RemoveGenerator(int index)
+    {
+        if (index < 0 || index >= _generators.Count) return -1;
+        _generatorPlacements[index] = _generatorPlacements[^1];
+        _generatorPlacements.RemoveAt(_generatorPlacements.Count - 1);
+        return SwapRemove(_generators, _generatorNetwork, index);
+    }
+
+    public int RemoveAccumulator(int index)
+    {
+        if (index < 0 || index >= _accumulators.Count) return -1;
+        _accumulatorPlacements[index] = _accumulatorPlacements[^1];
+        _accumulatorPlacements.RemoveAt(_accumulatorPlacements.Count - 1);
+        return SwapRemove(_accumulators, _accumulatorNetwork, index);
+    }
+
+    private int SwapRemove<T>(List<T> items, List<int> networks, int index)
+    {
+        var moved = items.Count - 1;
+        items[index] = items[moved];
+        items.RemoveAt(moved);
+        networks[index] = networks[moved];
+        networks.RemoveAt(moved);
+        _dirty = true;
+        Version++;
+        return index == moved ? -1 : moved;
     }
 
     /// The network energising a tile, or -1 if nothing does.

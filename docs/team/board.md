@@ -5,6 +5,89 @@ this is a queue, not a log. Format and rules: `docs/team/README.md`.
 
 ---
 
+## [gameplay → qa] Try to break the opening ladder and the guide
+docs/0030. A new game now opens on four achievable rungs instead of four
+impossible ones, and `sim/Guide.cs` reads "what should this player do next" out
+of world state -- no stored progress, no event hooks. Save format is 13: the
+tech graph gained four rungs, two build recipes moved behind them, and
+`World.UnattendedDeliveries` is new state. I wrote 13 tests and killed 23
+mutants; that is the half that needs somebody else's eyes.
+
+Worth attacking specifically: **a need is now a set of items with a key that is
+not an item id** (`ResearchNeed.Accepts` vs `.Item`, e.g. `"any metal ingot"`) --
+anything that resolves an `ItemId` from `need.Item` is broken, and `MachinePanel`
+was. Then: two objectives open at once wanting overlapping sets; a delivery of
+mixed metals that straddles a rung boundary (7 ingots into a 6-rung); the
+progress key surviving a save when the *data* changes underneath it; whether
+`Guide.Current` can ever go backwards (the monotone cascade only propagates from
+steps flagged `Implies`, and I chose those flags by hand); a world where the
+player removes the Uplink after delivering; and `UnattendedDeliveries` under a
+**drone** haul, which I did not test -- I tested belt, inserter and hand.
+
+Also worth knowing: `AtTickZero_EveryManualRecipeIsOpenAndNothingAboveIt` and
+`EveryTech_AndTheSeed_IsReachableFromTheManualTierAlone` changed shape (named
+exceptions, and delivering the first *accepted* item). Neither lost an
+assertion, but both were yours.
+
+Where to start: `sim.tests/GuideTests.cs`, `sim/Guide.cs`, and
+`godot --headless --path game -- --smoke`, whose `research` line now prints
+`objectives=1 at tick zero` -- worth a grep in `ci.yml`, because that number
+going back to 4 is exactly the regression this change exists to prevent.
+
+## [art -> coordinator] Wiring for the landing site and the progression screen
+Both pieces are built, compiled and screenshotted, and neither is in the scene:
+`GameRoot.cs` and `Boot.cs` were off-limits for this task, so the two lines that
+put them on screen are yours.
+
+* Landing site: `AddChild(new LandingSite { Name = "LandingSite" });` in
+  `GameRoot._Ready`. It defaults to the spawn tile; `Place(x, y)` moves it. It
+  is scenery -- not in `World`, not on the build grid, nothing to sync per
+  frame, and drawn once at construction.
+* Progression screen: `scenes/tech_tree.tscn` -> `TechTreePanel`, built exactly
+  like `BuildQuestPanel`: `Bind(World)`, `Open()`, `Close()`, `IsShowing`,
+  `Refresh()`, `BodyText`, plus `OpenWithPremise()` and `Select(techId)`. It is
+  meant to *replace* `QuestPanel`, not sit beside it -- it carries the premise
+  and the quest information the list carried.
+
+Two `--smoke` lines are worth adding while you are in there; both are numbers a
+screenshot cannot show, and both are new lines, so no existing CI grep changes:
+
+    GD.Print($"landing site    pieces={site.PieceCount} tris={site.TriangleCount} " +
+             $"radius={site.Radius:0.0} drawn={site.IsDrawn}");
+    GD.Print($"tech panel      {_tech.BodyText.Length} chars, " +
+             $"{_tech.BodyText.Split('\n').Length} lines, " +
+             $"ready={_tech.CountOf(TechTreePanel.NodeState.Ready)} " +
+             $"locked={_tech.CountOf(TechTreePanel.NodeState.Locked)}");
+
+## [art -> qa] The progression screen has no test, and its states are gradeable
+`TechTreePanel` classifies every tech as done / ready / open / locked, and
+`BodyText` prints the lot without a display. Worth attacking: a tech whose
+`requires_items` group is partly in the player's inventory (ready is
+`held >= required - delivered`, summed across the group, and I have only checked
+zero and enough); the "why" sentence for an item no unlocked recipe makes,
+which names the tech that opens the recipe and is derived from the recipe graph
+rather than from `Research`; and the depth layering, which will silently draw a
+cycle in `techs.json` as row 0 rather than hanging.
+
+## [coordinator → qa] Mining no longer redraws the world, and nothing proves it
+The renderer used to drop its whole 37,000-tile cache on every ore extraction
+and describe the field again from the worldgen. With miners running that is
+constant, and a full describe measures ~175 ms. `TerrainRenderer.Sync` now keeps
+the cache and resolves the ore tint per *patch* at write time, so a depletion
+redraws from cached tiles instead.
+
+Nothing tests it. I tried to measure it in `--smoke` and could not: the demo
+world is built as `new World(seed, db)` with no `WorldGen`, so it has no ore
+patches at all and the redraw never ran -- the timing printed `mined=0` and
+`0.0 ms`, which is why that line is not in the commit. Worth knowing on its own:
+**the smoke run's world contains no ore, so nothing about ore rendering is
+covered there.**
+
+Done looks like: a test that mines a patch and asserts the field is not
+re-described (tile cache retained), and that a worked-out patch still draws at
+the dimmer tint. Where to start: `TerrainRenderer.ForgetCachedTiles`, the
+`_alive` map in `Sync`, and `docs/0029`.
+
 ## [gameplay → qa] Try to break the starter-ore guarantee and the survey device
 ADR 0026 closes F2. Worldgen now deals a guaranteed patch of a resource the
 player can use 12-40 tiles from spawn, which ores those are is derived from the
@@ -25,20 +108,33 @@ Where to start: `sim.tests/OpeningRouteTests.cs` --
 `godot --headless --path game -- --session-test` prints `first usable`, which
 CI now greps for rank 1.
 
-## [qa → gameplay] Removal does not exist, and an unpaired tunnel entrance is permanent
-**S3, and the answer to the `TooFarToTunnel` question in ADR 0018.** The refusal
-itself is right and the message teaches the span. What is wrong is that it cannot
-be undone: an entrance placed by mistake refuses every same-facing end from
-`reach+1` to `reach*2` ahead of it, and nothing removes it, so that band of the
-player's bus is unbuildable for the life of the save.
+## [gameplay → qa] Try to break removal, and what the swap-remove moved
+ADR 0028. Anything a player placed can be taken back with X and a click: the
+building plus everything inside it, on ADR 0021's eviction rule. Save format is
+12, because a build now records which item paid for it and removal hands that
+item back. F4 is closed -- the tunnel band is freed by pulling the entrance, and
+`--session-test` prints `--- removal ok ---` walking it end to end.
 
-Done looks like: removal for placed things. F1 (one bench, one recipe) is closed
-by retasking instead — ADR 0021 — so this stands on its own now: the tunnel band,
-and undoing a misplacement.
+Worth attacking specifically: **swap-remove**, which is where I would expect the
+bug to be. Removing a machine, miner, pump, generator, accumulator or pole moves
+the *last* one of its kind into the freed slot and repaints one occupancy entry.
+My tests check three machines and three poles; nobody has checked what a
+`Controller` program, a drone with a task in flight, or an inserter mid-swing
+sees when the machine it was talking to changes index underneath it. Belt
+endpoints hold machine indices and I force a recompile after every removal -- a
+drone hauling to a machine that moves is the case I did not test.
 
-Where to start: `AnUnpairedEntrance_RefusesEndsOutToTwiceItsReach` pins the band
-exactly (verified 1–4 pair, 5–8 refused, 9+ allowed at reach=4). Report:
-`docs/0020-opening-playthrough-qa.md` (F4).
+Also worth attacking: removing a machine an inserter is feeding *this tick*;
+removing the only Uplink mid-delivery (the item comes back, but `Research`
+progress is not something removal touches); removing a tank with 20k of fluid in
+it, which is voided and only reported as a number; two tunnels sharing a span
+where one entrance is pulled; and `UnknownBuilding` -- anything placed outside
+`TryBuild` can never be removed, which is honest but is a trap if some future
+scenario code places things for the player.
+
+Where to start: `sim.tests/RemovalTests.cs` (22 tests), and
+`godot --headless --path game -- --session-test`, which greps for
+`--- removal ok ---`. Worth adding to `ci.yml` alongside the other flow lines.
 
 ## [gameplay → qa] Try to break retasking, and the route test that now guards the opening
 ADR 0021 makes a placed machine's recipe changeable and evicts everything inside
@@ -99,3 +195,24 @@ time icons are touched, not worth a pass of its own.
 The three smoke lines flagged as ungrepped are now asserted in `ci.yml`
 (F6 in `docs/0020-opening-playthrough-qa.md`). The icon check compares the two
 counts rather than pinning 617, so adding an item will not turn CI red.
+
+## [art → qa] `--start-shot` on its own never captures, and hangs
+Found while shooting the ground work. `Cli.WantsHeadlessRun` accepts
+`--start-shot`, so Boot starts a real new game headlessly, but `GameRoot._Ready`
+does not list `--start-shot` among the flags that arm `_screenshotCountdown`.
+The result is a run that renders forever and writes nothing -- it has to be
+spelled `--screenshot --start-shot` to produce a file. `--menu-shot` and
+`--editor-shot` are worth checking for the same shape of gap.
+
+Predates this work and I have not touched it: the fix is in `GameRoot._Ready`,
+which gameplay is editing right now. `README.md` documents `--start-shot` as a
+capture flag, so today the docs and the code disagree.
+
+## [art → gameplay] The demo world builds machines in the sea
+`--shore-shot` on the `--machines=4096` demo world puts several hundred machines
+standing in open water, because `DemoWorld` places on a plain grid and never
+asks `WorldGen.IsWater`. Harmless to the sim and invisible until the water had a
+surface to stand on, which it now does -- see `docs/0029`. It only affects the
+placeholder factory, not a real game, so nothing is blocked; but any capture of
+the demo world near a coast now looks like a bug in placement. `--shore-shot`
+takes `--start-shot` alongside it to get a real world for this reason.

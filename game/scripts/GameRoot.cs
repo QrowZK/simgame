@@ -36,10 +36,11 @@ public sealed partial class GameRoot : Node3D
     private ScriptEditor _editor = null!;
     private CameraRig _rig = null!;
     private Label _hud = null!;
+    private Label _guide = null!;
     private MachinePanel _panel = null!;
     private PauseMenu _pause = null!;
     private BuildMenu _build = null!;
-    private QuestPanel _quests = null!;
+    private TechTreePanel _progression = null!;
     private SurveyPanel _survey = null!;
     /// Whether the win has already been announced. The world stays playable
     /// after the Seed goes -- there is no reason to take a factory away from
@@ -53,6 +54,14 @@ public sealed partial class GameRoot : Node3D
     /// Which way the next belt or inserter will face. Held across placements,
     /// because laying a run means placing the same direction many times.
     private Direction _facing = Direction.East;
+
+    /// Whether the next click takes something back rather than inspecting it.
+    ///
+    /// A mode rather than a modifier-click, and mutually exclusive with build
+    /// mode, because both own the left button and a player needs to be able to
+    /// see which one is armed before they click. X is next to the movement
+    /// keys, which is where a key you press between placements has to be.
+    private bool _removing;
     private double _accumulator;
     private int _screenshotCountdown = -1;
     private string _toast = "";
@@ -81,6 +90,7 @@ public sealed partial class GameRoot : Node3D
 
         AddChild(BuildLighting());
         _hud = BuildHud();
+        _guide = BuildGuideCard();
         // Before the panel: the panel binds to it, and a null catalogue there
         // silently costs the recipe picker.
         _buildables = new BuildCatalogue(Sim.Data.Catalogue.Instance);
@@ -91,26 +101,39 @@ public sealed partial class GameRoot : Node3D
         _belts = new BeltRenderer { Name = "BeltRenderer" };
         AddChild(_belts);
         _pause = BuildPauseMenu();
-        _quests = BuildQuestPanel();
+        _progression = BuildProgressionPanel();
         _survey = BuildSurveyPanel();
         _editor = BuildScriptEditor();
 
         // A brand new game, and only a brand new game: the premise is shown at
         // tick zero on an untouched world, so a loaded save never replays it.
         if (_world.TickCount == 0 && _world.MachineCount == 0 && _world.Research is not null)
-            _quests.OpenWithPremise();
+            _progression.OpenWithPremise();
 
         // Frame whatever there is to look at. A new game has no factory, so the
         // camera sits on the landing site at a zoom where the ground around it
         // reads as terrain rather than as a texture.
         if (machineCount == 0)
         {
-            _rig.Position = new Vector3(NewGame.SpawnX, 0f, NewGame.SpawnY);
+            // Off the wreck, not on it. The site is nearly fifteen tiles across
+            // and it sits on the landing point, so a camera centred there fills
+            // the screen with debris and the first thing the player builds gets
+            // lost in it -- an Uplink four tiles out could not be picked out of
+            // the wreckage at all. Looking a little past it puts the wreck in
+            // the upper corner, where the eye still goes to it, and leaves the
+            // ground the guide sends you to build on clear and in frame.
+            _rig.Position = new Vector3(NewGame.SpawnX + 6f, 0f, NewGame.SpawnY + 6f);
 
-            // Wide enough to see the lie of the land and the nearest ore --
-            // the first decision a new game asks for -- but inside the drawn
-            // tile field, so the player never sees its edge.
-            _rig.ZoomLevel = 78f;
+            // Close enough that the first thing a player sees is a place.
+            //
+            // This was 78, chosen to show "the lie of the land and the nearest
+            // ore". It showed neither: at 78 units of view a machine is eight
+            // pixels, ground detail averages into a flat sheet, and the opening
+            // frame of the game is an empty green field. The nearest ore is
+            // 12-40 tiles away and is the prospector's job to find, not the
+            // camera's -- the camera's job is to make the ground look like
+            // somewhere you are standing.
+            _rig.ZoomLevel = 30f;
         }
         else
         {
@@ -120,6 +143,20 @@ public sealed partial class GameRoot : Node3D
         }
 
         _rig.Apply();
+
+        // The crash site. Scenery, not a machine: it is not in `World`, holds no
+        // tiles, and a player can build straight through it. It exists because
+        // the premise says a probe came apart here and, until now, the place it
+        // came apart at was an empty patch of grass -- the most important moment
+        // in the game had nothing on screen at all.
+        //
+        // Only in a world that is being played. The demo factory is a renderer
+        // benchmark whose spawn is covered in machines, and a wreck under them
+        // would be scenery in the middle of a measurement.
+        if (_world.Research is not null)
+        {
+            AddChild(new LandingSite { Name = "LandingSite" });
+        }
 
         _renderer.Sync(_world);
         _terrain.Sync(_world, _rig.Position);
@@ -133,7 +170,8 @@ public sealed partial class GameRoot : Node3D
 
         if (AllArgs().Contains("--screenshot") || AllArgs().Contains("--build-shot")
             || AllArgs().Contains("--belt-shot") || AllArgs().Contains("--uplink-shot")
-            || AllArgs().Contains("--survey-shot"))
+            || AllArgs().Contains("--survey-shot") || AllArgs().Contains("--shore-shot")
+            || AllArgs().Contains("--dig-shot") || AllArgs().Contains("--opening-shot"))
         {
             _screenshotCountdown = 12;      // let a few frames draw first
 
@@ -197,6 +235,9 @@ public sealed partial class GameRoot : Node3D
             else if (AllArgs().Contains("--belt-shot")) FrameTheBelts();
             else if (AllArgs().Contains("--uplink-shot")) ShowTheUplink();
             else if (AllArgs().Contains("--survey-shot")) ShowTheSurvey();
+            else if (AllArgs().Contains("--dig-shot")) DigByHandForCapture();
+            else if (AllArgs().Contains("--opening-shot")) _progression.Close();
+            else if (AllArgs().Contains("--shore-shot")) FrameTheShore();
             else ShowAnyRunningMachine();
         }
 
@@ -218,7 +259,7 @@ public sealed partial class GameRoot : Node3D
         {
             _seedAnnounced = true;
             Say("The Seed is away. It will come apart on entry somewhere else, and start again.");
-            _quests.Open();
+            _progression.Open();
         }
 
         if (_toastFrames > 0) _toastFrames--;
@@ -249,11 +290,42 @@ public sealed partial class GameRoot : Node3D
 
             _hud.Text = $"machines {_world.MachineCount}   tick {_world.TickCount}   " +
                         $"batches {_renderer.BatchCount}   fps {Engine.GetFramesPerSecond():0}" +
-                        power + stored + "\n" +
-                        "WASD pan   Q/E rotate   wheel zoom   click a machine to inspect   " +
-                        "B build   P survey   T objectives   R rotate   F5 save   F9 load   F1 script   Esc menu" +
+                        power + stored + "\n" + Keys() +
                         (_toastFrames > 0 ? "\n" + _toast : "");
+
+            RefreshGuide();
         }
+    }
+
+
+    /// The keys worth naming *right now*.
+    ///
+    /// This line used to list all twelve bindings in the game, always, whatever
+    /// the player was doing. That is a reference card, and a reference card
+    /// pinned to the top of the screen is read once and then becomes furniture
+    /// -- while still costing a new player the width of the window to scan.
+    ///
+    /// A mode names its own exits and nothing else. Outside a mode the line
+    /// stays short enough to actually read, and the rarely-used bindings live
+    /// where they belong: on the pause menu, which is where a player goes when
+    /// they want to know what a game can do.
+    private string Keys()
+    {
+        if (_build.IsShowing)
+            return _holding is null
+                ? "pick something to build   ·   Esc  stop building"
+                : $"click a tile to place {_holding.DisplayName}   ·   R  rotate   ·   " +
+                  "Esc  stop building";
+
+        if (_removing)
+            return "click a building to take it back   ·   Esc  stop removing";
+
+        if (_survey.IsShowing) return "P  close survey";
+        if (_progression.IsShowing) return "T  close progression";
+        if (_panel.IsShowing) return "click another machine to inspect it   ·   Esc  close";
+
+        return "WASD  pan   ·   wheel  zoom   ·   Q/E  rotate   ·   B  build   ·   " +
+               "P  survey   ·   T  progression   ·   Esc  menu";
     }
 
     /// Headless verification: tick the sim, refill the instance buffers, and
@@ -374,13 +446,39 @@ public sealed partial class GameRoot : Node3D
         // rebuild evaluates it once per visible tile. It only happens when the
         // camera crosses a tile boundary, but it happens inside a frame, so the
         // cost of the whole field is worth a number rather than a shrug.
-        var terrainWatch = System.Diagnostics.Stopwatch.StartNew();
+        // Warm first, then measure a genuinely cold field.
+        //
+        // Timed naively this number says almost nothing: the first rebuild in a
+        // process pays JIT for the whole describe-and-colour chain and measured
+        // 95 ms, while the same code a moment later measured 31 ms. CI asserts a
+        // ceiling on it, so the same commit went green on one runner and red on
+        // another. A rebuild after a small camera move is no better -- it is
+        // mostly cache hits, and measures the cache.
+        //
+        // So: rebuild twice to warm the path, drop the tile cache, and time the
+        // full field. Warm code, cold cache, which is what "the cost of
+        // describing the whole field" means.
         _terrain.Sync(_world, _rig.Position + new Vector3(1f, 0f, 1f));
+        _terrain.Sync(_world, _rig.Position + new Vector3(2f, 0f, 2f));
+        _terrain.ForgetCachedTiles();
+
+        var terrainWatch = System.Diagnostics.Stopwatch.StartNew();
+        _terrain.Sync(_world, _rig.Position + new Vector3(3f, 0f, 3f));
         terrainWatch.Stop();
 
         var field = _terrain.ViewRadius * 2 + 1;
         GD.Print($"terrain rebuild {field}x{field} tiles in " +
                  $"{terrainWatch.Elapsed.TotalMilliseconds:0.0} ms");
+
+        // Water is recessed into real pools, and a still cannot prove that: a
+        // dark blue plate and a hole in the ground look alike from above. The
+        // count and the deepest recess say it in numbers instead -- measured
+        // over the coast, because spawn is deliberately nowhere near it and a
+        // field with no water in it reports nothing either way.
+        var coast = TerrainRenderer.NearestWater(_world, _rig.Position);
+        if (coast is { } shore) _terrain.Sync(_world, shore);
+        GD.Print($"terrain water   tiles={_terrain.WaterTiles} " +
+                 $"deepest={_terrain.DeepestWater:0.00} below land");
         GD.Print($"build menu      offered={offered} " +
                  $"holding={_holding?.DisplayName ?? "<none>"} ghost={ghostShown}");
         StopBuilding();
@@ -430,9 +528,16 @@ public sealed partial class GameRoot : Node3D
         // empty box. Give it the fresh state built above -- the same one a new
         // game starts with -- so the line reports the text a player would read.
         _world.Research ??= fresh;
-        _quests.Refresh();
-        GD.Print($"quest panel     {_quests.BodyText.Length} chars, " +
-                 $"{_quests.BodyText.Split('\n').Length} lines");
+        _progression.Refresh();
+        var site = new LandingSite { Name = "SmokeLandingSite" };
+        AddChild(site);
+        GD.Print($"landing site    pieces={site.PieceCount} tris={site.TriangleCount} " +
+                 $"radius={site.Radius:0.0} drawn={site.IsDrawn}");
+
+        GD.Print($"tech panel      {_progression.BodyText.Length} chars, " +
+                 $"{_progression.BodyText.Split('\n').Length} lines, " +
+                 $"ready={_progression.CountOf(TechTreePanel.NodeState.Ready)} " +
+                 $"locked={_progression.CountOf(TechTreePanel.NodeState.Locked)}");
 
         GD.Print("=== SMOKE OK ===");
 
@@ -496,7 +601,8 @@ public sealed partial class GameRoot : Node3D
             // then the pause menu. Jumping straight to a menu from an open panel
             // would feel like the game ignored the panel.
             if (_build.IsShowing) StopBuilding();
-            else if (_quests.IsShowing) _quests.Close();
+            else if (_removing) StopRemoving();
+            else if (_progression.IsShowing) _progression.Close();
             else if (_survey.IsShowing) _survey.Close();
             else if (_panel.IsShowing) _panel.Close();
             else if (_pause.Visible) _pause.Close();
@@ -515,8 +621,8 @@ public sealed partial class GameRoot : Node3D
 
         if (@event is InputEventKey { Pressed: true, Keycode: Key.T })
         {
-            if (_quests.IsShowing) _quests.Close();
-            else _quests.Open();
+            if (_progression.IsShowing) _progression.Close();
+            else _progression.Open();
             return;
         }
 
@@ -536,6 +642,26 @@ public sealed partial class GameRoot : Node3D
         {
             if (_build.IsShowing) StopBuilding();
             else StartBuilding();
+            return;
+        }
+
+        // X arms removal. Build mode is turned off rather than layered under
+        // it: both modes own the left button, and a click that could either
+        // place or destroy depending on state nobody can see is how a player
+        // loses a machine they did not mean to touch.
+        if (@event is InputEventKey { Pressed: true, Keycode: Key.X })
+        {
+            if (_removing) StopRemoving();
+            else StartRemoving();
+            return;
+        }
+
+        // Right-click leaves removal mode too, for the same reason it leaves
+        // build mode.
+        if (_removing && @event is InputEventMouseButton
+            { Pressed: true, ButtonIndex: MouseButton.Right })
+        {
+            StopRemoving();
             return;
         }
 
@@ -580,13 +706,70 @@ public sealed partial class GameRoot : Node3D
             return;
         }
 
+        if (_removing)
+        {
+            RemoveAt(tileX, tileY);
+            return;
+        }
+
         if (_world.TryMachineAt(tileX, tileY, out var machine, out var index))
             _panel.Show(machine, _world.PlacementOf(index), index);
         else if (_world.TryMinerAt(tileX, tileY, out var miner, out var minerIndex))
             _panel.Show(miner, _world.MinerPlacements[minerIndex],
                         _world.Ground.RemainingAt(tileX, tileY));
         else
+            DigOrClose(tileX, tileY);
+    }
+
+    /// How much one click takes out of the ground by hand. Small on purpose:
+    /// the first furnace wants 24 stone, so a bench costs a handful of clicks
+    /// and a smelting run costs a few more. That is the ache the belt is the
+    /// answer to, and removing it would remove the argument for the rest of
+    /// the game.
+    private const int HandMinePerClick = 5;
+
+    /// Clicking bare ground.
+    ///
+    /// Hand mining existed in the simulation from the first week and was never
+    /// bound to anything: the headless tests called `HandOps.Mine` directly and
+    /// passed, the opening-route walker called it and passed, and a person
+    /// sitting in front of the game had no way to dig at all. The whole
+    /// documented opening -- walk to a patch, mine it by hand, craft a bench --
+    /// was impossible to actually perform.
+    ///
+    /// So a click on a resource tile digs it. Refusals carry their reason, as
+    /// everywhere else: a fluid deposit says the hands cannot lift it and names
+    /// what can, and a worked-out patch says it is finished rather than doing
+    /// nothing and looking broken.
+    private void DigOrClose(int tileX, int tileY)
+    {
+        if (!_world.Ground.TryResourceAt(tileX, tileY, out var item, out var remaining))
+        {
             _panel.Close();
+            return;
+        }
+
+        var name = _world.Items.GetName(item);
+
+        if (remaining <= 0)
+        {
+            Say($"This {name} patch is worked out. Press P to survey for another.");
+            return;
+        }
+
+        if (_world.Ground.Gen.TryPatchAt(tileX, tileY, out var patch) && patch.IsFluid)
+        {
+            Say($"{name} is a fluid -- hands cannot lift it. It needs a derrick standing on it.");
+            return;
+        }
+
+        var before = _world.PlayerInventory.Count(item);
+        var dug = HandOps.Mine(_world.Ground, tileX, tileY, _world.PlayerInventory,
+                               HandMinePerClick);
+
+        Say(dug == 0
+            ? $"Nothing came out of this {name}."
+            : $"Dug {dug} {name}. Carrying {before + dug}. ({remaining - dug} left here.)");
     }
 
     /// Opens the panel on a running machine, falling back to any machine at
@@ -643,6 +826,12 @@ public sealed partial class GameRoot : Node3D
     /// means the ghost can never promise a placement the build then refuses.
     private void UpdateGhost()
     {
+        if (_removing)
+        {
+            UpdateRemovalGhost();
+            return;
+        }
+
         if (!_build.IsShowing || _holding is null)
         {
             _ghost.Hide();
@@ -672,6 +861,86 @@ public sealed partial class GameRoot : Node3D
                           || _world.Ground.TryResourceAt(tileX, tileY, out _, out _));
 
         _ghost.Show(_holding, tileX, tileY, allowed, _renderer.TileSize);
+    }
+
+    public void StartRemoving()
+    {
+        if (_build.IsShowing) StopBuilding();
+        _panel.Close();
+        _removing = true;
+        Say("Removal: click a building to take it back. X or Esc to stop.");
+    }
+
+    public void StopRemoving()
+    {
+        _removing = false;
+        _ghost.Hide();
+        Say("Removal off.");
+    }
+
+    /// The ghost, standing on what the click would take rather than on what it
+    /// would place.
+    ///
+    /// The same ghost, deliberately. It already draws a footprint in the mesh
+    /// of the thing it represents, and the question a player asks before a
+    /// removal click is the one it already answers: *which* building is under
+    /// my cursor, and will this click do anything. Green still means the click
+    /// works and red still means it will be refused, so nothing has to be
+    /// relearned for the second mode.
+    private void UpdateRemovalGhost()
+    {
+        if (!TileUnderCursor(out var tileX, out var tileY))
+        {
+            _ghost.Hide();
+            return;
+        }
+
+        if (!_world.TryRemovableAt(tileX, tileY, out var item, out var anchorX, out var anchorY)
+            || !_buildables.TryGet(item, out var buildable))
+        {
+            _ghost.Hide();
+            return;
+        }
+
+        _ghost.Show(buildable, anchorX, anchorY, true, _renderer.TileSize);
+    }
+
+    /// Takes back what is under the cursor, and says what came with it.
+    ///
+    /// Every refusal gets its own sentence, as with building. The counts are
+    /// said out loud rather than left to the player to notice: a removal that
+    /// hands back eleven items and mentions none of them is indistinguishable
+    /// from one that ate them.
+    public void RemoveAt(int tileX, int tileY)
+    {
+        var report = _world.TryRemove(tileX, tileY);
+
+        var name = report.Ok && _buildables.TryGet(report.Item, out var buildable)
+            ? buildable.DisplayName
+            : "building";
+
+        Say(report.Result switch
+        {
+            RemoveResult.Ok => Removed(name, report),
+            RemoveResult.NothingThere => "Nothing of yours is there.",
+            RemoveResult.UnknownBuilding =>
+                "That was not built from anything you carried, so there is nothing to give back.",
+            _ => "That cannot be removed.",
+        });
+
+        // The panel may have been showing the machine that just went, or one
+        // whose index moved when the arrays closed up behind it.
+        _panel.Close();
+        _build.Refresh();
+    }
+
+    private static string Removed(string name, RemovalReport report)
+    {
+        var text = $"Took back the {name}";
+        if (report.Returned > 0) text += $" and {report.Returned} item(s) inside it";
+        if (report.FluidVoided > 0) text += $"; {report.FluidVoided} fluid drained away";
+        if (report.Spilled > 0) text += $"; {report.Spilled} item(s) fell off the belt";
+        return text + ".";
     }
 
     private bool TileUnderCursor(out int tileX, out int tileY)
@@ -732,7 +1001,7 @@ public sealed partial class GameRoot : Node3D
     {
         // One panel at a time: the objectives panel covers the build menu, and
         // a capture of two overlapping panels shows neither of them properly.
-        _quests.Close();
+        _progression.Close();
 
         // Hand over one of everything placeable, so the menu has a real list
         // rather than the one bench a new game carries.
@@ -760,12 +1029,52 @@ public sealed partial class GameRoot : Node3D
                                     GetViewport().GetVisibleRect().Size.Y * 0.22f));
     }
 
+    /// Capture path for hand mining, driven through the real input handler.
+    ///
+    /// It synthesises an actual left click at an actual screen position rather
+    /// than calling the dig directly, because calling the dig directly is
+    /// exactly what every test did while the game had no way to dig at all.
+    /// The thing worth proving is that a person clicking a patch gets ore.
+    private void DigByHandForCapture()
+    {
+        _progression.Close();
+
+        var usable = _world.Research?.ConsumableNow(_world.Items);
+        var hits = new Prospector(radius: 400).Scan(_world.Ground.Gen,
+                                                   NewGame.SpawnX, NewGame.SpawnY, usable);
+
+        // A solid patch: hands cannot lift a fluid, and the refusal for that is
+        // its own message rather than the thing being demonstrated here.
+        var target = hits.FindIndex(h => !(_world.Ground.Gen.TryPatchAt(h.X, h.Y, out var p)
+                                           && p.IsFluid));
+        if (target < 0) return;
+
+        var hit = hits[target];
+        _rig.Position = new Vector3(hit.X * _renderer.TileSize, 0f, hit.Y * _renderer.TileSize);
+        _rig.ZoomLevel = 18f;
+        _rig.Apply();
+
+        var screen = _rig.Camera.UnprojectPosition(
+            new Vector3(hit.X * _renderer.TileSize, 0f, hit.Y * _renderer.TileSize));
+
+        Input.WarpMouse(screen);
+        Input.ParseInputEvent(new InputEventMouseButton
+        {
+            ButtonIndex = MouseButton.Left,
+            Pressed = true,
+            Position = screen,
+            GlobalPosition = screen,
+        });
+
+        GD.Print($"dig target      {_world.Items.GetName(hit.Item)} at {hit.X},{hit.Y}");
+    }
+
     /// Capture path for the survey device: open it where a new game starts, so
     /// the shot shows the list a player actually gets on their first minute --
     /// including whether the top of it is marked usable (ADR 0026).
     private void ShowTheSurvey()
     {
-        _quests.Close();
+        _progression.Close();
         _survey.Open(NewGame.SpawnX, NewGame.SpawnY);
     }
 
@@ -775,7 +1084,7 @@ public sealed partial class GameRoot : Node3D
     /// things this panel says that no other panel does.
     private void ShowTheUplink()
     {
-        _quests.Close();
+        _progression.Close();
 
         var uplink = _buildables.Find(Research.UplinkItem);
         if (uplink is null || _world.Research is null) return;
@@ -804,6 +1113,25 @@ public sealed partial class GameRoot : Node3D
 
     /// Points the camera at the belt line and closes the panel, so a capture
     /// shows the belts rather than a corner of them behind a GUI.
+    /// Capture path for the coastline. Worldgen lifts the whole home region
+    /// out of the sea so a new game is playable, so every other capture in this
+    /// file is inland and the shoreline -- the one place this renderer puts
+    /// relief -- appears in none of them. Walks out to the nearest water and
+    /// frames it close enough that the bank and the pool floor are both legible.
+    private void FrameTheShore()
+    {
+        _panel.Close();
+        _progression.Close();
+
+        var coast = TerrainRenderer.NearestWater(_world, _rig.Position);
+        if (coast is not { } shore) return;
+
+        _rig.Position = shore;
+        _rig.ZoomLevel = 48f;
+        _rig.Apply();
+        _terrain.Sync(_world, _rig.Position);
+    }
+
     private void FrameTheBelts()
     {
         _panel.Close();
@@ -875,7 +1203,7 @@ public sealed partial class GameRoot : Node3D
             _panel.Close();
             _panel.Bind(_world.Items, _world.PlayerInventory, _world, _buildables);
             _build.Bind(_buildables, _world, _world.Items);
-            _quests.Bind(_world);
+            _progression.Bind(_world);
             _seedAnnounced = _world.Research?.SeedDelivered ?? false;
             _renderer.Sync(_world);
             _toast = "Quick loaded.";
@@ -950,14 +1278,62 @@ public sealed partial class GameRoot : Node3D
         return panel;
     }
 
-    private QuestPanel BuildQuestPanel()
+    private TechTreePanel BuildProgressionPanel()
     {
-        var layer = new CanvasLayer { Name = "QuestUi" };
-        var panel = GD.Load<PackedScene>("res://scenes/quest_panel.tscn").Instantiate<QuestPanel>();
+        var layer = new CanvasLayer { Name = "ProgressionUi" };
+        var panel = GD.Load<PackedScene>("res://scenes/tech_tree.tscn")
+                      .Instantiate<TechTreePanel>();
         panel.Bind(_world);
         layer.AddChild(panel);
         AddChild(layer);
         return panel;
+    }
+
+    /// The one thing to do next, on screen, always.
+    ///
+    /// Not a tutorial: it never disables a control, never waits for a keypress
+    /// and never blocks. `Sim.Guide` reads the step out of world state, so a
+    /// player who builds the furnace before delivering the ore, or lays a belt
+    /// nobody asked for, is not corrected -- the card simply says the next
+    /// thing that is still undone. Wube's post-mortem on the Factorio tutorial
+    /// they deleted is the argument: constrain the player's actions and they
+    /// learn to solve the tutorial rather than the game.
+    ///
+    /// It removes itself when the ladder is finished. From there the
+    /// progression screen is the guidance, which is where a game this size
+    /// keeps it.
+    private Label BuildGuideCard()
+    {
+        var layer = new CanvasLayer { Name = "GuideUi" };
+        var label = new Label
+        {
+            Name = "Guide",
+            Position = new Vector2(12, 84),
+            CustomMinimumSize = new Vector2(430, 0),
+            AutowrapMode = TextServer.AutowrapMode.WordSmart,
+        };
+        layer.AddChild(label);
+        AddChild(layer);
+        return label;
+    }
+
+    /// Repaints the guide card from the world. Cheap enough to do per frame --
+    /// it is a handful of integer comparisons -- and doing it per frame is what
+    /// makes it react the instant the player finishes a step, which is the only
+    /// moment the card has to be right.
+    private void RefreshGuide()
+    {
+        var step = Sim.Guide.Current(_world);
+        if (step is not { } now)
+        {
+            _guide.Visible = false;
+            return;
+        }
+
+        _guide.Visible = true;
+        _guide.Text = string.IsNullOrEmpty(now.Key)
+            ? $"NEXT   {now.Title}\n{now.Detail}"
+            : $"NEXT   {now.Title}   [{now.Key}]\n{now.Detail}";
     }
 
     private Label BuildHud()

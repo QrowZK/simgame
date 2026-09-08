@@ -90,8 +90,22 @@ public class GraphInvariantTests
                 if (!techIds.Contains(req))
                     missing.Add($"{tech.Id}: requires tech '{req}'");
 
-            if (tech.RequiresItem is not null && !itemIds.Contains(tech.RequiresItem))
-                missing.Add($"{tech.Id}: requires_item '{tech.RequiresItem}'");
+            // `requires_item` is the key a delivery is filed under, and for the
+            // opening rungs it is a group label ("any metal ingot") rather than
+            // an item. What must resolve is the accepted set: a rung that
+            // accepts nothing, or accepts an item that does not exist, is a
+            // tech no delivery can ever complete.
+            if (tech.RequiresItem is null) continue;
+
+            if (tech.RequiresItems.Count == 0)
+                missing.Add($"{tech.Id}: requires_item '{tech.RequiresItem}' with no accepted items");
+
+            foreach (var accepted in tech.RequiresItems)
+                if (!itemIds.Contains(accepted))
+                    missing.Add($"{tech.Id}: accepts '{accepted}', which is not an item");
+
+            if (tech.RequiresCount < 1)
+                missing.Add($"{tech.Id}: requires_count {tech.RequiresCount}");
         }
 
         Assert.True(missing.Count == 0, "Dangling tech requirements:\n" + string.Join("\n", missing));

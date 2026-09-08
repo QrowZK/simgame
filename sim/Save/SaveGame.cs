@@ -43,6 +43,9 @@ public static class SaveGame
         foreach (var (item, count) in world.PlayerInventory.Contents.OrderBy(kv => kv.Key.Value))
             save.Player.Add(new StackSave { Item = item.Value, Count = count });
 
+        foreach (var (x, y, item) in world.BuiltFrom)
+            save.Built.Add(new BuiltSave { X = x, Y = y, Item = item.Value });
+
         for (var i = 0; i < world.MachineCount; i++)
             save.Machines.Add(CaptureMachine(world, i));
 
@@ -198,6 +201,7 @@ public static class SaveGame
         {
             save.Research.Enabled = true;
             save.Research.SeedDelivered = research.SeedDelivered;
+            save.Research.UnattendedDeliveries = world.UnattendedDeliveries;
             save.Research.Unlocked = research.UnlockedInOrder.ToList();
             foreach (var (objective, item, count) in research.Progress)
                 save.Research.Progress.Add(new ResearchProgressSave
@@ -372,6 +376,7 @@ public static class SaveGame
                              save.Research.Progress.Select(p => (p.Objective, p.Item, p.Count)),
                              save.Research.SeedDelivered);
             world.Research = research;
+            world.RestoreUnattendedDeliveries(save.Research.UnattendedDeliveries);
         }
 
         world.Ground.Restore(save.Depletion.Select(d => (d.X, d.Y, d.Taken)));
@@ -390,8 +395,11 @@ public static class SaveGame
             miner.Restore(entry.State, entry.TicksRemaining, entry.Buffered, entry.Energy);
         }
 
+        // Through the world rather than straight into the grid: a pole reserves
+        // its tile, and restoring past that left loaded poles buildable-over.
         foreach (var entry in save.Poles)
-            world.Power.AddPole(new Pole(entry.X, entry.Y, entry.SupplyRadius, entry.WireRadius));
+            world.AddSavedPole(new Pole(entry.X, entry.Y, entry.SupplyRadius, entry.WireRadius),
+                               new MachinePlacement(entry.X, entry.Y, 0, 0));
 
         foreach (var entry in save.Generators)
         {
@@ -457,6 +465,12 @@ public static class SaveGame
                 case FluidNodeKind.Pump: world.Fluids.AddPump(node.X, node.Y, node.Throughput); break;
                 default: world.Fluids.AddPipe(node.X, node.Y, node.Throughput); break;
             }
+
+        // Last: the anchors it names belong to things every block above placed,
+        // and a record for a building that failed to load would be a promise to
+        // hand back something that is not there.
+        foreach (var entry in save.Built)
+            world.RegisterBuilt(entry.X, entry.Y, Item(entry.Item, save));
 
         for (var i = 0; i < save.Fluids.Count && i < world.Fluids.NetworkCount; i++)
         {
