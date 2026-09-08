@@ -648,7 +648,7 @@ public static class Cli
 
     public static bool WantsHeadlessRun() =>
         Has("--smoke") || Has("--screenshot") || Has("--machines") || Has("--start-shot")
-        || Has("--build-shot") || Has("--survey-shot") || Has("--dig-shot") || Has("--belt-shot") || Has("--uplink-shot")
+        || Has("--build-shot") || Has("--survey-shot") || Has("--dig-shot") || Has("--opening-shot") || Has("--belt-shot") || Has("--uplink-shot")
         || Has("--shore-shot");
 
     public static int ReadInt(string name, int fallback)

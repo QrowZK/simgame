@@ -18,6 +18,53 @@ public class ResearchTests
 
     private static World NewWorld() => NewGame.Create(seed: 4242, Data);
 
+    /// Walks the opening ladder (docs/0030), which now stands between a new
+    /// game and the Steam tier. Written as real deliveries of real items rather
+    /// than `UnlockAll`, so a test that says "delivering a hull opens Steam"
+    /// still says it about a player who got there the way a player does.
+    ///
+    /// Returns what the rungs paid out, because two of the tests below care
+    /// that the payout happened exactly once.
+    internal static void CompleteTheOpening(Research research)
+    {
+        research.Deliver("magnetite", 1);
+        research.Deliver("iron_ingot", 3);
+        research.Deliver("iron_ingot", 6);
+        research.Deliver("iron_ingot", 12);
+
+        if (!research.IsTechUnlocked(Guide.TechLine))
+            throw new InvalidOperationException(
+                "the opening ladder did not complete, so every test below it is testing " +
+                "the wrong world");
+    }
+
+    /// The same ladder, walked through a world so the payouts actually land --
+    /// and then taken straight back out again, because a test measuring an
+    /// inventory after a hull must not be reading the opening's belts.
+    internal static void CompleteTheOpening(World world)
+    {
+        Hand(world, "magnetite", 1);
+        Hand(world, "iron_ingot", 3);
+        Hand(world, "iron_ingot", 6);
+        Hand(world, "iron_ingot", 12);
+
+        Assert.True(world.Research!.IsTechUnlocked(Guide.TechLine),
+            "the opening ladder did not complete, so every assertion below it is about " +
+            "the wrong world");
+
+        foreach (var tech in new[] { Guide.TechFirstOre, Guide.TechFirstMetal,
+                                     Guide.TechHaulage, Guide.TechLine })
+            foreach (var reward in world.Research.RewardsFor(tech))
+                world.PlayerInventory.Take(Data.Item(reward.Item), reward.Count);
+    }
+
+    private static void Hand(World world, string item, int count)
+    {
+        var id = Data.Item(item);
+        world.PlayerInventory.Add(id, count);
+        Assert.Equal(count, world.DeliverByHand(id, count).Accepted);
+    }
+
     // ---- the opening must stay playable ------------------------------------
 
     /// The single property that keeps a new game from being a locked door: the
@@ -45,16 +92,25 @@ public class ResearchTests
     {
         var research = new Research(Data);
 
-        var manual = Data.Data.Recipes.Where(r => r.Tier == "MAN").ToList();
+        // The two exceptions are named, not tolerated: the belt and the
+        // inserter moved behind the opening ladder's second and third rungs
+        // (docs/0030), where they are the reward rather than a row in a menu
+        // the player cannot use. Both are Manual-tier recipes that need a Steam
+        // hull, so nothing that was buildable at tick zero stopped being so.
+        var openingRewards = new[] { "build_stm_inserter", "build_stm_transport_belt" };
+
+        var manual = Data.Data.Recipes
+            .Where(r => r.Tier == "MAN" && !openingRewards.Contains(r.Id)).ToList();
         var above = Data.Data.Recipes.Where(r => r.Tier != "MAN").ToList();
 
+        Assert.All(openingRewards, id => Assert.False(research.IsUnlocked(id)));
         Assert.Equal(manual.Count, manual.Count(r => research.IsUnlocked(r.Id)));
         Assert.Equal(0, above.Count(r => research.IsUnlocked(r.Id)));
 
         // And the numbers are what the data actually holds, so a data change
         // that emptied the Manual tier could not pass this by making both
         // counts zero.
-        Assert.Equal(58, manual.Count);
+        Assert.Equal(56, manual.Count);
         Assert.Equal(688, above.Count);
     }
 
@@ -183,6 +239,7 @@ public class ResearchTests
     public void DeliveringASteamHull_UnlocksExactlyThatTechsRecipes()
     {
         var research = new Research(Data);
+        CompleteTheOpening(research);
         var metallurgy = Data.Data.Recipes.Where(r => r.UnlockedBy == "tech_stm_metallurgy").ToList();
         var processing = Data.Data.Recipes.Where(r => r.UnlockedBy == "tech_stm_processing").ToList();
 
@@ -208,6 +265,10 @@ public class ResearchTests
     {
         var research = new Research(Data);
 
+        // The four Steam lines are what is open once the opening ladder is
+        // walked -- at tick zero the only objective is the first rung of it.
+        Assert.Single(research.Objectives);
+        CompleteTheOpening(research);
         Assert.Equal(4, research.Objectives.Count);
 
         var report = research.Deliver("stm_machine_hull", 4);
@@ -238,6 +299,7 @@ public class ResearchTests
     public void AFifthSteamHull_IsRefusedRatherThanBankedAgainstTheNextTier()
     {
         var research = new Research(Data);
+        CompleteTheOpening(research);
 
         var report = research.Deliver("stm_machine_hull", 5);
 
@@ -265,6 +327,7 @@ public class ResearchTests
     public void TheFirstTechOfALine_PaysItsKitExactlyOnce()
     {
         var world = NewWorld();
+        CompleteTheOpening(world);
         var belt = Data.Item("stm_transport_belt");
         var hull = Data.Item("stm_machine_hull");
 
@@ -288,6 +351,7 @@ public class ResearchTests
     public void AHandDelivery_TakesOnlyWhatWasAccepted()
     {
         var world = NewWorld();
+        CompleteTheOpening(world);
         var hull = Data.Item("stm_machine_hull");
         var ingot = Data.Item("iron_ingot");
         world.PlayerInventory.Add(hull, 10);
@@ -308,6 +372,7 @@ public class ResearchTests
     public void ItemsPushedIntoAPlacedUplink_BecomeResearchOnTheNextTick()
     {
         var world = NewWorld();
+        CompleteTheOpening(world);
         var uplink = Buildables.Find("man_uplink")!;
         var recipe = Buildables.RecipesFor(uplink, world.Research).Single();
 
@@ -356,6 +421,7 @@ public class ResearchTests
     public void AnUplink_NeverReportsWorking()
     {
         var world = NewWorld();
+        CompleteTheOpening(world);
         var uplink = Buildables.Find("man_uplink")!;
         Assert.Equal(BuildResult.Ok, world.TryBuild(Buildables, uplink.Item, 40, 40,
                                                     Buildables.RecipesFor(uplink, world.Research).Single()));
@@ -406,8 +472,14 @@ public class ResearchTests
 
             foreach (var objective in research.Objectives.ToList())
                 foreach (var need in objective.Needs)
-                    if (have.Contains(need.Item))
-                        research.Deliver(need.Item, need.Outstanding);
+                {
+                    // A need is a set of acceptable items, not one id: the
+                    // opening rungs take any ore and any ingot. Deliver the
+                    // first one the closure has actually made.
+                    var have_ = need.Accepts.FirstOrDefault(have.Contains);
+                    if (have_ is not null)
+                        research.Deliver(have_, need.Outstanding);
+                }
 
             if (research.SeedDelivered) break;
         }
@@ -449,6 +521,7 @@ public class ResearchTests
     public void Research_SurvivesASaveRoundTripExactly()
     {
         var world = NewWorld();
+        CompleteTheOpening(world);
 
         // A messy state on purpose: one line finished, one part delivered, and
         // a tier above that untouched. A world with every tech at the same
@@ -462,7 +535,13 @@ public class ResearchTests
         // only objective that can ever be part-delivered is the Seed.
         Assert.Equal(3, world.Research.Objectives.Count(o => o.Id.StartsWith("tech_vlt_")));
         Assert.True(world.Research.IsTechUnlocked("tech_vlt_metallurgy"));
-        Assert.Equal(5, world.Research.Progress.Count());
+        // Nine rows: the four opening rungs, the four Steam lines, and the one
+        // part-delivered Voltaic line. The opening's rows are the interesting
+        // ones here -- they are filed under a *group* key ("any metal ingot"),
+        // which is not an item id, and a save that round-tripped them through
+        // the item table would lose them.
+        Assert.Equal(9, world.Research.Progress.Count());
+        Assert.Contains(world.Research.Progress, p => p.Item == "any metal ingot" && p.Count == 12);
 
         var json = SaveGame.ToJson(SaveGame.Capture(world));
         var loaded = SaveGame.Restore(SaveGame.FromJson(json), Data.Recipes, world.Ground.Gen);

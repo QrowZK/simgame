@@ -1,0 +1,80 @@
+[gd_scene load_steps=3 format=3 uid="uid://b7techtree0001"]
+
+[ext_resource type="Script" path="res://scripts/TechTreePanel.cs" id="1_tech"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+bg_color = Color(0.07, 0.08, 0.1, 0.98)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.35, 0.38, 0.44, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[node name="TechTreePanel" type="PanelContainer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = -16.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+script = ExtResource("1_tech")
+
+[node name="Margin" type="MarginContainer" parent="."]
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 10
+
+[node name="Rows" type="VBoxContainer" parent="Margin"]
+theme_override_constants/separation = 6
+
+[node name="Title" type="Label" parent="Margin/Rows"]
+text = "Progression"
+
+[node name="Legend" type="Label" parent="Margin/Rows"]
+text = ""
+theme_override_font_sizes/font_size = 11
+
+[node name="Premise" type="Label" parent="Margin/Rows"]
+visible = false
+text = ""
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 12
+
+[node name="Body" type="HBoxContainer" parent="Margin/Rows"]
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+
+[node name="GraphHolder" type="Control" parent="Margin/Rows/Body"]
+custom_minimum_size = Vector2(700, 300)
+clip_contents = true
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Detail" type="VBoxContainer" parent="Margin/Rows/Body"]
+custom_minimum_size = Vector2(300, 0)
+theme_override_constants/separation = 6
+
+[node name="DetailTitle" type="Label" parent="Margin/Rows/Body/Detail"]
+text = ""
+autowrap_mode = 2
+
+[node name="DetailBody" type="RichTextLabel" parent="Margin/Rows/Body/Detail"]
+custom_minimum_size = Vector2(300, 0)
+size_flags_vertical = 3
+bbcode_enabled = true
+scroll_active = true
+theme_override_font_sizes/normal_font_size = 12
+theme_override_font_sizes/bold_font_size = 12
+
+[node name="Buttons" type="HBoxContainer" parent="Margin/Rows"]
+theme_override_constants/separation = 8
+
+[node name="Close" type="Button" parent="Margin/Rows/Buttons"]
+text = "Close"

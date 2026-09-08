@@ -103,15 +103,29 @@ def main():
                 requires.append("tech_%s_%s" % (prev["id"].lower(), line["id"]))
             if line["id"] != "fabrication" and prev:
                 requires.append("tech_%s_fabrication" % prev["id"].lower())
+            # Component-gated, not points-gated: you must physically hold the
+            # tier's hull before its tech line opens.
+            hull = ("%s_machine_hull" % t["id"].lower()) if t["index"] >= 1 else None
+
+            # The first tier above Manual also waits on the opening ladder
+            # below, so a new game's objective list is the four rungs it can
+            # actually do rather than four hulls it cannot (docs/0030).
+            if t["index"] == 1 and spec.get("intro_techs"):
+                requires = requires + [spec["intro_techs"][-1]["id"]]
+
             techs.append({
                 "id": "tech_%s_%s" % (t["id"].lower(), line["id"]),
                 "name": "%s %s" % (t["name"], line["name"]),
                 "tier": t["id"],
                 "line": line["id"],
                 "requires": requires,
-                # Component-gated, not points-gated: you must physically hold the
-                # tier's hull before its tech line opens.
-                "requires_item": ("%s_machine_hull" % t["id"].lower()) if t["index"] >= 1 else None,
+                "requires_item": hull,
+                # A need is a *set* of items and a count. One hull is the
+                # degenerate case; the opening rungs are the general one,
+                # because which ore is near spawn is a property of the seed.
+                "requires_items": [hull] if hull else [],
+                "requires_count": 1 if hull else 0,
+                "rewards": [],
             })
 
     # ---- fluids and hand-written extra items --------------------------------
@@ -452,6 +466,64 @@ def main():
         tier_id = r["tier"]
         r["power_draw"] = tier_at[by_index[tier_id]]["power"] * r.pop("_power_mult")
         r["unlocked_by"] = "tech_%s_%s" % (tier_id.lower(), r.pop("_tech_line"))
+
+    # ---- the opening ladder (docs/0030) -------------------------------------
+    # Authored as rungs, but the items each rung accepts are *derived* from the
+    # recipe graph: "any raw ore" is whatever a Manual furnace will smelt, and
+    # "any metal ingot" is what comes out of one. Adding an ore to the spec
+    # therefore widens the first objective with no second place to edit, which
+    # is the same rule `NewGame.StarterOres` follows.
+    man_smelts = [r for r in recipes if r["tier"] == "MAN" and r["machine"] == "furnace"]
+    man_alloys = [r for r in recipes if r["tier"] == "MAN" and r["machine"] == "alloy_smelter"]
+    raw_ids = {i["id"] for i in items if i["raw"]}
+
+    groups = {
+        # Stone is excluded by construction: nothing smelts it, and a first
+        # objective satisfied by the 24 stone in the starter kit would be a
+        # rung the player steps over without mining anything.
+        "man_ore": sorted({i["item"] for r in man_smelts for i in r["inputs"]} & raw_ids),
+        "man_ingot": sorted({o["item"] for r in man_smelts + man_alloys for o in r["outputs"]}),
+    }
+
+    intro_ids = []
+    for rung in spec.get("intro_techs", []):
+        group = rung["requires_group"]
+        members = groups[group["select"]]
+        if not members:
+            raise SystemExit("intro tech %s selects '%s', which matched nothing"
+                             % (rung["id"], group["select"]))
+        techs.insert(len(intro_ids), {
+            "id": rung["id"],
+            "name": rung["name"],
+            "tier": "MAN",
+            "line": "intro",
+            # A strict chain. Each rung's reward is what the next one needs, so
+            # showing rung three before rung one is showing a player a task
+            # they have no tool for.
+            "requires": list(intro_ids),
+            "requires_item": group["key"],
+            "requires_items": members,
+            "requires_count": rung["count"],
+            "rewards": rung["rewards"],
+        })
+        intro_ids.append(rung["id"])
+
+        # Re-gating, not new recipes: the belt and the inserter were open at
+        # tick zero and unbuildable anyway (both need a Steam hull), so moving
+        # them here costs the player nothing and makes the reward legible.
+        for recipe_id in rung["unlocks"]:
+            hit = next((r for r in recipes if r["id"] == recipe_id), None)
+            if hit is None:
+                raise SystemExit("intro tech %s unlocks '%s', which is not a recipe"
+                                 % (rung["id"], recipe_id))
+            hit["unlocked_by"] = rung["id"]
+
+    by_item = {i["id"]: i for i in items}
+    for rung in spec.get("intro_techs", []):
+        for reward in rung["rewards"]:
+            if reward["item"] not in by_item:
+                raise SystemExit("intro tech %s rewards '%s', which is not an item"
+                                 % (rung["id"], reward["item"]))
 
     key_order = ["id", "machine", "tier", "duration_ticks", "power_draw",
                  "inputs", "outputs", "unlocked_by"]

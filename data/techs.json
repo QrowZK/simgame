@@ -1,11 +1,112 @@
 [
   {
+    "id": "tech_start_uplink",
+    "name": "Uplink Online",
+    "tier": "MAN",
+    "line": "intro",
+    "requires": [],
+    "requires_item": "any raw ore",
+    "requires_items": [
+      "cassiterite",
+      "chalcopyrite",
+      "galena",
+      "magnetite",
+      "sphalerite"
+    ],
+    "requires_count": 1,
+    "rewards": [
+      {
+        "item": "man_furnace",
+        "count": 1
+      }
+    ]
+  },
+  {
+    "id": "tech_start_smelting",
+    "name": "First Metal",
+    "tier": "MAN",
+    "line": "intro",
+    "requires": [
+      "tech_start_uplink"
+    ],
+    "requires_item": "any metal ingot",
+    "requires_items": [
+      "brass_ingot",
+      "bronze_ingot",
+      "copper_ingot",
+      "iron_ingot",
+      "lead_ingot",
+      "tin_ingot",
+      "zinc_ingot"
+    ],
+    "requires_count": 3,
+    "rewards": [
+      {
+        "item": "stm_inserter",
+        "count": 2
+      }
+    ]
+  },
+  {
+    "id": "tech_start_haulage",
+    "name": "Mechanised Haulage",
+    "tier": "MAN",
+    "line": "intro",
+    "requires": [
+      "tech_start_uplink",
+      "tech_start_smelting"
+    ],
+    "requires_item": "any metal ingot",
+    "requires_items": [
+      "brass_ingot",
+      "bronze_ingot",
+      "copper_ingot",
+      "iron_ingot",
+      "lead_ingot",
+      "tin_ingot",
+      "zinc_ingot"
+    ],
+    "requires_count": 6,
+    "rewards": [
+      {
+        "item": "stm_transport_belt",
+        "count": 8
+      }
+    ]
+  },
+  {
+    "id": "tech_start_line",
+    "name": "The Line Runs",
+    "tier": "MAN",
+    "line": "intro",
+    "requires": [
+      "tech_start_uplink",
+      "tech_start_smelting",
+      "tech_start_haulage"
+    ],
+    "requires_item": "any metal ingot",
+    "requires_items": [
+      "brass_ingot",
+      "bronze_ingot",
+      "copper_ingot",
+      "iron_ingot",
+      "lead_ingot",
+      "tin_ingot",
+      "zinc_ingot"
+    ],
+    "requires_count": 12,
+    "rewards": []
+  },
+  {
     "id": "tech_man_metallurgy",
     "name": "Manual Metallurgy",
     "tier": "MAN",
     "line": "metallurgy",
     "requires": [],
-    "requires_item": null
+    "requires_item": null,
+    "requires_items": [],
+    "requires_count": 0,
+    "rewards": []
   },
   {
     "id": "tech_stm_metallurgy",
@@ -14,9 +115,15 @@
     "line": "metallurgy",
     "requires": [
       "tech_man_metallurgy",
-      "tech_man_fabrication"
+      "tech_man_fabrication",
+      "tech_start_line"
     ],
-    "requires_item": "stm_machine_hull"
+    "requires_item": "stm_machine_hull",
+    "requires_items": [
+      "stm_machine_hull"
+    ],
+    "requires_count": 1,
+    "rewards": []
   },
   {
     "id": "tech_vlt_metallurgy",
@@ -27,7 +134,12 @@
       "tech_stm_metallurgy",
       "tech_stm_fabrication"
     ],
-    "requires_item": "vlt_machine_hull"
+    "requires_item": "vlt_machine_hull",
+    "requires_items": [
+      "vlt_machine_hull"
+    ],
+    "requires_count": 1,
+    "rewards": []
   },
   {
     "id": "tech_arc_metallurgy",
@@ -38,7 +150,12 @@
       "tech_vlt_metallurgy",
       "tech_vlt_fabrication"
     ],
-    "requires_item": "arc_machine_hull"
+    "requires_item": "arc_machine_hull",
+    "requires_items": [
+      "arc_machine_hull"
+    ],
+    "requires_count": 1,
+    "rewards": []
   },
   {
     "id": "tech_pls_metallurgy",
@@ -49,7 +166,12 @@
       "tech_arc_metallurgy",
       "tech_arc_fabrication"
     ],
-    "requires_item": "pls_machine_hull"
+    "requires_item": "pls_machine_hull",
+    "requires_items": [
+      "pls_machine_hull"
+    ],
+    "requires_count": 1,
+    "rewards": []
   },
   {
     "id": "tech_fus_metallurgy",
@@ -60,7 +182,12 @@
       "tech_pls_metallurgy",
       "tech_pls_fabrication"
     ],
-    "requires_item": "fus_machine_hull"
+    "requires_item": "fus_machine_hull",
+    "requires_items": [
+      "fus_machine_hull"
+    ],
+    "requires_count": 1,
+    "rewards": []
   },
   {
     "id": "tech_qnt_metallurgy",
@@ -71,7 +198,12 @@
       "tech_fus_metallurgy",
       "tech_fus_fabrication"
     ],
-    "requires_item": "qnt_machine_hull"
+    "requires_item": "qnt_machine_hull",
+    "requires_items": [
+      "qnt_machine_hull"
+    ],
+    "requires_count": 1,
+    "rewards": []
   },
   {
     "id": "tech_sng_metallurgy",
@@ -82,7 +214,12 @@
       "tech_qnt_metallurgy",
       "tech_qnt_fabrication"
     ],
-    "requires_item": "sng_machine_hull"
+    "requires_item": "sng_machine_hull",
+    "requires_items": [
+      "sng_machine_hull"
+    ],
+    "requires_count": 1,
+    "rewards": []
   },
   {
     "id": "tech_man_processing",
@@ -90,7 +227,10 @@
     "tier": "MAN",
     "line": "processing",
     "requires": [],
-    "requires_item": null
+    "requires_item": null,
+    "requires_items": [],
+    "requires_count": 0,
+    "rewards": []
   },
   {
     "id": "tech_stm_processing",
@@ -99,9 +239,15 @@
     "line": "processing",
     "requires": [
       "tech_man_processing",
-      "tech_man_fabrication"
+      "tech_man_fabrication",
+      "tech_start_line"
     ],
-    "requires_item": "stm_machine_hull"
+    "requires_item": "stm_machine_hull",
+    "requires_items": [
+      "stm_machine_hull"
+    ],
+    "requires_count": 1,
+    "rewards": []
   },
   {
     "id": "tech_vlt_processing",
@@ -112,7 +258,12 @@
       "tech_stm_processing",
       "tech_stm_fabrication"
     ],
-    "requires_item": "vlt_machine_hull"
+    "requires_item": "vlt_machine_hull",
+    "requires_items": [
+      "vlt_machine_hull"
+    ],
+    "requires_count": 1,
+    "rewards": []
   },
   {
     "id": "tech_arc_processing",
@@ -123,7 +274,12 @@
       "tech_vlt_processing",
       "tech_vlt_fabrication"
     ],
-    "requires_item": "arc_machine_hull"
+    "requires_item": "arc_machine_hull",
+    "requires_items": [
+      "arc_machine_hull"
+    ],
+    "requires_count": 1,
+    "rewards": []
   },
   {
     "id": "tech_pls_processing",
@@ -134,7 +290,12 @@
       "tech_arc_processing",
       "tech_arc_fabrication"
     ],
-    "requires_item": "pls_machine_hull"
+    "requires_item": "pls_machine_hull",
+    "requires_items": [
+      "pls_machine_hull"
+    ],
+    "requires_count": 1,
+    "rewards": []
   },
   {
     "id": "tech_fus_processing",
@@ -145,7 +306,12 @@
       "tech_pls_processing",
       "tech_pls_fabrication"
     ],
-    "requires_item": "fus_machine_hull"
+    "requires_item": "fus_machine_hull",
+    "requires_items": [
+      "fus_machine_hull"
+    ],
+    "requires_count": 1,
+    "rewards": []
   },
   {
     "id": "tech_qnt_processing",
@@ -156,7 +322,12 @@
       "tech_fus_processing",
       "tech_fus_fabrication"
     ],
-    "requires_item": "qnt_machine_hull"
+    "requires_item": "qnt_machine_hull",
+    "requires_items": [
+      "qnt_machine_hull"
+    ],
+    "requires_count": 1,
+    "rewards": []
   },
   {
     "id": "tech_sng_processing",
@@ -167,7 +338,12 @@
       "tech_qnt_processing",
       "tech_qnt_fabrication"
     ],
-    "requires_item": "sng_machine_hull"
+    "requires_item": "sng_machine_hull",
+    "requires_items": [
+      "sng_machine_hull"
+    ],
+    "requires_count": 1,
+    "rewards": []
   },
   {
     "id": "tech_man_chemistry",
@@ -175,7 +351,10 @@
     "tier": "MAN",
     "line": "chemistry",
     "requires": [],
-    "requires_item": null
+    "requires_item": null,
+    "requires_items": [],
+    "requires_count": 0,
+    "rewards": []
   },
   {
     "id": "tech_stm_chemistry",
@@ -184,9 +363,15 @@
     "line": "chemistry",
     "requires": [
       "tech_man_chemistry",
-      "tech_man_fabrication"
+      "tech_man_fabrication",
+      "tech_start_line"
     ],
-    "requires_item": "stm_machine_hull"
+    "requires_item": "stm_machine_hull",
+    "requires_items": [
+      "stm_machine_hull"
+    ],
+    "requires_count": 1,
+    "rewards": []
   },
   {
     "id": "tech_vlt_chemistry",
@@ -197,7 +382,12 @@
       "tech_stm_chemistry",
       "tech_stm_fabrication"
     ],
-    "requires_item": "vlt_machine_hull"
+    "requires_item": "vlt_machine_hull",
+    "requires_items": [
+      "vlt_machine_hull"
+    ],
+    "requires_count": 1,
+    "rewards": []
   },
   {
     "id": "tech_arc_chemistry",
@@ -208,7 +398,12 @@
       "tech_vlt_chemistry",
       "tech_vlt_fabrication"
     ],
-    "requires_item": "arc_machine_hull"
+    "requires_item": "arc_machine_hull",
+    "requires_items": [
+      "arc_machine_hull"
+    ],
+    "requires_count": 1,
+    "rewards": []
   },
   {
     "id": "tech_pls_chemistry",
@@ -219,7 +414,12 @@
       "tech_arc_chemistry",
       "tech_arc_fabrication"
     ],
-    "requires_item": "pls_machine_hull"
+    "requires_item": "pls_machine_hull",
+    "requires_items": [
+      "pls_machine_hull"
+    ],
+    "requires_count": 1,
+    "rewards": []
   },
   {
     "id": "tech_fus_chemistry",
@@ -230,7 +430,12 @@
       "tech_pls_chemistry",
       "tech_pls_fabrication"
     ],
-    "requires_item": "fus_machine_hull"
+    "requires_item": "fus_machine_hull",
+    "requires_items": [
+      "fus_machine_hull"
+    ],
+    "requires_count": 1,
+    "rewards": []
   },
   {
     "id": "tech_qnt_chemistry",
@@ -241,7 +446,12 @@
       "tech_fus_chemistry",
       "tech_fus_fabrication"
     ],
-    "requires_item": "qnt_machine_hull"
+    "requires_item": "qnt_machine_hull",
+    "requires_items": [
+      "qnt_machine_hull"
+    ],
+    "requires_count": 1,
+    "rewards": []
   },
   {
     "id": "tech_sng_chemistry",
@@ -252,7 +462,12 @@
       "tech_qnt_chemistry",
       "tech_qnt_fabrication"
     ],
-    "requires_item": "sng_machine_hull"
+    "requires_item": "sng_machine_hull",
+    "requires_items": [
+      "sng_machine_hull"
+    ],
+    "requires_count": 1,
+    "rewards": []
   },
   {
     "id": "tech_man_fabrication",
@@ -260,7 +475,10 @@
     "tier": "MAN",
     "line": "fabrication",
     "requires": [],
-    "requires_item": null
+    "requires_item": null,
+    "requires_items": [],
+    "requires_count": 0,
+    "rewards": []
   },
   {
     "id": "tech_stm_fabrication",
@@ -268,9 +486,15 @@
     "tier": "STM",
     "line": "fabrication",
     "requires": [
-      "tech_man_fabrication"
+      "tech_man_fabrication",
+      "tech_start_line"
     ],
-    "requires_item": "stm_machine_hull"
+    "requires_item": "stm_machine_hull",
+    "requires_items": [
+      "stm_machine_hull"
+    ],
+    "requires_count": 1,
+    "rewards": []
   },
   {
     "id": "tech_vlt_fabrication",
@@ -280,7 +504,12 @@
     "requires": [
       "tech_stm_fabrication"
     ],
-    "requires_item": "vlt_machine_hull"
+    "requires_item": "vlt_machine_hull",
+    "requires_items": [
+      "vlt_machine_hull"
+    ],
+    "requires_count": 1,
+    "rewards": []
   },
   {
     "id": "tech_arc_fabrication",
@@ -290,7 +519,12 @@
     "requires": [
       "tech_vlt_fabrication"
     ],
-    "requires_item": "arc_machine_hull"
+    "requires_item": "arc_machine_hull",
+    "requires_items": [
+      "arc_machine_hull"
+    ],
+    "requires_count": 1,
+    "rewards": []
   },
   {
     "id": "tech_pls_fabrication",
@@ -300,7 +534,12 @@
     "requires": [
       "tech_arc_fabrication"
     ],
-    "requires_item": "pls_machine_hull"
+    "requires_item": "pls_machine_hull",
+    "requires_items": [
+      "pls_machine_hull"
+    ],
+    "requires_count": 1,
+    "rewards": []
   },
   {
     "id": "tech_fus_fabrication",
@@ -310,7 +549,12 @@
     "requires": [
       "tech_pls_fabrication"
     ],
-    "requires_item": "fus_machine_hull"
+    "requires_item": "fus_machine_hull",
+    "requires_items": [
+      "fus_machine_hull"
+    ],
+    "requires_count": 1,
+    "rewards": []
   },
   {
     "id": "tech_qnt_fabrication",
@@ -320,7 +564,12 @@
     "requires": [
       "tech_fus_fabrication"
     ],
-    "requires_item": "qnt_machine_hull"
+    "requires_item": "qnt_machine_hull",
+    "requires_items": [
+      "qnt_machine_hull"
+    ],
+    "requires_count": 1,
+    "rewards": []
   },
   {
     "id": "tech_sng_fabrication",
@@ -330,6 +579,11 @@
     "requires": [
       "tech_qnt_fabrication"
     ],
-    "requires_item": "sng_machine_hull"
+    "requires_item": "sng_machine_hull",
+    "requires_items": [
+      "sng_machine_hull"
+    ],
+    "requires_count": 1,
+    "rewards": []
   }
 ]

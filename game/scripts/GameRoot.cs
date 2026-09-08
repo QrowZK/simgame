@@ -36,10 +36,11 @@ public sealed partial class GameRoot : Node3D
     private ScriptEditor _editor = null!;
     private CameraRig _rig = null!;
     private Label _hud = null!;
+    private Label _guide = null!;
     private MachinePanel _panel = null!;
     private PauseMenu _pause = null!;
     private BuildMenu _build = null!;
-    private QuestPanel _quests = null!;
+    private TechTreePanel _progression = null!;
     private SurveyPanel _survey = null!;
     /// Whether the win has already been announced. The world stays playable
     /// after the Seed goes -- there is no reason to take a factory away from
@@ -89,6 +90,7 @@ public sealed partial class GameRoot : Node3D
 
         AddChild(BuildLighting());
         _hud = BuildHud();
+        _guide = BuildGuideCard();
         // Before the panel: the panel binds to it, and a null catalogue there
         // silently costs the recipe picker.
         _buildables = new BuildCatalogue(Sim.Data.Catalogue.Instance);
@@ -99,14 +101,14 @@ public sealed partial class GameRoot : Node3D
         _belts = new BeltRenderer { Name = "BeltRenderer" };
         AddChild(_belts);
         _pause = BuildPauseMenu();
-        _quests = BuildQuestPanel();
+        _progression = BuildProgressionPanel();
         _survey = BuildSurveyPanel();
         _editor = BuildScriptEditor();
 
         // A brand new game, and only a brand new game: the premise is shown at
         // tick zero on an untouched world, so a loaded save never replays it.
         if (_world.TickCount == 0 && _world.MachineCount == 0 && _world.Research is not null)
-            _quests.OpenWithPremise();
+            _progression.OpenWithPremise();
 
         // Frame whatever there is to look at. A new game has no factory, so the
         // camera sits on the landing site at a zoom where the ground around it
@@ -135,6 +137,18 @@ public sealed partial class GameRoot : Node3D
 
         _rig.Apply();
 
+        // The crash site. Scenery, not a machine: it is not in `World`, holds no
+        // tiles, and a player can build straight through it. It exists because
+        // the premise says a probe came apart here and, until now, the place it
+        // came apart at was an empty patch of grass -- the most important moment
+        // in the game had nothing on screen at all.
+        //
+        // Only in a world that is being played. The demo factory is a renderer
+        // benchmark whose spawn is covered in machines, and a wreck under them
+        // would be scenery in the middle of a measurement.
+        if (_world.Research is not null)
+            AddChild(new LandingSite { Name = "LandingSite" });
+
         _renderer.Sync(_world);
         _terrain.Sync(_world, _rig.Position);
         _poles.Sync(_world);
@@ -148,7 +162,7 @@ public sealed partial class GameRoot : Node3D
         if (AllArgs().Contains("--screenshot") || AllArgs().Contains("--build-shot")
             || AllArgs().Contains("--belt-shot") || AllArgs().Contains("--uplink-shot")
             || AllArgs().Contains("--survey-shot") || AllArgs().Contains("--shore-shot")
-            || AllArgs().Contains("--dig-shot"))
+            || AllArgs().Contains("--dig-shot") || AllArgs().Contains("--opening-shot"))
         {
             _screenshotCountdown = 12;      // let a few frames draw first
 
@@ -213,6 +227,7 @@ public sealed partial class GameRoot : Node3D
             else if (AllArgs().Contains("--uplink-shot")) ShowTheUplink();
             else if (AllArgs().Contains("--survey-shot")) ShowTheSurvey();
             else if (AllArgs().Contains("--dig-shot")) DigByHandForCapture();
+            else if (AllArgs().Contains("--opening-shot")) _progression.Close();
             else if (AllArgs().Contains("--shore-shot")) FrameTheShore();
             else ShowAnyRunningMachine();
         }
@@ -235,7 +250,7 @@ public sealed partial class GameRoot : Node3D
         {
             _seedAnnounced = true;
             Say("The Seed is away. It will come apart on entry somewhere else, and start again.");
-            _quests.Open();
+            _progression.Open();
         }
 
         if (_toastFrames > 0) _toastFrames--;
@@ -268,6 +283,8 @@ public sealed partial class GameRoot : Node3D
                         $"batches {_renderer.BatchCount}   fps {Engine.GetFramesPerSecond():0}" +
                         power + stored + "\n" + Keys() +
                         (_toastFrames > 0 ? "\n" + _toast : "");
+
+            RefreshGuide();
         }
     }
 
@@ -295,11 +312,11 @@ public sealed partial class GameRoot : Node3D
             return "click a building to take it back   ·   Esc  stop removing";
 
         if (_survey.IsShowing) return "P  close survey";
-        if (_quests.IsShowing) return "T  close objectives";
+        if (_progression.IsShowing) return "T  close progression";
         if (_panel.IsShowing) return "click another machine to inspect it   ·   Esc  close";
 
         return "WASD  pan   ·   wheel  zoom   ·   Q/E  rotate   ·   B  build   ·   " +
-               "P  survey   ·   T  objectives   ·   Esc  menu";
+               "P  survey   ·   T  progression   ·   Esc  menu";
     }
 
     /// Headless verification: tick the sim, refill the instance buffers, and
@@ -502,9 +519,16 @@ public sealed partial class GameRoot : Node3D
         // empty box. Give it the fresh state built above -- the same one a new
         // game starts with -- so the line reports the text a player would read.
         _world.Research ??= fresh;
-        _quests.Refresh();
-        GD.Print($"quest panel     {_quests.BodyText.Length} chars, " +
-                 $"{_quests.BodyText.Split('\n').Length} lines");
+        _progression.Refresh();
+        var site = new LandingSite { Name = "SmokeLandingSite" };
+        AddChild(site);
+        GD.Print($"landing site    pieces={site.PieceCount} tris={site.TriangleCount} " +
+                 $"radius={site.Radius:0.0} drawn={site.IsDrawn}");
+
+        GD.Print($"tech panel      {_progression.BodyText.Length} chars, " +
+                 $"{_progression.BodyText.Split('\n').Length} lines, " +
+                 $"ready={_progression.CountOf(TechTreePanel.NodeState.Ready)} " +
+                 $"locked={_progression.CountOf(TechTreePanel.NodeState.Locked)}");
 
         GD.Print("=== SMOKE OK ===");
 
@@ -569,7 +593,7 @@ public sealed partial class GameRoot : Node3D
             // would feel like the game ignored the panel.
             if (_build.IsShowing) StopBuilding();
             else if (_removing) StopRemoving();
-            else if (_quests.IsShowing) _quests.Close();
+            else if (_progression.IsShowing) _progression.Close();
             else if (_survey.IsShowing) _survey.Close();
             else if (_panel.IsShowing) _panel.Close();
             else if (_pause.Visible) _pause.Close();
@@ -588,8 +612,8 @@ public sealed partial class GameRoot : Node3D
 
         if (@event is InputEventKey { Pressed: true, Keycode: Key.T })
         {
-            if (_quests.IsShowing) _quests.Close();
-            else _quests.Open();
+            if (_progression.IsShowing) _progression.Close();
+            else _progression.Open();
             return;
         }
 
@@ -968,7 +992,7 @@ public sealed partial class GameRoot : Node3D
     {
         // One panel at a time: the objectives panel covers the build menu, and
         // a capture of two overlapping panels shows neither of them properly.
-        _quests.Close();
+        _progression.Close();
 
         // Hand over one of everything placeable, so the menu has a real list
         // rather than the one bench a new game carries.
@@ -1004,7 +1028,7 @@ public sealed partial class GameRoot : Node3D
     /// The thing worth proving is that a person clicking a patch gets ore.
     private void DigByHandForCapture()
     {
-        _quests.Close();
+        _progression.Close();
 
         var usable = _world.Research?.ConsumableNow(_world.Items);
         var hits = new Prospector(radius: 400).Scan(_world.Ground.Gen,
@@ -1041,7 +1065,7 @@ public sealed partial class GameRoot : Node3D
     /// including whether the top of it is marked usable (ADR 0026).
     private void ShowTheSurvey()
     {
-        _quests.Close();
+        _progression.Close();
         _survey.Open(NewGame.SpawnX, NewGame.SpawnY);
     }
 
@@ -1051,7 +1075,7 @@ public sealed partial class GameRoot : Node3D
     /// things this panel says that no other panel does.
     private void ShowTheUplink()
     {
-        _quests.Close();
+        _progression.Close();
 
         var uplink = _buildables.Find(Research.UplinkItem);
         if (uplink is null || _world.Research is null) return;
@@ -1088,7 +1112,7 @@ public sealed partial class GameRoot : Node3D
     private void FrameTheShore()
     {
         _panel.Close();
-        _quests.Close();
+        _progression.Close();
 
         var coast = TerrainRenderer.NearestWater(_world, _rig.Position);
         if (coast is not { } shore) return;
@@ -1170,7 +1194,7 @@ public sealed partial class GameRoot : Node3D
             _panel.Close();
             _panel.Bind(_world.Items, _world.PlayerInventory, _world, _buildables);
             _build.Bind(_buildables, _world, _world.Items);
-            _quests.Bind(_world);
+            _progression.Bind(_world);
             _seedAnnounced = _world.Research?.SeedDelivered ?? false;
             _renderer.Sync(_world);
             _toast = "Quick loaded.";
@@ -1245,14 +1269,62 @@ public sealed partial class GameRoot : Node3D
         return panel;
     }
 
-    private QuestPanel BuildQuestPanel()
+    private TechTreePanel BuildProgressionPanel()
     {
-        var layer = new CanvasLayer { Name = "QuestUi" };
-        var panel = GD.Load<PackedScene>("res://scenes/quest_panel.tscn").Instantiate<QuestPanel>();
+        var layer = new CanvasLayer { Name = "ProgressionUi" };
+        var panel = GD.Load<PackedScene>("res://scenes/tech_tree.tscn")
+                      .Instantiate<TechTreePanel>();
         panel.Bind(_world);
         layer.AddChild(panel);
         AddChild(layer);
         return panel;
+    }
+
+    /// The one thing to do next, on screen, always.
+    ///
+    /// Not a tutorial: it never disables a control, never waits for a keypress
+    /// and never blocks. `Sim.Guide` reads the step out of world state, so a
+    /// player who builds the furnace before delivering the ore, or lays a belt
+    /// nobody asked for, is not corrected -- the card simply says the next
+    /// thing that is still undone. Wube's post-mortem on the Factorio tutorial
+    /// they deleted is the argument: constrain the player's actions and they
+    /// learn to solve the tutorial rather than the game.
+    ///
+    /// It removes itself when the ladder is finished. From there the
+    /// progression screen is the guidance, which is where a game this size
+    /// keeps it.
+    private Label BuildGuideCard()
+    {
+        var layer = new CanvasLayer { Name = "GuideUi" };
+        var label = new Label
+        {
+            Name = "Guide",
+            Position = new Vector2(12, 84),
+            CustomMinimumSize = new Vector2(430, 0),
+            AutowrapMode = TextServer.AutowrapMode.WordSmart,
+        };
+        layer.AddChild(label);
+        AddChild(layer);
+        return label;
+    }
+
+    /// Repaints the guide card from the world. Cheap enough to do per frame --
+    /// it is a handful of integer comparisons -- and doing it per frame is what
+    /// makes it react the instant the player finishes a step, which is the only
+    /// moment the card has to be right.
+    private void RefreshGuide()
+    {
+        var step = Sim.Guide.Current(_world);
+        if (step is not { } now)
+        {
+            _guide.Visible = false;
+            return;
+        }
+
+        _guide.Visible = true;
+        _guide.Text = string.IsNullOrEmpty(now.Key)
+            ? $"NEXT   {now.Title}\n{now.Detail}"
+            : $"NEXT   {now.Title}   [{now.Key}]\n{now.Detail}";
     }
 
     private Label BuildHud()

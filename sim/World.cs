@@ -59,6 +59,18 @@ public sealed class World
 
     public IReadOnlyCollection<int> Uplinks => _uplinks;
 
+    private int _unattendedDeliveries;
+
+    /// How many items have reached research without passing through the
+    /// player's hands. Saved, because it is progress: it is what proves the
+    /// first automated line ran.
+    public int UnattendedDeliveries => _unattendedDeliveries;
+
+    /// For the save loader. Not a setter: restoring a count is not the same
+    /// operation as scoring one, and a settable property invites a caller to
+    /// fake the milestone.
+    public void RestoreUnattendedDeliveries(int count) => _unattendedDeliveries = count;
+
     public World(int seed, ItemDatabase? items = null, WorldGen? gen = null)
     {
         Seed = seed;
@@ -79,12 +91,12 @@ public sealed class World
         var report = Research.Deliver(Items.GetName(item), count);
 
         foreach (var tech in report.Completed)
-        {
-            if (!Sim.Research.Kits.TryGetValue(tech, out var kit)) continue;
-            foreach (var (name, amount) in kit)
-                if (Items.TryGetId(name, out var id))
-                    PlayerInventory.Add(id, amount);
-        }
+            foreach (var reward in Research.RewardsFor(tech))
+                if (Items.TryGetId(reward.Item, out var id))
+                {
+                    PlayerInventory.Add(id, reward.Count);
+                    report.Granted.Add(reward);
+                }
 
         return report;
     }
@@ -1286,7 +1298,17 @@ public sealed class World
         {
             if (count <= 0) continue;
             var report = DeliverToUplink(item, count);
-            if (report.Accepted > 0) machine.TakeInput(item, report.Accepted);
+            if (report.Accepted <= 0) continue;
+
+            machine.TakeInput(item, report.Accepted);
+
+            // Nothing put this in the Uplink's buffer but a belt, an inserter
+            // or a drone -- a hand delivery goes straight to `Research` and
+            // never touches a machine. So this counter is the world state for
+            // "the factory delivered that, not you", which is the moment the
+            // opening is built around and the one thing about it a guide
+            // cannot infer from anything else (docs/0030).
+            _unattendedDeliveries += report.Accepted;
         }
 
         machine.SetIdle();

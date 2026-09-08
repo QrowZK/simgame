@@ -46,6 +46,29 @@ public sealed class TechDef
     [JsonPropertyName("line")] public string Line { get; set; } = "";
     [JsonPropertyName("requires")] public List<string> Requires { get; set; } = new();
     [JsonPropertyName("requires_item")] public string? RequiresItem { get; set; }
+
+    /// Every item that counts toward this tech. One hull, for the tier techs;
+    /// for the opening rungs, every ore a Manual furnace will smelt -- because
+    /// which ore is near spawn is a property of the seed, and a rung naming one
+    /// ore would be uncompletable on the seeds that buried it (docs/0030).
+    ///
+    /// `RequiresItem` is the *key* the delivery is filed under and displayed
+    /// as, and for a group it is a label ("any metal ingot") rather than an
+    /// item id. Read this list, not that string, when you mean items.
+    [JsonPropertyName("requires_items")] public List<string> RequiresItems { get; set; } = new();
+
+    [JsonPropertyName("requires_count")] public int RequiresCount { get; set; }
+
+    /// What completing this hands the player. Data rather than code so the UI
+    /// can name it: "this gives you two Steam Inserters" is a reason to do
+    /// something, and "this unlocks 26 recipes" is not.
+    [JsonPropertyName("rewards")] public List<RewardDef> Rewards { get; set; } = new();
+}
+
+public sealed class RewardDef
+{
+    [JsonPropertyName("item")] public string Item { get; set; } = "";
+    [JsonPropertyName("count")] public int Count { get; set; }
 }
 
 public sealed class RecipeItemRef

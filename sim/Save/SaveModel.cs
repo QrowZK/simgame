@@ -59,7 +59,14 @@ public sealed class SaveFile
     /// in a twenty-hour factory would refuse to be picked up -- the exact
     /// permanence this change exists to end, reintroduced silently by a file
     /// that looked like it loaded correctly.
-    public const int CurrentVersion = 12;
+    /// 13 added the opening ladder (docs/0030). The tech graph gained four
+    /// rungs ahead of the Steam tier and two build recipes moved behind them,
+    /// so a version 12 file -- whose unlocked list cannot mention rungs that
+    /// did not exist -- would load into a game that had silently taken the
+    /// belt and the inserter away from a player who had already earned them.
+    /// It also carries `UnattendedDeliveries`, which is progress rather than
+    /// derived state and cannot be recovered from anything else in the file.
+    public const int CurrentVersion = 13;
 
     public int Version { get; set; } = CurrentVersion;
     public int Seed { get; set; }
@@ -117,6 +124,11 @@ public sealed class ResearchSave
     public List<ResearchProgressSave> Progress { get; set; } = new();
 
     public bool SeedDelivered { get; set; }
+
+    /// Items research received from a belt, an inserter or a drone rather than
+    /// from the player's hands. The opening's last beat is "the factory did
+    /// that without you", and this is the only record that it happened.
+    public int UnattendedDeliveries { get; set; }
 }
 
 public sealed class ResearchProgressSave

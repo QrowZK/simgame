@@ -5,6 +5,70 @@ this is a queue, not a log. Format and rules: `docs/team/README.md`.
 
 ---
 
+## [gameplay → qa] Try to break the opening ladder and the guide
+docs/0030. A new game now opens on four achievable rungs instead of four
+impossible ones, and `sim/Guide.cs` reads "what should this player do next" out
+of world state -- no stored progress, no event hooks. Save format is 13: the
+tech graph gained four rungs, two build recipes moved behind them, and
+`World.UnattendedDeliveries` is new state. I wrote 13 tests and killed 23
+mutants; that is the half that needs somebody else's eyes.
+
+Worth attacking specifically: **a need is now a set of items with a key that is
+not an item id** (`ResearchNeed.Accepts` vs `.Item`, e.g. `"any metal ingot"`) --
+anything that resolves an `ItemId` from `need.Item` is broken, and `MachinePanel`
+was. Then: two objectives open at once wanting overlapping sets; a delivery of
+mixed metals that straddles a rung boundary (7 ingots into a 6-rung); the
+progress key surviving a save when the *data* changes underneath it; whether
+`Guide.Current` can ever go backwards (the monotone cascade only propagates from
+steps flagged `Implies`, and I chose those flags by hand); a world where the
+player removes the Uplink after delivering; and `UnattendedDeliveries` under a
+**drone** haul, which I did not test -- I tested belt, inserter and hand.
+
+Also worth knowing: `AtTickZero_EveryManualRecipeIsOpenAndNothingAboveIt` and
+`EveryTech_AndTheSeed_IsReachableFromTheManualTierAlone` changed shape (named
+exceptions, and delivering the first *accepted* item). Neither lost an
+assertion, but both were yours.
+
+Where to start: `sim.tests/GuideTests.cs`, `sim/Guide.cs`, and
+`godot --headless --path game -- --smoke`, whose `research` line now prints
+`objectives=1 at tick zero` -- worth a grep in `ci.yml`, because that number
+going back to 4 is exactly the regression this change exists to prevent.
+
+## [art -> coordinator] Wiring for the landing site and the progression screen
+Both pieces are built, compiled and screenshotted, and neither is in the scene:
+`GameRoot.cs` and `Boot.cs` were off-limits for this task, so the two lines that
+put them on screen are yours.
+
+* Landing site: `AddChild(new LandingSite { Name = "LandingSite" });` in
+  `GameRoot._Ready`. It defaults to the spawn tile; `Place(x, y)` moves it. It
+  is scenery -- not in `World`, not on the build grid, nothing to sync per
+  frame, and drawn once at construction.
+* Progression screen: `scenes/tech_tree.tscn` -> `TechTreePanel`, built exactly
+  like `BuildQuestPanel`: `Bind(World)`, `Open()`, `Close()`, `IsShowing`,
+  `Refresh()`, `BodyText`, plus `OpenWithPremise()` and `Select(techId)`. It is
+  meant to *replace* `QuestPanel`, not sit beside it -- it carries the premise
+  and the quest information the list carried.
+
+Two `--smoke` lines are worth adding while you are in there; both are numbers a
+screenshot cannot show, and both are new lines, so no existing CI grep changes:
+
+    GD.Print($"landing site    pieces={site.PieceCount} tris={site.TriangleCount} " +
+             $"radius={site.Radius:0.0} drawn={site.IsDrawn}");
+    GD.Print($"tech panel      {_tech.BodyText.Length} chars, " +
+             $"{_tech.BodyText.Split('\n').Length} lines, " +
+             $"ready={_tech.CountOf(TechTreePanel.NodeState.Ready)} " +
+             $"locked={_tech.CountOf(TechTreePanel.NodeState.Locked)}");
+
+## [art -> qa] The progression screen has no test, and its states are gradeable
+`TechTreePanel` classifies every tech as done / ready / open / locked, and
+`BodyText` prints the lot without a display. Worth attacking: a tech whose
+`requires_items` group is partly in the player's inventory (ready is
+`held >= required - delivered`, summed across the group, and I have only checked
+zero and enough); the "why" sentence for an item no unlocked recipe makes,
+which names the tech that opens the recipe and is derived from the recipe graph
+rather than from `Research`; and the depth layering, which will silently draw a
+cycle in `techs.json` as row 0 rather than hanging.
+
 ## [coordinator → qa] Mining no longer redraws the world, and nothing proves it
 The renderer used to drop its whole 37,000-tile cache on every ore extraction
 and describe the field again from the worldgen. With miners running that is

@@ -201,6 +201,7 @@ public static class SaveGame
         {
             save.Research.Enabled = true;
             save.Research.SeedDelivered = research.SeedDelivered;
+            save.Research.UnattendedDeliveries = world.UnattendedDeliveries;
             save.Research.Unlocked = research.UnlockedInOrder.ToList();
             foreach (var (objective, item, count) in research.Progress)
                 save.Research.Progress.Add(new ResearchProgressSave
@@ -375,6 +376,7 @@ public static class SaveGame
                              save.Research.Progress.Select(p => (p.Objective, p.Item, p.Count)),
                              save.Research.SeedDelivered);
             world.Research = research;
+            world.RestoreUnattendedDeliveries(save.Research.UnattendedDeliveries);
         }
 
         world.Ground.Restore(save.Depletion.Select(d => (d.X, d.Y, d.Taken)));

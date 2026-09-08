@@ -345,7 +345,7 @@ public sealed partial class MachinePanel : PanelContainer
             var wants = research.Objectives
                 .SelectMany(o => o.Needs.Where(n => !n.Met))
                 .GroupBy(n => n.Item)
-                .Select(g => $"{g.Sum(n => n.Outstanding)} x {ItemLabel(g.Key)}")
+                .Select(g => $"{g.Sum(n => n.Outstanding)} x {(g.First().IsGroup ? g.Key : ItemLabel(g.Key))}")
                 .ToList();
 
             _status.Text = wants.Count == 0
@@ -377,12 +377,21 @@ public sealed partial class MachinePanel : PanelContainer
             foreach (var need in objective.Needs)
             {
                 if (need.Met) continue;
-                if (!_names.TryGetId(need.Item, out var id)) continue;
 
-                var report = _world.DeliverByHand(id, need.Outstanding);
-                accepted += report.Accepted;
-                completed.AddRange(report.Completed);
-                seed |= report.SeedComplete;
+                // A need accepts a *set* of items -- the opening rungs take any
+                // ore, any ingot -- so every one of them is offered, and the
+                // need's own key is not an item id at all. Handing only
+                // `need.Item` over made this button do nothing on the first
+                // four objectives of the game.
+                foreach (var wanted in need.Accepts)
+                {
+                    if (!_names.TryGetId(wanted, out var id)) continue;
+
+                    var report = _world.DeliverByHand(id, need.Outstanding);
+                    accepted += report.Accepted;
+                    completed.AddRange(report.Completed);
+                    seed |= report.SeedComplete;
+                }
             }
 
         _retaskMessage = seed
