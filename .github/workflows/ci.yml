@@ -107,7 +107,20 @@ jobs:
           # Build mode: the menu offers something and the ghost actually
           # appears. A build UI that lists machines and previews nothing looks
           # fine in a screenshot and cannot be used.
-          grep -qE "build menu      offered=[1-9][0-9]* holding=.+ ghost=True" smoke.log
+          grep -qE "build menu      offered=[1-9][0-9]* holding=.+ ghost=True explained=[1-9][0-9]*" smoke.log
+          # Every offered row explains itself. Nobody hovers in a screenshot, so
+          # a tooltip that came out empty would look exactly like the nothing
+          # that was there before.
+          awk '/^build menu      offered=/ {
+                 o = ""; e = "";
+                 for (i = 1; i <= NF; i++) {
+                   if ($i ~ /^offered=/)   { split($i, a, "="); o = a[2] }
+                   if ($i ~ /^explained=/) { split($i, b, "="); e = b[2] }
+                 }
+                 if (o == "" || e == "" || o != e) {
+                   print "::error::" e " of " o " build rows carry a tooltip"; exit 1
+                 }
+               }' smoke.log
           grep -q "build closed    menu=False ghost=False" smoke.log
           # The recipe picker on a placed machine. It photographs as an empty
           # box when it is broken -- a null catalogue at bind time did exactly

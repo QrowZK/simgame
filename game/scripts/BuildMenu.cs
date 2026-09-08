@@ -113,6 +113,11 @@ public sealed partial class BuildMenu : PanelContainer
             // and the pips say which tier, before the text is read at all.
             _items.AddItem($"{buildable.DisplayName}  x{_bag.Count(buildable.Item)}",
                            ItemIcons.For(_names.GetName(buildable.Item)));
+
+            // What the row is, without having to place one to find out. There
+            // was no tooltip anywhere in this game: every question a player had
+            // about a row could only be answered by trying it.
+            _items.SetItemTooltip(_items.ItemCount - 1, Explain(buildable));
         }
 
         if (_shown.Count == 0)
@@ -155,6 +160,49 @@ public sealed partial class BuildMenu : PanelContainer
 
         _recipes.Select(0);
         return recipes[0];
+    }
+
+
+    /// How many rows carry an explanation, for the headless report. A tooltip
+    /// that is silently empty is indistinguishable from the nothing that was
+    /// here before, and nobody hovers in a screenshot.
+    public int Explained
+    {
+        get
+        {
+            var n = 0;
+            for (var i = 0; i < _items.ItemCount; i++)
+                if (_items.GetItemTooltip(i).Length > 0) n++;
+            return n;
+        }
+    }
+
+    /// One row's worth of "what is this", for the tooltip.
+    ///
+    /// Footprint first, because footprint is the only throughput dial in this
+    /// game -- a 3x3 runs nine batches a cycle and costs nine times the floor
+    /// -- and a player who does not know that reads every machine as the same
+    /// machine at a different price.
+    private string Explain(Buildable buildable)
+    {
+        var lines = new System.Collections.Generic.List<string>
+        {
+            $"{buildable.DisplayName}  --  {buildable.Tier} tier",
+            $"{buildable.Size}x{buildable.Size} tiles, {buildable.Size * buildable.Size} " +
+            (buildable.Size == 1 ? "batch per cycle" : "batches per cycle"),
+        };
+
+        if (buildable.TierPower > 0)
+            lines.Add($"Draws {buildable.TierPower} power while it runs.");
+
+        var recipes = _catalogue.RecipesFor(buildable, _world.Research).Count;
+        if (recipes > 0)
+            lines.Add(recipes == 1
+                ? "Makes one thing. Click it to see what."
+                : $"Makes any of {recipes} things, one at a time. Click it to choose.");
+
+        lines.Add($"You have {_bag.Count(buildable.Item)}.");
+        return string.Join("\n", lines);
     }
 
     private void ShowRecipes(Buildable? buildable)

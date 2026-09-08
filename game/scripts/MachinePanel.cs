@@ -66,6 +66,19 @@ public sealed partial class MachinePanel : PanelContainer
         _recipes.ItemSelected += OnRecipePicked;
 
         _load = GetNode<Button>("Margin/Rows/Buttons/Load");
+
+        // Buttons that say what they will do, on hover. "Load one cycle" is the
+        // clearest label of the three and still does not say where the items
+        // come from or how many that is.
+        _load.TooltipText =
+            "Takes exactly one cycle's worth of inputs out of your pockets and\n" +
+            "puts them in this machine. One cycle, so the progress bar moves\n" +
+            "once and you can see what the machine does with them.";
+
+        GetNode<Button>("Margin/Rows/Buttons/Take").TooltipText =
+            "Empties this machine's output buffer into your pockets.\n" +
+            "A full output buffer is why a machine stops: it has nowhere to\n" +
+            "put what it made.";
         _load.Pressed += LoadOneCycle;
         GetNode<Button>("Margin/Rows/Buttons/Take").Pressed += TakeOutput;
 
@@ -248,6 +261,10 @@ public sealed partial class MachinePanel : PanelContainer
         var machine = _machine!;
 
         _load.Text = "Load one cycle";
+        _load.TooltipText =
+            "Takes exactly one cycle's worth of inputs out of your pockets and\n" +
+            "puts them in this machine. One cycle, so the progress bar moves\n" +
+            "once and you can see what the machine does with them.";
         _title.Text = $"{machine.Recipe.Id}   [{_placement.Size}x{_placement.Size}]";
 
         // A parallel machine's real per-cycle amounts, not the recipe card's.
@@ -291,6 +308,10 @@ public sealed partial class MachinePanel : PanelContainer
     private void RefreshMiner(Miner miner)
     {
         _load.Text = "Load one cycle";
+        _load.TooltipText =
+            "Takes exactly one cycle's worth of inputs out of your pockets and\n" +
+            "puts them in this machine. One cycle, so the progress bar moves\n" +
+            "once and you can see what the machine does with them.";
         _title.Text = $"Mining {ItemName(miner.Item)}   [{_placement.Size}x{_placement.Size}]";
         _subtitle.Text = $"{miner.YieldPerCycle} per {miner.CycleTicks} ticks   " +
                          $"({_patchRemaining} left in this patch)";
@@ -325,6 +346,10 @@ public sealed partial class MachinePanel : PanelContainer
         // "Load one cycle" is meaningless on a machine with no cycle, and a
         // button whose label lies about what it does is worse than no button.
         _load.Text = "Deliver what I carry";
+        _load.TooltipText =
+            "Hands over everything you are carrying that an open objective\n" +
+            "wants. Delivered items are spent -- this is what research costs.\n" +
+            "An inserter or a belt can do the same job without you walking.";
         _title.Text = $"Uplink   [{_placement.Size}x{_placement.Size}]";
         _subtitle.Text = "Deliver research here -- by hand, by inserter or by drone.";
         _progress.Value = 0;

@@ -499,7 +499,8 @@ public sealed partial class GameRoot : Node3D
         GD.Print($"terrain water   tiles={_terrain.WaterTiles} " +
                  $"deepest={_terrain.DeepestWater:0.00} below land");
         GD.Print($"build menu      offered={offered} " +
-                 $"holding={_holding?.DisplayName ?? "<none>"} ghost={ghostShown}");
+                 $"holding={_holding?.DisplayName ?? "<none>"} ghost={ghostShown} " +
+                 $"explained={_build.Explained}");
         StopBuilding();
         GD.Print($"build closed    menu={_build.IsShowing} ghost={_ghost.Visible}");
 
