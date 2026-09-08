@@ -37,6 +37,7 @@ public sealed partial class GameRoot : Node3D
     private CameraRig _rig = null!;
     private Label _hud = null!;
     private Label _guide = null!;
+    private Sounds _sounds = null!;
     private MachinePanel _panel = null!;
     private PauseMenu _pause = null!;
     private BuildMenu _build = null!;
@@ -91,10 +92,13 @@ public sealed partial class GameRoot : Node3D
         AddChild(BuildLighting());
         _hud = BuildHud();
         _guide = BuildGuideCard();
+        _sounds = new Sounds { Name = "Sounds" };
+        AddChild(_sounds);
         // Before the panel: the panel binds to it, and a null catalogue there
         // silently costs the recipe picker.
         _buildables = new BuildCatalogue(Sim.Data.Catalogue.Instance);
         _panel = BuildPanel();
+        _panel.Audio = _sounds;
         _build = BuildBuildMenu();
         _ghost = new BuildGhost { Name = "BuildGhost" };
         AddChild(_ghost);
@@ -171,7 +175,8 @@ public sealed partial class GameRoot : Node3D
         if (AllArgs().Contains("--screenshot") || AllArgs().Contains("--build-shot")
             || AllArgs().Contains("--belt-shot") || AllArgs().Contains("--uplink-shot")
             || AllArgs().Contains("--survey-shot") || AllArgs().Contains("--shore-shot")
-            || AllArgs().Contains("--dig-shot") || AllArgs().Contains("--opening-shot"))
+            || AllArgs().Contains("--dig-shot") || AllArgs().Contains("--opening-shot")
+            || AllArgs().Contains("--pause-shot"))
         {
             _screenshotCountdown = 12;      // let a few frames draw first
 
@@ -196,6 +201,12 @@ public sealed partial class GameRoot : Node3D
         _poles.SyncFluids(_world);
         _drones.Sync(_world);
         _belts.Sync(_world, _renderer.TileSize);
+
+            // A capture still has to finish while the world is paused: the
+            // pause menu is itself a thing worth photographing, and arming a
+            // shot of it used to hang forever because the countdown lived past
+            // this return.
+            if (_screenshotCountdown > 0 && --_screenshotCountdown == 0) Capture();
             return;
         }
 
@@ -237,18 +248,16 @@ public sealed partial class GameRoot : Node3D
             else if (AllArgs().Contains("--survey-shot")) ShowTheSurvey();
             else if (AllArgs().Contains("--dig-shot")) DigByHandForCapture();
             else if (AllArgs().Contains("--opening-shot")) _progression.Close();
+            else if (AllArgs().Contains("--pause-shot"))
+            {
+                _progression.Close();
+                _pause.Open();
+            }
             else if (AllArgs().Contains("--shore-shot")) FrameTheShore();
             else ShowAnyRunningMachine();
         }
 
-        if (_screenshotCountdown > 0 && --_screenshotCountdown == 0)
-        {
-            var image = GetViewport().GetTexture().GetImage();
-            var path = "user://shot.png";
-            image.SavePng(path);
-            GD.Print($"screenshot {image.GetWidth()}x{image.GetHeight()} -> {ProjectSettings.GlobalizePath(path)}");
-            GetTree().Quit();
-        }
+        if (_screenshotCountdown > 0 && --_screenshotCountdown == 0) Capture();
 
         UpdateGhost();
 
@@ -297,6 +306,16 @@ public sealed partial class GameRoot : Node3D
         }
     }
 
+
+    private void Capture()
+    {
+        var image = GetViewport().GetTexture().GetImage();
+        var path = "user://shot.png";
+        image.SavePng(path);
+        GD.Print($"screenshot {image.GetWidth()}x{image.GetHeight()} -> " +
+                 ProjectSettings.GlobalizePath(path));
+        GetTree().Quit();
+    }
 
     /// The keys worth naming *right now*.
     ///
@@ -480,7 +499,8 @@ public sealed partial class GameRoot : Node3D
         GD.Print($"terrain water   tiles={_terrain.WaterTiles} " +
                  $"deepest={_terrain.DeepestWater:0.00} below land");
         GD.Print($"build menu      offered={offered} " +
-                 $"holding={_holding?.DisplayName ?? "<none>"} ghost={ghostShown}");
+                 $"holding={_holding?.DisplayName ?? "<none>"} ghost={ghostShown} " +
+                 $"explained={_build.Explained}");
         StopBuilding();
         GD.Print($"build closed    menu={_build.IsShowing} ghost={_ghost.Visible}");
 
@@ -529,6 +549,8 @@ public sealed partial class GameRoot : Node3D
         // game starts with -- so the line reports the text a player would read.
         _world.Research ??= fresh;
         _progression.Refresh();
+        GD.Print($"sounds          {_sounds.Loaded} of 4 cues loaded");
+
         var site = new LandingSite { Name = "SmokeLandingSite" };
         AddChild(site);
         GD.Print($"landing site    pieces={site.PieceCount} tris={site.TriangleCount} " +
@@ -753,12 +775,14 @@ public sealed partial class GameRoot : Node3D
 
         if (remaining <= 0)
         {
+            _sounds.Play(Sounds.Cue.Refuse);
             Say($"This {name} patch is worked out. Press P to survey for another.");
             return;
         }
 
         if (_world.Ground.Gen.TryPatchAt(tileX, tileY, out var patch) && patch.IsFluid)
         {
+            _sounds.Play(Sounds.Cue.Refuse);
             Say($"{name} is a fluid -- hands cannot lift it. It needs a derrick standing on it.");
             return;
         }
@@ -767,6 +791,7 @@ public sealed partial class GameRoot : Node3D
         var dug = HandOps.Mine(_world.Ground, tileX, tileY, _world.PlayerInventory,
                                HandMinePerClick);
 
+        _sounds.Play(dug == 0 ? Sounds.Cue.Refuse : Sounds.Cue.Dig);
         Say(dug == 0
             ? $"Nothing came out of this {name}."
             : $"Dug {dug} {name}. Carrying {before + dug}. ({remaining - dug} left here.)");
@@ -966,12 +991,15 @@ public sealed partial class GameRoot : Node3D
     {
         if (_holding is null)
         {
+            _sounds.Play(Sounds.Cue.Refuse);
             Say("Pick something to build first.");
             return;
         }
 
         var result = _world.TryBuild(_buildables, _holding.Item, tileX, tileY,
                                      _holdingRecipe, _facing);
+
+        _sounds.Play(result == BuildResult.Ok ? Sounds.Cue.Place : Sounds.Cue.Refuse);
 
         Say(result switch
         {

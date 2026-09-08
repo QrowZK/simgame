@@ -15,6 +15,12 @@ public sealed partial class MainMenu : Control
     [Signal] public delegate void NewGameRequestedEventHandler(int seed);
     [Signal] public delegate void LoadRequestedEventHandler(string path);
 
+    /// Raised when the player asks to see their saves. The menu no longer
+    /// unfolds a list inside its own card: choosing which world to continue is
+    /// a screen's worth of question -- which of these is it, how far did it
+    /// get -- and it has its own screen now (SaveSelect.dc.html).
+    [Signal] public delegate void SaveSelectRequestedEventHandler();
+
     private Button _continue = null!;
     private Button _newGame = null!;
     private Button _loadGame = null!;
@@ -35,7 +41,7 @@ public sealed partial class MainMenu : Control
 
         _continue.Pressed += OnContinue;
         _newGame.Pressed += OnNewGame;
-        _loadGame.Pressed += ToggleSaveList;
+        _loadGame.Pressed += () => EmitSignal(SignalName.SaveSelectRequested);
         GetNode<Button>("Card/Rows/Quit").Pressed += () => GetTree().Quit();
         _saves.ItemActivated += index => LoadSlot((int)index);
 

@@ -42,6 +42,12 @@ public sealed partial class Boot : Node
             return;
         }
 
+        if (Cli.Has("--save-select-shot"))
+        {
+            CallDeferred(nameof(RunSaveSelectShot));
+            return;
+        }
+
         if (Cli.Has("--menu-test"))
         {
             CallDeferred(nameof(RunMenuTest));
@@ -63,8 +69,20 @@ public sealed partial class Boot : Node
         ShowMenu();
     }
 
+    private int _screenshotCountdown = -1;
+
     public override void _Process(double delta)
     {
+        if (_screenshotCountdown > 0 && --_screenshotCountdown == 0)
+        {
+            var shot = GetViewport().GetTexture().GetImage();
+            shot.SavePng("user://shot.png");
+            GD.Print($"screenshot {shot.GetWidth()}x{shot.GetHeight()} -> " +
+                     ProjectSettings.GlobalizePath("user://shot.png"));
+            GD.Print("=== SAVE SELECT OK ===");
+            GetTree().Quit();
+        }
+
         if (_menuShotCountdown > 0 && --_menuShotCountdown == 0)
         {
             var image = GetViewport().GetTexture().GetImage();
@@ -72,6 +90,36 @@ public sealed partial class Boot : Node
             GD.Print($"menu screenshot -> {ProjectSettings.GlobalizePath("user://menu.png")}");
             GetTree().Quit();
         }
+    }
+
+    /// Capture path for the load screen. Writes three real saves and one file
+    /// that is deliberately not a save, because the row for a file that will
+    /// not parse is half the point of the design and cannot be photographed
+    /// without one.
+    private void RunSaveSelectShot()
+    {
+        GD.Print("=== SAVE SELECT ===");
+
+        GameSession.NewGame(seed: 1481765108);
+        for (var i = 0; i < 240; i++) GameSession.World!.Tick();
+        GameSession.Save("quicksave");
+
+        for (var i = 0; i < 120; i++) GameSession.World!.Tick();
+        GameSession.Save("autosave");
+
+        GameSession.NewGame(seed: 1132414339);
+        for (var i = 0; i < 60; i++) GameSession.World!.Tick();
+        GameSession.Save("banana");
+
+        using (var broken = FileAccess.Open("user://saves/steam-run.json", FileAccess.ModeFlags.Write))
+            broken?.StoreString("{ this is not a save file");
+
+        ShowMenu();
+        _saveSelect = null;
+        ShowSaveSelect();
+        GD.Print($"slots           {GameSession.List().Count}");
+
+        _screenshotCountdown = 8;
     }
 
     /// Presses New Game the way a player does: through the menu, with the seed
@@ -719,6 +767,7 @@ public sealed partial class Boot : Node
         _menu = GD.Load<PackedScene>("res://scenes/main_menu.tscn").Instantiate<MainMenu>();
         _menu.NewGameRequested += OnNewGame;
         _menu.LoadRequested += OnLoad;
+        _menu.SaveSelectRequested += ShowSaveSelect;
 
         var layer = new CanvasLayer { Name = "MenuLayer" };
         layer.AddChild(_menu);
@@ -727,6 +776,47 @@ public sealed partial class Boot : Node
 
     private void OnNewGame(int seed) =>
         StartGame(GameSession.NewGame(seed), disposeMenu: true);
+
+    /// The load screen, over the menu rather than instead of it: Back returns
+    /// to a menu that never went away, so the card does not have to be rebuilt
+    /// and the player does not lose their place.
+    private SaveSelect? _saveSelect;
+
+    private void ShowSaveSelect()
+    {
+        if (_saveSelect is not null) return;
+
+        _saveSelect = GD.Load<PackedScene>("res://scenes/save_select.tscn")
+                        .Instantiate<SaveSelect>();
+        _saveSelect.LoadRequested += OnLoadFromSelect;
+        _saveSelect.BackRequested += CloseSaveSelect;
+
+        var layer = new CanvasLayer { Name = "SaveSelectLayer" };
+        layer.AddChild(_saveSelect);
+        AddChild(layer);
+    }
+
+    private void CloseSaveSelect()
+    {
+        _saveSelect?.GetParent()?.QueueFree();
+        _saveSelect = null;
+    }
+
+    private void OnLoadFromSelect(string path)
+    {
+        try
+        {
+            StartGame(GameSession.Load(path), disposeMenu: true);
+            CloseSaveSelect();
+        }
+        catch (System.Exception e)
+        {
+            // The screen stays open and says why. A failed load must never
+            // drop the player into a half-built world or a blank one.
+            GD.PushWarning($"load failed: {e.Message}");
+            _saveSelect?.ShowError(e.Message);
+        }
+    }
 
     private void OnLoad(string path)
     {
@@ -768,7 +858,7 @@ public static class Cli
 
     public static bool WantsHeadlessRun() =>
         Has("--smoke") || Has("--screenshot") || Has("--machines") || Has("--start-shot")
-        || Has("--build-shot") || Has("--survey-shot") || Has("--dig-shot") || Has("--opening-shot") || Has("--belt-shot") || Has("--uplink-shot")
+        || Has("--build-shot") || Has("--survey-shot") || Has("--dig-shot") || Has("--opening-shot") || Has("--pause-shot") || Has("--save-select-shot") || Has("--belt-shot") || Has("--uplink-shot")
         || Has("--shore-shot");
 
     public static int ReadInt(string name, int fallback)

@@ -374,7 +374,7 @@ public sealed partial class TerrainRenderer : Node3D
         var patchKey = NoPatch;
         if (world.Ground.TryPatchAt(x, y, out var patch))
         {
-            ore = OreColour(patch.Item);
+            ore = OreColour(world, patch.Item);
             patchKey = ((long)patch.X << 32) ^ (uint)patch.Y;
         }
 
@@ -538,11 +538,59 @@ public sealed partial class TerrainRenderer : Node3D
     /// A stable colour per resource. Derived from the item id rather than
     /// authored, so a resource added to `/data` is immediately distinguishable
     /// without anyone picking a swatch for it.
-    private static Color OreColour(ItemId item)
+    /// What a patch of this looks like in the ground.
+    ///
+    /// This used to be a hash of the item's runtime id turned straight into a
+    /// hue, which had two costs. Minerals came out unrelated to themselves --
+    /// the first ore most players are sent to dig is sphalerite, and it drew as
+    /// mint green. And an arbitrary hue lands on the grass band often enough
+    /// that a patch could be nearly invisible in the very step where the game
+    /// says "find ore and mine it".
+    ///
+    /// Named ores get the colour the rock actually is: chalcopyrite brassy,
+    /// galena lead-grey, magnetite near-black, halite white. Anything unnamed
+    /// still gets a hash, but one that cannot land on green and is pushed to a
+    /// saturation and value that read as mineral against ground.
+    private static readonly System.Collections.Generic.Dictionary<string, Color> OreColours = new()
     {
+        ["chalcopyrite"]      = new Color(0.80f, 0.62f, 0.22f),   // brassy, iridescent
+        ["cassiterite"]       = new Color(0.36f, 0.26f, 0.20f),   // dark resinous brown
+        ["magnetite"]         = new Color(0.24f, 0.25f, 0.29f),   // black, faintly blue
+        ["galena"]            = new Color(0.62f, 0.64f, 0.69f),   // bright lead grey
+        ["sphalerite"]        = new Color(0.55f, 0.36f, 0.24f),   // resin brown
+        ["coal_deposit"]      = new Color(0.14f, 0.14f, 0.16f),
+        ["stone_deposit"]     = new Color(0.58f, 0.56f, 0.52f),
+        ["limestone_deposit"] = new Color(0.84f, 0.82f, 0.74f),
+        ["quartz_deposit"]    = new Color(0.92f, 0.92f, 0.93f),
+        ["halite"]            = new Color(0.90f, 0.86f, 0.86f),
+        ["dolomite"]          = new Color(0.80f, 0.75f, 0.68f),
+        ["sulfur_deposit"]    = new Color(0.90f, 0.82f, 0.24f),
+        ["bauxite"]           = new Color(0.72f, 0.40f, 0.28f),   // red earth
+        ["native_gold"]       = new Color(0.93f, 0.78f, 0.28f),
+        ["garnierite"]        = new Color(0.36f, 0.66f, 0.52f),   // genuinely green, and named so
+        ["chromite"]          = new Color(0.28f, 0.27f, 0.26f),
+        ["pyrolusite"]        = new Color(0.34f, 0.32f, 0.36f),
+        ["fluorite_deposit"]  = new Color(0.52f, 0.66f, 0.82f),
+        ["ilmenite"]          = new Color(0.30f, 0.28f, 0.32f),
+        ["sperrylite"]        = new Color(0.78f, 0.78f, 0.82f),
+        ["spodumene"]         = new Color(0.82f, 0.72f, 0.78f),
+        ["scheelite"]         = new Color(0.86f, 0.74f, 0.50f),
+        ["monazite"]          = new Color(0.66f, 0.48f, 0.32f),
+        ["pyrochlore"]        = new Color(0.48f, 0.38f, 0.28f),
+        ["xenite_deposit"]    = new Color(0.62f, 0.36f, 0.74f),   // the exotic one, and it looks it
+    };
+
+    private static Color OreColour(World world, ItemId item)
+    {
+        if (OreColours.TryGetValue(world.Items.GetName(item), out var known))
+            return known;
+
+        // Unnamed: a hash, but never green. The band 70-165 degrees is ground,
+        // and an ore the player cannot pick out of the grass is an ore they
+        // will walk past while the guide tells them to go and find one.
         var hash = (uint)(item.Value * 2654435761u);
-        var hue = (hash % 360) / 360f;
-        return Color.FromHsv(hue, 0.55f, 0.85f);
+        var hue = 165f + (hash % 265);
+        return Color.FromHsv((hue % 360f) / 360f, 0.62f, 0.88f);
     }
 
     /// Writes one instance: a box scaled to the tile's footprint and thickness,

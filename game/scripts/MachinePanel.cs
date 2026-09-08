@@ -66,6 +66,19 @@ public sealed partial class MachinePanel : PanelContainer
         _recipes.ItemSelected += OnRecipePicked;
 
         _load = GetNode<Button>("Margin/Rows/Buttons/Load");
+
+        // Buttons that say what they will do, on hover. "Load one cycle" is the
+        // clearest label of the three and still does not say where the items
+        // come from or how many that is.
+        _load.TooltipText =
+            "Takes exactly one cycle's worth of inputs out of your pockets and\n" +
+            "puts them in this machine. One cycle, so the progress bar moves\n" +
+            "once and you can see what the machine does with them.";
+
+        GetNode<Button>("Margin/Rows/Buttons/Take").TooltipText =
+            "Empties this machine's output buffer into your pockets.\n" +
+            "A full output buffer is why a machine stops: it has nowhere to\n" +
+            "put what it made.";
         _load.Pressed += LoadOneCycle;
         GetNode<Button>("Margin/Rows/Buttons/Take").Pressed += TakeOutput;
 
@@ -248,6 +261,10 @@ public sealed partial class MachinePanel : PanelContainer
         var machine = _machine!;
 
         _load.Text = "Load one cycle";
+        _load.TooltipText =
+            "Takes exactly one cycle's worth of inputs out of your pockets and\n" +
+            "puts them in this machine. One cycle, so the progress bar moves\n" +
+            "once and you can see what the machine does with them.";
         _title.Text = $"{machine.Recipe.Id}   [{_placement.Size}x{_placement.Size}]";
 
         // A parallel machine's real per-cycle amounts, not the recipe card's.
@@ -291,6 +308,10 @@ public sealed partial class MachinePanel : PanelContainer
     private void RefreshMiner(Miner miner)
     {
         _load.Text = "Load one cycle";
+        _load.TooltipText =
+            "Takes exactly one cycle's worth of inputs out of your pockets and\n" +
+            "puts them in this machine. One cycle, so the progress bar moves\n" +
+            "once and you can see what the machine does with them.";
         _title.Text = $"Mining {ItemName(miner.Item)}   [{_placement.Size}x{_placement.Size}]";
         _subtitle.Text = $"{miner.YieldPerCycle} per {miner.CycleTicks} ticks   " +
                          $"({_patchRemaining} left in this patch)";
@@ -325,6 +346,10 @@ public sealed partial class MachinePanel : PanelContainer
         // "Load one cycle" is meaningless on a machine with no cycle, and a
         // button whose label lies about what it does is worse than no button.
         _load.Text = "Deliver what I carry";
+        _load.TooltipText =
+            "Hands over everything you are carrying that an open objective\n" +
+            "wants. Delivered items are spent -- this is what research costs.\n" +
+            "An inserter or a belt can do the same job without you walking.";
         _title.Text = $"Uplink   [{_placement.Size}x{_placement.Size}]";
         _subtitle.Text = "Deliver research here -- by hand, by inserter or by drone.";
         _progress.Value = 0;
@@ -365,6 +390,10 @@ public sealed partial class MachinePanel : PanelContainer
     /// Hand-delivers everything the player is carrying that research wants.
     /// The `Load` button, on the one machine where "load one cycle" means
     /// nothing -- an Uplink has no cycle.
+    /// The noises this panel makes. Set by `GameRoot`; null in a headless run
+    /// and in the art preview harness, and every call site tolerates that.
+    public Sounds? Audio { get; set; }
+
     private void DeliverByHand()
     {
         if (_machine is null || _world.Research is null) return;
@@ -393,6 +422,8 @@ public sealed partial class MachinePanel : PanelContainer
                     seed |= report.SeedComplete;
                 }
             }
+
+        Audio?.Play(accepted > 0 ? Sounds.Cue.Deliver : Sounds.Cue.Refuse);
 
         _retaskMessage = seed
             ? "The Seed is away."
@@ -423,10 +454,7 @@ public sealed partial class MachinePanel : PanelContainer
     /// The readable name for a data item id, for the Uplink's want list. The
     /// panel elsewhere names items through the world's table, which is keyed by
     /// runtime id; research speaks in data ids, so this is the other direction.
-    private static readonly System.Collections.Generic.Dictionary<string, string> Labels =
-        Sim.Data.Catalogue.Instance.Data.Items.ToDictionary(i => i.Id, i => i.Name);
-
-    private static string ItemLabel(string itemId) => Labels.GetValueOrDefault(itemId, itemId);
+    private static string ItemLabel(string itemId) => ItemText.Of(itemId);
 
     /// The name a player reads, not the key the data is filed under.
     ///
@@ -435,8 +463,7 @@ public sealed partial class MachinePanel : PanelContainer
     /// "24 stone_deposit, 1 man_manual_crafting, 1 man_uplink". The id is what
     /// the recipe graph is keyed by and nobody outside the code should ever see
     /// one.
-    private string ItemName(ItemId item) =>
-        _names.Count > item.Value ? ItemLabel(_names.GetName(item)) : $"#{item.Value}";
+    private string ItemName(ItemId item) => ItemText.Of(_names, item);
 
     /// Loads exactly one cycle's worth from the player's inventory -- the
     /// smallest useful unit of hand-feeding, and the one that makes the progress

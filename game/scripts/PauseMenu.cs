@@ -21,6 +21,26 @@ public sealed partial class PauseMenu : Control
         _name = GetNode<LineEdit>("Card/Rows/NameRow/SaveName");
         _status = GetNode<Label>("Card/Rows/Status");
 
+        // Every binding in the game, in the one place a player goes when they
+        // want to know what a game can do.
+        //
+        // The HUD used to carry this list, always, whatever the player was
+        // doing -- a reference card pinned across the top of the screen. Making
+        // that line contextual was right, but it left nowhere to look up a key
+        // you had forgotten. Pausing to check is the ordinary way to do that,
+        // and it is the ordinary place to find it.
+        GetNode<Label>("Card/Rows/Controls").Text =
+            "WASD  pan the camera\n" +
+            "Q / E  rotate     ·  mouse wheel  zoom\n" +
+            "click  inspect a machine, or dig a resource tile\n" +
+            "B  build     ·  R  rotate what you are holding\n" +
+            "X  remove a building, and get it back\n" +
+            "P  survey what is nearby\n" +
+            "T  progression: what to deliver, and why things are locked\n" +
+            "F1  script editor for drone controllers\n" +
+            "F5  quick save     ·  F9  quick load\n" +
+            "Esc  close what is open, or pause";
+
         GetNode<Button>("Card/Rows/Resume").Pressed += () => EmitSignal(SignalName.ResumeRequested);
         GetNode<Button>("Card/Rows/Save").Pressed += OnSave;
         GetNode<Button>("Card/Rows/MainMenu").Pressed += () => EmitSignal(SignalName.MainMenuRequested);

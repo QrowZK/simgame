@@ -33,9 +33,6 @@ public sealed partial class SurveyPanel : PanelContainer
     /// carried, so what it reports has to change as the player moves.
     private Vector2I _from;
 
-    private static readonly Dictionary<string, string> ItemNames =
-        Sim.Data.Catalogue.Instance.Data.Items.ToDictionary(i => i.Id, i => i.Name);
-
     public bool IsShowing => Visible;
 
     /// The rendered list, so the headless smoke run can report it without a
@@ -79,8 +76,7 @@ public sealed partial class SurveyPanel : PanelContainer
         var rows = new List<string>();
         foreach (var hit in hits)
         {
-            var name = ItemNames.GetValueOrDefault(_world.Items.GetName(hit.Item),
-                                                   _world.Items.GetName(hit.Item));
+            var name = ItemText.Of(_world.Items, hit.Item);
             var heading = Prospector.HeadingTo(_from.X, _from.Y, hit);
 
             // Colour carries the same fact as the word, never only the colour:

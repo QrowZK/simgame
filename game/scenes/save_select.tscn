@@ -1,0 +1,155 @@
+[gd_scene load_steps=5 format=3 uid="uid://dsaveselect01"]
+
+[ext_resource type="Script" path="res://scripts/SaveSelect.cs" id="1_saveselect"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_card"]
+bg_color = Color(0.09, 0.102, 0.122, 0.97)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.33, 0.36, 0.42, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_well"]
+bg_color = Color(0.059, 0.071, 0.086, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.22, 0.25, 0.30, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_detail"]
+bg_color = Color(0.078, 0.09, 0.11, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.35, 0.38, 0.44, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[node name="SaveSelect" type="Control"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_saveselect")
+
+[node name="Backdrop" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.11, 0.12, 0.14, 1)
+
+[node name="Card" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -400.0
+offset_top = -264.0
+offset_right = 400.0
+offset_bottom = 264.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_card")
+
+[node name="Margin" type="MarginContainer" parent="Card"]
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 24
+
+[node name="Rows" type="VBoxContainer" parent="Card/Margin"]
+theme_override_constants/separation = 14
+
+[node name="Head" type="HBoxContainer" parent="Card/Margin/Rows"]
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="Card/Margin/Rows/Head"]
+theme_override_font_sizes/font_size = 20
+text = "Load a world"
+
+[node name="Spacer" type="Control" parent="Card/Margin/Rows/Head"]
+size_flags_horizontal = 3
+
+[node name="Order" type="Label" parent="Card/Margin/Rows/Head"]
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.6, 0.64, 0.7, 1)
+text = "newest first"
+
+[node name="Body" type="HBoxContainer" parent="Card/Margin/Rows"]
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+
+[node name="Well" type="PanelContainer" parent="Card/Margin/Rows/Body"]
+size_flags_horizontal = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_well")
+
+[node name="Scroll" type="ScrollContainer" parent="Card/Margin/Rows/Body/Well"]
+horizontal_scroll_mode = 0
+
+[node name="Slots" type="VBoxContainer" parent="Card/Margin/Rows/Body/Well/Scroll"]
+size_flags_horizontal = 3
+theme_override_constants/separation = 0
+
+[node name="Detail" type="PanelContainer" parent="Card/Margin/Rows/Body"]
+custom_minimum_size = Vector2(296, 0)
+size_flags_horizontal = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_detail")
+
+[node name="DetailMargin" type="MarginContainer" parent="Card/Margin/Rows/Body/Detail"]
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 12
+
+[node name="DetailRows" type="VBoxContainer" parent="Card/Margin/Rows/Body/Detail/DetailMargin"]
+theme_override_constants/separation = 10
+
+[node name="Name" type="Label" parent="Card/Margin/Rows/Body/Detail/DetailMargin/DetailRows"]
+text = ""
+
+[node name="Seed" type="Label" parent="Card/Margin/Rows/Body/Detail/DetailMargin/DetailRows"]
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.6, 0.64, 0.7, 1)
+text = ""
+
+[node name="Facts" type="VBoxContainer" parent="Card/Margin/Rows/Body/Detail/DetailMargin/DetailRows"]
+theme_override_constants/separation = 6
+
+[node name="Grow" type="Control" parent="Card/Margin/Rows/Body/Detail/DetailMargin/DetailRows"]
+size_flags_vertical = 3
+
+[node name="Actions" type="HBoxContainer" parent="Card/Margin/Rows/Body/Detail/DetailMargin/DetailRows"]
+theme_override_constants/separation = 8
+
+[node name="Load" type="Button" parent="Card/Margin/Rows/Body/Detail/DetailMargin/DetailRows/Actions"]
+text = "Load"
+
+[node name="Delete" type="Button" parent="Card/Margin/Rows/Body/Detail/DetailMargin/DetailRows/Actions"]
+text = "Delete"
+
+[node name="Foot" type="HBoxContainer" parent="Card/Margin/Rows"]
+theme_override_constants/separation = 14
+
+[node name="Back" type="Button" parent="Card/Margin/Rows/Foot"]
+text = "Back"
+
+[node name="Status" type="Label" parent="Card/Margin/Rows/Foot"]
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.6, 0.64, 0.7, 1)
+text = ""
