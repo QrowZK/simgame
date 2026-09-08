@@ -70,9 +70,22 @@ public sealed class Catalogue
             ? recipe
             : throw new KeyNotFoundException($"no recipe '{id}'");
 
-    private static Catalogue? _instance;
-
     /// The catalogue built from the repository's own data files. Cached, because
     /// building it parses five JSON files and registers 600 items.
-    public static Catalogue Instance => _instance ??= new Catalogue(GameData.Instance);
+    ///
+    /// `Lazy` rather than `_instance ??= new(...)`, and that is not a style
+    /// choice: `??=` on a static is a read, a construct and a write with no
+    /// barrier, so two threads racing the first use each build a catalogue and
+    /// the loser's is handed to whoever asked first. Two catalogues means two
+    /// sets of `Recipe` objects, and `BuildCatalogue.CanRun` compares recipes by
+    /// `ReferenceEquals` -- so a caller holding `Catalogue.Instance` and a
+    /// `BuildCatalogue` built from `Catalogue.Instance` could find that its own
+    /// machine could not run its own recipe. That reached CI as an opening-route
+    /// test failing on one run and passing on the next from the same commit.
+    ///
+    /// `Lazy`'s default mode is `ExecutionAndPublication`: constructed once,
+    /// published once, every caller sees the same object.
+    private static readonly Lazy<Catalogue> Cached = new(() => new Catalogue(GameData.Instance));
+
+    public static Catalogue Instance => Cached.Value;
 }
