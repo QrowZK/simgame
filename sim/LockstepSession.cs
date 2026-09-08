@@ -64,6 +64,7 @@ public static class LockstepSession
         var shuffler = new Lcg(0x5EED_1234u);
 
         var outcomes = new Dictionary<CommandOutcome, int>();
+        var byKind = new Dictionary<CommandKind, int>();
         var results = new List<CommandResult>();
         var issued = 0;
         var firstDivergence = -1L;
@@ -76,6 +77,9 @@ public static class LockstepSession
         {
             var commands = director.CommandsFor(tick);
             issued += commands.Count;
+
+            foreach (var command in commands)
+                byKind[command.Kind] = byKind.GetValueOrDefault(command.Kind) + 1;
 
             results.Clear();
             left.ApplyCommands(builds, catalogue.Recipes, commands, results);
@@ -118,6 +122,18 @@ public static class LockstepSession
                    $"refused={left.CommandsRefused} " +
                    $"digest={left.CommandDigest:X16}");
 
+        report.Say("by kind        " +
+                   string.Join(" ", Enum.GetValues<CommandKind>()
+                                        .Select(k => $"{k}={byKind.GetValueOrDefault(k)}")));
+
+        // A determinism harness that never issues a command cannot prove that
+        // command deterministic, and a kind that quietly stopped being issued
+        // would leave this run passing while proving nothing about it.
+        foreach (var kind in Enum.GetValues<CommandKind>())
+            report.Check(byKind.GetValueOrDefault(kind) > 0,
+                         $"the stream issued at least one {kind} " +
+                         $"({byKind.GetValueOrDefault(kind)})");
+
         foreach (var (outcome, count) in outcomes.OrderByDescending(kv => kv.Value)
                                                  .ThenBy(kv => kv.Key.ToString(), StringComparer.Ordinal))
             report.Say($"  {outcome,-18} {count,6}   \"{CommandOutcomes.Say(outcome)}\"");
@@ -146,6 +162,8 @@ public static class LockstepSession
                      CommandOutcome.NothingThere, CommandOutcome.WorkedOut,
                      CommandOutcome.Blocked, CommandOutcome.NoneCarried,
                      CommandOutcome.AlreadyRunning, CommandOutcome.NoUplinkInReach,
+                     CommandOutcome.WantsNothing, CommandOutcome.NothingToTake,
+                     CommandOutcome.NoMachine, CommandOutcome.BadAmount,
                  })
             report.Check(outcomes.GetValueOrDefault(wanted) > 0,
                          $"the stream produced at least one {wanted} " +
@@ -252,6 +270,8 @@ public static class LockstepSession
         private readonly (int X, int Y)[] _target;
         private readonly (int X, int Y)[] _uplink;
         private readonly bool[] _built;
+        private readonly (int X, int Y)[] _bench;
+        private readonly bool[] _benchBuilt;
         private readonly MoveIntent[] _lastIntent;
         private readonly string _uplinkItem = Research.UplinkItem;
 
@@ -277,6 +297,8 @@ public static class LockstepSession
             _target = new (int X, int Y)[count];
             _uplink = new (int X, int Y)[count];
             _built = new bool[count];
+            _bench = new (int X, int Y)[count];
+            _benchBuilt = new bool[count];
             _lastIntent = new MoveIntent[count];
 
             for (var i = 0; i < count; i++)
@@ -324,6 +346,52 @@ public static class LockstepSession
                                                  _target[i].X + _rng.Between(-400, 400),
                                                  _target[i].Y + _rng.Between(-400, 400),
                                                  3));
+
+                // ---- the opening loop: a bench, loaded and emptied by hand --
+                //
+                // This is the first hour of the game and the reason `Load` and
+                // `Take` exist (ADR 0040): the starter kit is a crafting bench
+                // and 24 stone, and the only way the stone becomes a furnace is
+                // a pair of hands. It is put down *where the player stops*, so
+                // the loads that follow are in reach for the rest of the run
+                // rather than out of reach by tick 200.
+                if (!_benchBuilt[i] &&
+                    Math.Abs(player.TileX - _target[i].X) <= 2 &&
+                    Math.Abs(player.TileY - _target[i].Y) <= 2)
+                {
+                    _benchBuilt[i] = true;
+                    _bench[i] = (player.TileX + 1, player.TileY + 1);
+                    _batch.Add(PlayerCommand.Build(tick, i, Next(i), _bench[i].X, _bench[i].Y,
+                                                   "man_manual_crafting", "build_man_furnace"));
+                }
+
+                if (_benchBuilt[i] && tick % 37 == 5)
+                {
+                    // Twice, one sequence apart. The first fills a cycle; the
+                    // second finds a machine that wants nothing -- which is
+                    // exactly the contested case two players standing at one
+                    // furnace produce, and both peers must call it the same way.
+                    _batch.Add(PlayerCommand.Load(tick, i, Next(i),
+                                                  _bench[i].X, _bench[i].Y));
+                    _batch.Add(PlayerCommand.Load(tick, i, Next(i),
+                                                  _bench[i].X, _bench[i].Y));
+                }
+
+                if (_benchBuilt[i] && tick % 37 == 22)
+                    _batch.Add(PlayerCommand.Take(tick, i, Next(i),
+                                                  _bench[i].X, _bench[i].Y));
+
+                // Loading and emptying thin air, and a load of no cycles at all.
+                if (_rng.OneIn(173))
+                    _batch.Add(PlayerCommand.Load(tick, i, Next(i),
+                                                  _bench[i].X + _rng.Between(-300, 300),
+                                                  _bench[i].Y + _rng.Between(-300, 300)));
+                if (_rng.OneIn(197))
+                    _batch.Add(PlayerCommand.Take(tick, i, Next(i),
+                                                  player.TileX + 300, player.TileY + 300));
+                if (tick % 599 == 41)
+                    _batch.Add(PlayerCommand.Load(tick, i, Next(i),
+                                                  _bench[i].X, _bench[i].Y, 0));
 
                 // ---- building, removing, rebuilding ------------------------
                 if (tick % 700 == 300)
@@ -378,6 +446,16 @@ public static class LockstepSession
                     _batch.Add(PlayerCommand.ChangeRecipe(tick, i, Next(i),
                                                           _uplink[rival].X, _uplink[rival].Y,
                                                           Research.UplinkRecipe));
+
+                    // And a hand into a rival's bench, from far away: OtherTeam
+                    // rather than TooFar, because walking closer never helps.
+                    if (_benchBuilt[rival])
+                    {
+                        _batch.Add(PlayerCommand.Load(tick, i, Next(i),
+                                                      _bench[rival].X, _bench[rival].Y));
+                        _batch.Add(PlayerCommand.Take(tick, i, Next(i),
+                                                      _bench[rival].X, _bench[rival].Y));
+                    }
                 }
 
                 // Retasking one's own Uplink to what it already runs:

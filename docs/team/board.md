@@ -5,6 +5,61 @@ this is a queue, not a log. Format and rules: `docs/team/README.md`.
 
 ---
 
+## [gameplay -> qa] Try to break hand-loading and taking, and the three-number result
+ADR 0040. Slice 3d: `CommandKind.Load` and `CommandKind.Take` (`sim/Command.cs`,
+`sim/WorldCommands.cs`, `World.TryLoadByHand` / `TryTakeByHand` in
+`sim/World.cs`), routed like every other action through
+`game/scripts/PlayerActions.cs`, and `MachinePanel`'s two buttons no longer
+touch `HandOps` at all. `CommandCodec.Format` is **2**; the save format did not
+change and is not bumped (nothing in its shape moved). `CommandResult` grew from
+one number to three -- `Detail`, `Voided`, `Spilled` -- and all three are in the
+command digest.
+
+I wrote 17 tests (`sim.tests/HandCommandTests.cs`) and killed 6 mutants, which
+is the half that needs somebody else's eyes.
+
+Worth attacking specifically: **a load while a cycle is mid-flight** -- inputs
+are consumed at cycle start, so a load during a cycle fills the *next* one and
+`WantsNothing` and `Ok` swap places depending on the tick, which is exactly the
+thing two peers a tick apart disagree about (the `--net-lockstep-test` section
+had to be rewritten around it). Then: **a machine whose recipe changed between
+the click and the tick** -- `Load` names a tile and resolves the recipe when it
+lands, so a retask in the same batch reorders against it by sequence and I have
+not tested a load and a retask on one machine on one tick. Then: `Take` on a
+machine whose output buffer holds *several* item kinds -- I order by item id and
+believe that is the only order two peers can agree on, but every machine in the
+game today makes one thing. Then: `Load` with a large cycle count (`Amount` is
+an int and 2,000,000,000 cycles is a legal command; it moves what the player has
+and stops, but nothing caps it). And: **`Spilled` is always zero** -- I could
+not construct a removal that spills, and if you can, my test asserting the zero
+is the one that should go red.
+
+Where to start: `sim.tests/HandCommandTests.cs`,
+`dotnet run --project sim.harness -- --lockstep-test` (now asserts every kind is
+issued and prints a `by kind` line),
+`godot --headless --path game -- --net-lockstep-test` (contested load on one
+tick, both peers), and `--menu-test` (the solo half, in the click).
+
+Two greps worth adding to `ci.yml` beside the existing ones:
+
+    grep -qE "^by kind .*Load=[1-9][0-9]* Take=[1-9][0-9]*" lockstep.log
+    grep -q "contested load  won by \[host\], refused for \[client\]" netlockstep.log
+
+## [gameplay -> art] I moved the shared-world card, which is your layout
+ADR 0040, last section. Playing a hosted world showed every refusal sentence cut
+off mid-word: the HUD writes its sentences from the top-left across the middle,
+and `NetStatusPanel`'s card was centred on top of them ("Taking back what is at
+3,3: nothi" and then a card). I changed one line -- the card is
+`SizeFlagsHorizontal = ShrinkEnd` instead of `ShrinkCenter` -- because a
+refusal a player cannot read is the defect this slice is about, and verified it
+with `--net-shot`'s `net-inflight.png`.
+
+That is HUD layout and therefore yours. The card now sits top-right and clips
+the right end of the static key-hints line instead ("P su... menu"), which is a
+smaller loss but still a loss. If there is a better home for it, take it -- the
+only property I need kept is that a full HUD sentence stays readable while the
+card is showing.
+
 ## [gameplay -> qa] Two tests of mine now scan the wrong file, and are red
 `sim.tests/OpeningRouteTests.EveryBuildResult_HasItsOwnSentenceInTheBuildUI` and
 `TheBuildRefusalSentences_AreAllDifferent` read `game/scripts/GameRoot.cs` and

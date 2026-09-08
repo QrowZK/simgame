@@ -31,7 +31,12 @@ public static class CommandCodec
     /// version and from the network protocol string on purpose: those change
     /// for their own reasons, and a peer that can read a save is not thereby a
     /// peer that can read a command.
-    public const byte Format = 1;
+    /// **2** since ADR 0040 added `Load` and `Take`. The byte layout did not
+    /// change -- only the set of kind bytes that decode -- but a peer on format
+    /// 1 must refuse the whole batch at the door rather than only the first
+    /// batch that happens to contain a load, which would leave it running a
+    /// world it could not see the whole of.
+    public const byte Format = 2;
 
     /// Guards against a mistaken framing more than against corruption -- a
     /// packet from some other channel decoded as commands would otherwise

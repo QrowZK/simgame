@@ -114,6 +114,8 @@ public sealed partial class World
         h = Hashing.Mix(h, command.Recipe);
         h = Hashing.Mix(h, (byte)result.Outcome);
         h = Hashing.Mix(h, result.Detail);
+        h = Hashing.Mix(h, result.Voided);
+        h = Hashing.Mix(h, result.Spilled);
         _commandDigest = h;
     }
 
@@ -196,7 +198,7 @@ public sealed partial class World
                     RemoveResult.TooFar => CommandOutcome.TooFar,
                     RemoveResult.OtherTeam => CommandOutcome.OtherTeam,
                     _ => CommandOutcome.UnknownKind,
-                }, removal.Returned);
+                }, removal.Returned, removal.FluidVoided, removal.Spilled);
             }
 
             case CommandKind.ChangeRecipe:
@@ -243,6 +245,40 @@ public sealed partial class World
                     DeliveryRefusal.NothingWanted => CommandOutcome.NothingWanted,
                     _ => CommandOutcome.NothingWanted,
                 }, report.Accepted);
+            }
+
+            case CommandKind.Load:
+            {
+                // Cycles, not items (see `CommandKind.Load`). Zero cycles is a
+                // command that means nothing rather than one that does nothing.
+                if (command.Amount <= 0)
+                    return new CommandResult(command, CommandOutcome.BadAmount);
+
+                var load = TryLoadByHand(command.X, command.Y, command.Amount, player);
+                return new CommandResult(command, load.Result switch
+                {
+                    LoadResult.Ok => CommandOutcome.Ok,
+                    LoadResult.NoMachine => CommandOutcome.NoMachine,
+                    LoadResult.TooFar => CommandOutcome.TooFar,
+                    LoadResult.OtherTeam => CommandOutcome.OtherTeam,
+                    LoadResult.WantsNothing => CommandOutcome.WantsNothing,
+                    LoadResult.NoneCarried => CommandOutcome.NoneCarried,
+                    _ => CommandOutcome.UnknownKind,
+                }, load.Moved);
+            }
+
+            case CommandKind.Take:
+            {
+                var take = TryTakeByHand(command.X, command.Y, player);
+                return new CommandResult(command, take.Result switch
+                {
+                    TakeResult.Ok => CommandOutcome.Ok,
+                    TakeResult.NoMachine => CommandOutcome.NoMachine,
+                    TakeResult.TooFar => CommandOutcome.TooFar,
+                    TakeResult.OtherTeam => CommandOutcome.OtherTeam,
+                    TakeResult.NothingToTake => CommandOutcome.NothingToTake,
+                    _ => CommandOutcome.UnknownKind,
+                }, take.Taken);
             }
 
             default:

@@ -55,11 +55,19 @@ public sealed partial class NetStatusPanel : Control
         AddChild(margin);
 
         // Wide enough for the desync sentence to wrap into three lines rather
-        // than thirty, centred so it does not sit on top of the HUD.
+        // than thirty, and pushed to the **right** edge so it does not sit on
+        // top of the HUD.
+        //
+        // It used to be centred, on the argument that the middle of the screen
+        // is nobody's. It is not: the HUD's sentences run from the top-left
+        // across the middle, and a capture of a real refusal showed the card
+        // eating it -- "Taking back what is at 3,3: nothi" and then a card.
+        // Every refusal in a shared world was being cut off mid-word, which is
+        // the one thing a refusal may not be (ADR 0040).
         _card = new PanelContainer
         {
             Name = "Card",
-            SizeFlagsHorizontal = SizeFlags.ShrinkCenter,
+            SizeFlagsHorizontal = SizeFlags.ShrinkEnd,
             CustomMinimumSize = new Vector2(640, 0),
         };
         _card.AddThemeStyleboxOverride("panel", new StyleBoxFlat

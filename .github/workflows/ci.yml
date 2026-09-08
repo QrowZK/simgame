@@ -177,6 +177,9 @@ jobs:
         run: |
           dotnet run --project sim.harness -- --lockstep-test | tee lockstep.log
           grep -q "first tick the two peers disagreed on: expected -1, got -1" lockstep.log
+          # A determinism harness that never issues a command cannot prove that
+          # command deterministic, so the new hand kinds must actually appear.
+          grep -qE "^by kind .*Load=[1-9][0-9]* Take=[1-9][0-9]*" lockstep.log
 
       - name: Lockstep over the wire (host and client, one world)
         working-directory: game
@@ -187,6 +190,9 @@ jobs:
           grep -q "mismatches 0" netlockstep.log
           grep -q "both peers stopped on their own comparison (host True, client True)" netlockstep.log
           grep -q "no prediction   machines (0, 0) before the click, (0, 0) in the same frame" netlockstep.log
+          # Two peers loading one furnace on the same tick resolve identically,
+          # by the total order rather than by whose packet arrived first.
+          grep -q "contested load  won by \[host\], refused for \[client\]" netlockstep.log
 
       - name: Save/load session test
         working-directory: game

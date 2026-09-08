@@ -34,6 +34,27 @@ public enum CommandKind : byte
 
     /// Hand `Amount` of `Item` to an Uplink within hand reach.
     Deliver = 6,
+
+    /// Load the machine covering (X, Y) with `Amount` cycles' worth of every
+    /// input it is short of, out of this player's own pockets.
+    ///
+    /// Named by *tile* for the same reason `ChangeRecipe` is: a machine index
+    /// issued on the tick of a click can name a different machine by the tick
+    /// it is applied on.
+    ///
+    /// Counted in **cycles**, not in items. One cycle is the amount that makes
+    /// the progress bar move exactly once, it is defined for every machine that
+    /// has a recipe, and it is the same number on every peer -- an item count
+    /// would have to be worked out from what the player happened to be carrying
+    /// at click time, which is local knowledge and therefore a desync.
+    Load = 7,
+
+    /// Take everything the machine or miner covering (X, Y) has finished.
+    ///
+    /// No amount: the button is "empty it", and a partial take would need an
+    /// item as well as a count, which is one more thing for two peers to
+    /// disagree about for no decision gained.
+    Take = 8,
 }
 
 /// One player action, addressed to one tick.
@@ -120,6 +141,13 @@ public readonly struct PlayerCommand : IComparable<PlayerCommand>, IEquatable<Pl
                                              int x, int y, string recipe)
         => new(tick, playerId, sequence, CommandKind.ChangeRecipe, x, y, 0,
                Direction.East, null, recipe);
+
+    public static PlayerCommand Load(long tick, int playerId, int sequence,
+                                     int x, int y, int cycles = 1)
+        => new(tick, playerId, sequence, CommandKind.Load, x, y, cycles);
+
+    public static PlayerCommand Take(long tick, int playerId, int sequence, int x, int y)
+        => new(tick, playerId, sequence, CommandKind.Take, x, y);
 
     public static PlayerCommand Deliver(long tick, int playerId, int sequence,
                                         string item, int amount)
@@ -243,29 +271,67 @@ public enum CommandOutcome : byte
     /// reason because the fix is different from both of the above: deliver
     /// something else.
     NothingWanted,
+
+    // ---- load and take -------------------------------------------------
+    /// The machine is in reach and yours, and there is nothing it wants: it
+    /// already holds the cycles asked for, or it takes no inputs at all -- a
+    /// miner digs and an Uplink is delivered to. Its own reason because the
+    /// answer is "wait, or take its output", not "walk closer" and not "go and
+    /// find some ore".
+    WantsNothing,
+
+    /// Nothing has finished in there yet. Distinct from `WantsNothing` because
+    /// one says the machine is full and the other says it is empty, and telling
+    /// a player the wrong one of those two sends them the wrong way.
+    NothingToTake,
 }
 
-/// A command and what the world did with it. `Detail` is the number the action
-/// produced -- units dug, units evicted, units handed back, units delivered --
-/// because "it worked" and "it worked and moved nothing" are different things
-/// to put on a screen.
+/// A command and what the world did with it.
+///
+/// Three numbers, not one. `Detail` is what the action *produced* -- units dug,
+/// evicted, handed back, loaded, taken, delivered -- because "it worked" and
+/// "it worked and moved nothing" are different things to put on a screen.
+///
+/// `Voided` and `Spilled` are what it *cost*, and they exist because one number
+/// was not enough. `RemovalReport` has carried `FluidVoided` and `Spilled`
+/// since ADR 0028, the command layer had room for neither, and so removing a
+/// full tank stopped saying that the fluid drained away (ADR 0039 named the
+/// loss and left it). A number a player used to be told and is now not told is
+/// a regression however tidy the type it was dropped from, so the type grew.
+///
+/// Both are zero for every action that cannot destroy anything, which is every
+/// action but removal today. They are folded into the command digest with
+/// `Detail`, so a peer that computed a different spill is a peer that diverged.
 public readonly struct CommandResult
 {
     public readonly PlayerCommand Command;
     public readonly CommandOutcome Outcome;
     public readonly int Detail;
 
-    public CommandResult(PlayerCommand command, CommandOutcome outcome, int detail = 0)
+    /// Fluid units that drained away and went nowhere: a removed pipe, tank or
+    /// pump. Fluid is not an item and there is nothing to hand it back to.
+    public readonly int Voided;
+
+    /// Items that had nowhere to land and fell on the floor: belt cargo behind
+    /// a cut that the shortened run could not hold.
+    public readonly int Spilled;
+
+    public CommandResult(PlayerCommand command, CommandOutcome outcome, int detail = 0,
+                         int voided = 0, int spilled = 0)
     {
         Command = command;
         Outcome = outcome;
         Detail = detail;
+        Voided = voided;
+        Spilled = spilled;
     }
 
     public bool Ok => Outcome == CommandOutcome.Ok;
 
     public override string ToString()
-        => $"{Command} -> {Outcome}" + (Detail != 0 ? $" ({Detail})" : "");
+        => $"{Command} -> {Outcome}" + (Detail != 0 ? $" ({Detail})" : "")
+           + (Voided != 0 ? $" voided {Voided}" : "")
+           + (Spilled != 0 ? $" spilled {Spilled}" : "");
 }
 
 /// The sentences. One per outcome, so a refusal reaches the player as words
@@ -304,6 +370,8 @@ public static class CommandOutcomes
         CommandOutcome.NoUplinkInReach => "No Uplink of yours is within reach.",
         CommandOutcome.NotCarried => "You are not carrying that.",
         CommandOutcome.NothingWanted => "Nothing being researched wants that.",
+        CommandOutcome.WantsNothing => "That machine wants nothing right now.",
+        CommandOutcome.NothingToTake => "There is nothing waiting in there.",
         _ => "That cannot be done.",
     };
 }

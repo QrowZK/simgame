@@ -1596,6 +1596,110 @@ public sealed partial class World
         return new DigReport(DigResult.Ok, patch.Item, remaining, dug);
     }
 
+    /// Loads a machine by hand: `cycles` cycles' worth of everything it is
+    /// short of, out of this player's own pockets (ADR 0040).
+    ///
+    /// **Hand reach, not build reach.** Loading is moving items between your
+    /// pockets and a machine's hopper with your arms, which is what digging and
+    /// hand-delivering are, and they go six tiles. Building reaches twelve
+    /// because setting a hull down is a throw. A player who can load a furnace
+    /// from twelve tiles away never has to stand next to anything in the first
+    /// hour, and standing next to the furnace is the first hour.
+    ///
+    /// Ownership before reach, deliberately: walking closer never makes a
+    /// rival's machine yours, and being told the wrong one of those two things
+    /// sends the player on a walk for nothing.
+    public LoadReport TryLoadByHand(int x, int y, int cycles, Player? actor = null)
+    {
+        var player = actor ?? Player;
+
+        if (!TryMachineAt(x, y, out var machine, out var index))
+        {
+            // A miner on the tile is not "no machine there" -- the player can
+            // see it perfectly well. It simply eats nothing.
+            if (TryMinerAt(x, y, out _, out var minerIndex))
+            {
+                var minerPlacement = MinerPlacements[minerIndex];
+                if (!MayAct(player, minerPlacement.X, minerPlacement.Y))
+                    return new LoadReport(LoadResult.OtherTeam);
+                return new LoadReport(!InHandReach(minerPlacement, player)
+                                          ? LoadResult.TooFar
+                                          : LoadResult.WantsNothing);
+            }
+
+            return new LoadReport(LoadResult.NoMachine);
+        }
+
+        var placement = PlacementOf(index);
+        if (!MayAct(player, placement.X, placement.Y))
+            return new LoadReport(LoadResult.OtherTeam);
+
+        if (!InHandReach(placement, player))
+            return new LoadReport(LoadResult.TooFar);
+
+        // Recipe.Inputs is a list in data order on every peer, so the items are
+        // considered in one fixed order and a player whose pockets can only
+        // cover part of a load covers the same part everywhere.
+        var wanted = 0;
+        var moved = 0;
+        foreach (var input in machine.Recipe.Inputs)
+        {
+            var short_ = machine.InputPerCycle(input.Item) * cycles
+                         - machine.GetInputCount(input.Item);
+            if (short_ <= 0) continue;
+            wanted += short_;
+            moved += HandOps.Insert(player.Inventory, machine, input.Item, short_);
+        }
+
+        if (wanted == 0) return new LoadReport(LoadResult.WantsNothing);
+        if (moved == 0) return new LoadReport(LoadResult.NoneCarried, 0, wanted);
+        return new LoadReport(LoadResult.Ok, moved, wanted);
+    }
+
+    /// Empties a machine's output buffer, or a miner's hopper, into the
+    /// player's pockets (ADR 0040). Hand reach, for the same reason as loading.
+    public TakeReport TryTakeByHand(int x, int y, Player? actor = null)
+    {
+        var player = actor ?? Player;
+
+        if (TryMachineAt(x, y, out var machine, out var index))
+        {
+            var placement = PlacementOf(index);
+            if (!MayAct(player, placement.X, placement.Y))
+                return new TakeReport(TakeResult.OtherTeam);
+            if (!InHandReach(placement, player))
+                return new TakeReport(TakeResult.TooFar);
+
+            // By item id, never by the buffer's enumeration order: a dictionary
+            // makes no promise about that, and the order items land in a
+            // player's inventory is state two peers must agree on.
+            var taken = 0;
+            foreach (var (item, count) in machine.OutputContents.OrderBy(kv => kv.Key.Value))
+                taken += HandOps.Extract(machine, player.Inventory, item, count);
+
+            return taken > 0 ? new TakeReport(TakeResult.Ok, taken)
+                             : new TakeReport(TakeResult.NothingToTake);
+        }
+
+        if (TryMinerAt(x, y, out var miner, out var minerIndex))
+        {
+            var placement = MinerPlacements[minerIndex];
+            if (!MayAct(player, placement.X, placement.Y))
+                return new TakeReport(TakeResult.OtherTeam);
+            if (!InHandReach(placement, player))
+                return new TakeReport(TakeResult.TooFar);
+
+            // Emptying a miner by hand is how the first ore moves, before there
+            // is an inserter to do it.
+            var pulled = miner.Pull(int.MaxValue);
+            if (pulled > 0) player.Inventory.Add(miner.Item, pulled);
+            return pulled > 0 ? new TakeReport(TakeResult.Ok, pulled)
+                              : new TakeReport(TakeResult.NothingToTake);
+        }
+
+        return new TakeReport(TakeResult.NoMachine);
+    }
+
     /// The Uplink the player could reach out and put something into, if any.
     /// Nearest first, so two Uplinks in reach resolve the same way every time
     /// rather than by list order.

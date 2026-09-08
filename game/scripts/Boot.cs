@@ -318,9 +318,14 @@ public sealed partial class Boot : Node
         var root = _game!;
         var builds = new Sim.BuildCatalogue(Sim.Data.Catalogue.Instance);
         var bench = builds.Find("man_manual_crafting");
+        // A recipe the starter kit can actually pay for, so the hand-feed below
+        // is a load rather than a "you are not carrying any of what it wants".
         var recipe = bench is null
             ? null
-            : builds.RecipesFor(bench, world.Research).FirstOrDefault();
+            : builds.RecipesFor(bench, world.Research)
+                    .FirstOrDefault(r => r.Inputs.All(
+                        i => world.PlayerInventory.Count(i.Item) >= i.Count))
+              ?? builds.RecipesFor(bench, world.Research).FirstOrDefault();
 
         var spoken = new List<string>();
         var prior = root.Actions.Speak;
@@ -342,6 +347,31 @@ public sealed partial class Boot : Node
 
         root.PlaceHeld(tile.X, tile.Y);          // refused: only one bench carried
         root.DigOrClose(tile.X + 40, tile.Y + 40);  // bare ground: not an action at all
+
+        // Hand-feeding, solo, in the click (ADR 0040). The same two commands a
+        // shared world sends over the wire, and the same assertion as the
+        // build: solo waits for nobody.
+        var stoneBefore = world.PlayerInventory.Contents
+                               .Where(kv => world.Items.GetName(kv.Key) == "stone_deposit")
+                               .Sum(kv => kv.Value);
+        root.Actions.Load(tile.X, tile.Y, 1, $"The bench at {tile.X},{tile.Y}");
+        var loadedInTheClick = world.TryMachineAt(tile.X, tile.Y, out var fed, out _)
+            ? fed.InputContents.Values.Sum()
+            : -1;
+        root.Actions.Take(tile.X, tile.Y, $"The bench at {tile.X},{tile.Y}");  // nothing yet
+
+        GD.Print($"solo hand-feed  bench holds {loadedInTheClick} in the click, " +
+                 $"stone {stoneBefore} -> " +
+                 $"{world.PlayerInventory.Contents.Where(kv => world.Items.GetName(kv.Key) == "stone_deposit").Sum(kv => kv.Value)}");
+
+        if (loadedInTheClick <= 0)
+        {
+            foreach (var line in spoken) GD.Print($"solo said       \"{Trim(line)}\"");
+            GD.Print("solo hand-feed  FAILED: a solo load took effect on no tick");
+            GetTree().Quit(1);
+            return;
+        }
+
         root.RemoveAt(tile.X, tile.Y);              // and take it back
         var afterRemoval = world.MachineCount;
 
@@ -370,6 +400,14 @@ public sealed partial class Boot : Node
         if (root.Actions.InFlight.Count != 0)
         {
             GD.Print("solo input      FAILED: a solo click queued something");
+            GetTree().Quit(1);
+            return;
+        }
+
+        if (root.Actions.CountOf(Sim.CommandOutcome.NothingToTake) == 0)
+        {
+            GD.Print("solo hand-feed  FAILED: taking from a bench that has made nothing " +
+                     "was not refused");
             GetTree().Quit(1);
             return;
         }
@@ -1780,6 +1818,125 @@ public sealed partial class Boot : Node
             root.Actions.Deliver(wantedItem, 3, $"Handing over 3 {wantedItem}");
         await Step(16);
 
+        // ---- the opening loop, by hand: load a bench, take what it made -----
+        //
+        // ADR 0040, and the whole point of this slice: until now both of these
+        // were refused in a shared world with a sentence, which meant two
+        // people could share a world and not play its first hour.
+        var affordable = benchRecipes.FirstOrDefault(
+            r => r.Inputs.All(i => hw.Player.Inventory.Count(i.Item) >= i.Count));
+
+        if (affordable is null)
+        {
+            failures.Add("nobody can afford anything the bench offers, so the hand-feed " +
+                         "section would prove nothing");
+        }
+        else
+        {
+            foreach (var (root, _, dx) in plots)
+                root.Actions.Retask(spawnX + dx, spawnY, affordable);
+            await Step(16);
+
+            // Take before anything has run: the refusal for clicking too early.
+            foreach (var (root, _, dx) in plots)
+                root.Actions.Take(spawnX + dx, spawnY, $"The early bench at {spawnX + dx}");
+            await Step(16);
+
+            // **The contested case.** Both peers reach into the *host's* bench
+            // in the same frame. One fills the cycle and the other finds a
+            // machine that wants nothing; which is which is ADR 0037's total
+            // order and nothing else, and both peers must agree about it.
+            // Same *tick*, not merely the same frame: two roots tick off their
+            // own wall clocks, so a click in one frame can be stamped a tick
+            // apart, and a tick apart is not a contest -- the first load's
+            // cycle has already started and eaten the inputs by the time the
+            // second lands, which is a legal outcome that proves nothing about
+            // the total order.
+            // The client runs a few ticks behind the host by construction (it
+            // is the sequencer's follower), so both peers clicking in one
+            // frame stamp their commands ticks apart. The host clicks, and the
+            // client clicks on the frame where *its* stamp lands on the same
+            // tick.
+            const string contested = "The contested bench";
+            hostRoot.Actions.Load(spawnX + plots[0].Dx, spawnY, 1, contested);
+            var target = hostDriver.LastIssued.Tick;
+
+            for (var i = 0; i < 900 && cw.TickCount + LockstepDriver.InputDelay < target; i++)
+                await Step(1);
+
+            clientRoot.Actions.Load(spawnX + plots[0].Dx, spawnY, 1, contested);
+
+            var stamped = (Host: hostDriver.LastIssued.Tick, Client: clientDriver.LastIssued.Tick);
+            if (stamped.Host != stamped.Client)
+                failures.Add($"the contested loads were stamped for ticks {stamped.Host} and " +
+                             $"{stamped.Client}, so this run never contested anything");
+            await Step(24);
+
+            var won = said.Where(kv => kv.Value.Any(l => l.StartsWith("Loaded")
+                                                         && l.Contains(contested)))
+                          .Select(kv => kv.Key).ToList();
+            var lost = said.Where(kv => kv.Value.Any(l => l.Contains(contested)
+                                                          && l.Contains("wants nothing")))
+                           .Select(kv => kv.Key).ToList();
+            GD.Print($"contested       both stamped for tick {stamped.Host}/{stamped.Client}");
+            GD.Print($"contested load  won by [{string.Join(",", won)}], " +
+                     $"refused for [{string.Join(",", lost)}] " +
+                     $"(both peers, one furnace, same tick)");
+
+            if (won.Count != 1 || lost.Count != 1 || won[0] == lost[0])
+                failures.Add($"two peers loading one machine resolved to {won.Count} winner(s) " +
+                             $"and {lost.Count} refusal(s); the total order says exactly one each");
+
+            // The other peer's own bench, so both are working and both peers
+            // have something to take.
+            clientRoot.Actions.Load(spawnX + plots[1].Dx, spawnY, 1, "The client bench");
+            await Step(24);
+
+            // "Is there anything in the hopper" is the wrong question: a full
+            // cycle's worth is consumed the moment the cycle starts, so a
+            // successful load can read as an empty machine one tick later. What
+            // a load actually causes is a bench that is *working*.
+            var working = (Host: Busy(hw, spawnX + plots[0].Dx, spawnY),
+                           Client: Busy(hw, spawnX + plots[1].Dx, spawnY));
+            GD.Print($"hand-fed        host bench busy={working.Host} " +
+                     $"(holding {InputsOf(hw, spawnX + plots[0].Dx, spawnY)}), " +
+                     $"client bench busy={working.Client} " +
+                     $"(holding {InputsOf(hw, spawnX + plots[1].Dx, spawnY)}), " +
+                     $"stone left host {Stone(hw)} client {Stone(cw)}");
+            if (!working.Host && !working.Client)
+                failures.Add("two hand loads left both benches idle: nothing was fed");
+
+            // Wait out the cycle. `Take` before it finishes is a refusal, not a
+            // wait, so the run has to actually let the machine work.
+            var deadline = hw.TickCount + affordable.DurationTicks + 90;
+            for (var i = 0; i < 6000 && hw.TickCount < deadline
+                                     && !Finished(hw, spawnX + plots[0].Dx, spawnY)
+                                     && !Finished(hw, spawnX + plots[1].Dx, spawnY); i++)
+                await Step(1);
+
+            GD.Print($"cycle done      host tick {hw.TickCount}, " +
+                     $"host bench out {OutputsOf(hw, spawnX + plots[0].Dx, spawnY)}, " +
+                     $"client bench out {OutputsOf(hw, spawnX + plots[1].Dx, spawnY)}");
+
+            var carriedBefore = (Host: Carried(hw), Client: Carried(cw));
+            foreach (var (root, _, dx) in plots)
+                root.Actions.Take(spawnX + dx, spawnY, $"The bench at {spawnX + dx},{spawnY}");
+            await Step(24);
+
+            var carriedAfter = (Host: Carried(hw), Client: Carried(cw));
+            GD.Print($"took the output carried {carriedBefore} -> {carriedAfter}, " +
+                     $"host bench out {OutputsOf(hw, spawnX + plots[0].Dx, spawnY)}");
+
+            if (carriedAfter.Host <= carriedBefore.Host)
+                failures.Add("taking a finished bench's output put nothing in anybody's pockets");
+
+            // The two peers are *not* compared here: they stand a few ticks
+            // apart while both are running, so a difference at this moment is
+            // latency rather than disagreement. They are levelled and compared
+            // below, on one tick, which is the only comparison that means
+            // anything.
+        }
+
         foreach (var (root, _, dx) in plots) root.RemoveAt(spawnX + dx, spawnY);
         await Step(16);
 
@@ -1795,6 +1952,8 @@ public sealed partial class Boot : Node
                      $"removes {a.IssuedOf(Sim.CommandKind.Remove)} " +
                      $"retasks {a.IssuedOf(Sim.CommandKind.ChangeRecipe)} " +
                      $"delivers {a.IssuedOf(Sim.CommandKind.Deliver)} " +
+                     $"loads {a.IssuedOf(Sim.CommandKind.Load)} " +
+                     $"takes {a.IssuedOf(Sim.CommandKind.Take)} " +
                      $"= {a.Issued} total");
             GD.Print($"{who,-6} answered {a.Applied} applied, {a.Refused} refused, " +
                      $"{a.Lost} lost, {a.InFlight.Count} still in flight");
@@ -1821,6 +1980,7 @@ public sealed partial class Boot : Node
                          Sim.CommandOutcome.Blocked,
                          Sim.CommandOutcome.NothingThere,
                          Sim.CommandOutcome.NoMachine,
+                         Sim.CommandOutcome.NothingToTake,
                      })
                 if (a.CountOf(wanted) == 0)
                     failures.Add($"the {who} never saw {wanted}, which this run provokes " +
@@ -1926,6 +2086,36 @@ public sealed partial class Boot : Node
                 into.Add(message);
             };
         }
+
+        /// Units sitting in the input buffer of the machine on a tile.
+        static int InputsOf(Sim.World world, int x, int y)
+            => world.TryMachineAt(x, y, out var machine, out _)
+                ? machine.InputContents.Values.Sum()
+                : 0;
+
+        static int OutputsOf(Sim.World world, int x, int y)
+            => world.TryMachineAt(x, y, out var machine, out _)
+                ? machine.OutputContents.Values.Sum()
+                : 0;
+
+        static bool Finished(Sim.World world, int x, int y) => OutputsOf(world, x, y) > 0;
+
+        /// A machine with a cycle in flight, which is what a hand load causes
+        /// and what an idle one looks nothing like.
+        static bool Busy(Sim.World world, int x, int y)
+            => world.TryMachineAt(x, y, out var machine, out _)
+               && (machine.State == Sim.MachineState.Working || machine.TicksRemaining > 0
+                   || machine.InputContents.Values.Sum() > 0
+                   || machine.OutputContents.Values.Sum() > 0);
+
+        /// Everything *everybody* in the world is carrying, which is what a
+        /// hand take moves into and a hand load moves out of.
+        ///
+        /// Every player, not the local one: each peer looks through a different
+        /// pair of eyes, so two peers agreeing about the local player's pockets
+        /// would be two peers comparing two different people.
+        static int Carried(Sim.World world)
+            => world.Players.Sum(p => p.Inventory.Contents.Values.Sum());
 
         static bool Wanted(Sim.World world, string item)
             => world.Research is not null

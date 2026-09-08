@@ -145,6 +145,21 @@ public sealed class PlayerActions
         => Do(PlayerCommand.ChangeRecipe(0, 0, 0, x, y, recipe.Id),
               $"Retasking the machine at {x},{y}", null);
 
+    /// Hand-loading a machine: one cycle's worth of everything it is short of,
+    /// out of the player's pockets. The first hour of the game, and now a
+    /// command like every other action rather than a local mutation a shared
+    /// world had to refuse (ADR 0040).
+    ///
+    /// **Hand reach**, decided here and enforced in `World.TryLoadByHand`: it
+    /// is the same pair of arms that digs and hands crates to the Uplink.
+    public void Load(int x, int y, int cycles, string label)
+        => Do(PlayerCommand.Load(0, 0, 0, x, y, cycles), label, null);
+
+    /// Emptying a machine's output, or a miner's hopper, into the player's
+    /// pockets. Hand reach, for the same reason.
+    public void Take(int x, int y, string label)
+        => Do(PlayerCommand.Take(0, 0, 0, x, y), label, null);
+
     public void Deliver(string itemName, int amount, string label)
         => Do(PlayerCommand.Deliver(0, 0, 0, itemName, amount), label, null);
 
@@ -267,7 +282,7 @@ public static class ActionVoice
     {
         var command = result.Command;
 
-        if (result.Ok) return Worked(command, result.Detail, label, world);
+        if (result.Ok) return Worked(result, label, world);
 
         var reason = result.Outcome switch
         {
@@ -283,6 +298,12 @@ public static class ActionVoice
             CommandOutcome.TooFar =>
                 $"too far to reach -- walk closer. Your hands go " +
                 $"{Sim.Player.HandReachTiles} tiles.",
+            CommandOutcome.NoneCarried when command.Kind == CommandKind.Load =>
+                "you are not carrying any of what it wants.",
+            CommandOutcome.NoMachine when command.Kind == CommandKind.Load =>
+                "there is no machine there to load.",
+            CommandOutcome.NoMachine when command.Kind == CommandKind.Take =>
+                "there is no machine there to empty.",
             CommandOutcome.Blocked => "something is already there.",
             CommandOutcome.NoneCarried => "you have none left.",
             CommandOutcome.NoResource => "a miner needs ore under it.",
@@ -311,6 +332,10 @@ public static class ActionVoice
                 $"no Uplink of yours is within {Sim.Player.HandReachTiles} tiles.",
             CommandOutcome.NotCarried => "you are not carrying that.",
             CommandOutcome.NothingWanted => "nothing being researched wants that.",
+            CommandOutcome.WantsNothing =>
+                "it wants nothing right now -- it already holds a full cycle's worth, "
+                + "or it takes no inputs at all.",
+            CommandOutcome.NothingToTake => "nothing has finished in there yet.",
             CommandOutcome.Duplicate => "that instruction arrived twice; the second did nothing.",
             _ => Lower(CommandOutcomes.Say(result.Outcome)),
         };
@@ -318,20 +343,36 @@ public static class ActionVoice
         return $"{label}: {reason}";
     }
 
-    private static string Worked(in PlayerCommand command, int detail, string label, World world)
-        => command.Kind switch
+    private static string Worked(in CommandResult result, string label, World world)
+    {
+        var command = result.Command;
+        var detail = result.Detail;
+        return command.Kind switch
         {
             CommandKind.Build => $"Built {label}.",
             CommandKind.Dig => Dug(command, detail, world),
-            CommandKind.Remove => detail > 0
-                ? $"{label} -- done, and {detail} item(s) that were inside came back to you."
-                : $"{label} -- done.",
+            CommandKind.Remove => $"{label} -- done." + Returned(detail) + Lost(result),
+            CommandKind.Load => $"Loaded {detail} item(s) into {label}.",
+            CommandKind.Take => $"Took {detail} item(s) out of {label}.",
             CommandKind.ChangeRecipe => detail > 0
                 ? $"Retasked. {detail} item(s) came back to you."
                 : "Retasked. It was empty, so nothing came back.",
             CommandKind.Deliver => $"Delivered {detail} {ItemText.Of(command.Item)}.",
             _ => $"{label} -- done.",
         };
+    }
+
+    /// What came back out of a removed building.
+    private static string Returned(int detail)
+        => detail > 0 ? $" {detail} item(s) that were inside came back to you." : "";
+
+    /// What did *not* come back: fluid has nowhere to be handed to, and belt
+    /// cargo behind the cut can outlast the run it was riding. Both were
+    /// reported before the command layer had room for only one number, and both
+    /// are reported again now that it has three (ADR 0040).
+    private static string Lost(in CommandResult result)
+        => (result.Voided > 0 ? $" {result.Voided} unit(s) of fluid drained away." : "")
+           + (result.Spilled > 0 ? $" {result.Spilled} item(s) spilled off the belt." : "");
 
     private static string Dug(in PlayerCommand command, int taken, World world)
     {
