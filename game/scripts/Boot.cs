@@ -54,6 +54,18 @@ public sealed partial class Boot : Node
             return;
         }
 
+        if (Cli.Has("--net-test"))
+        {
+            CallDeferred(nameof(RunNetTest));
+            return;
+        }
+
+        if (Cli.Has("--net-shot"))
+        {
+            CallDeferred(nameof(RunNetShot));
+            return;
+        }
+
         if (Cli.WantsHeadlessRun())
         {
             // --start-shot renders a real new game; the other headless runs want
@@ -791,6 +803,357 @@ public sealed partial class Boot : Node
         GD.Print("--- fluids ok ---");
     }
 
+
+    // ------------------------------------------------------------ multiplayer
+
+    private NetSession? _net;
+    private MultiplayerSetup? _setup;
+    private Lobby? _lobby;
+
+    /// The transport, as a node, because it has to be polled by the tree and
+    /// has to die with it. One per process: hosting while joining is not a
+    /// thing, and two would silently fight over the default multiplayer.
+    private NetSession Net()
+    {
+        if (_net is not null) return _net;
+
+        _net = new NetSession { Name = "NetSession" };
+        AddChild(_net);
+        return _net;
+    }
+
+    private void ShowMultiplayerSetup(MultiplayerSetup.Mode mode)
+    {
+        CloseMultiplayerSetup();
+
+        _setup = GD.Load<PackedScene>("res://scenes/multiplayer_setup.tscn")
+                   .Instantiate<MultiplayerSetup>();
+        _setup.Open(mode);
+        _setup.HostRequested += OnHostRequested;
+        _setup.JoinRequested += OnJoinRequested;
+        _setup.BackRequested += CloseMultiplayerSetup;
+
+        var layer = new CanvasLayer { Name = "MultiplayerSetupLayer" };
+        layer.AddChild(_setup);
+        AddChild(layer);
+    }
+
+    private void CloseMultiplayerSetup()
+    {
+        _setup?.GetParent()?.QueueFree();
+        _setup = null;
+    }
+
+    private void OnHostRequested(string playerName, int port, int seed, int maxPlayers)
+    {
+        var session = Net();
+        var failure = session.Host(playerName, port, maxPlayers);
+
+        if (failure != NetFailure.None)
+        {
+            // The screen stays open and says why. A port that will not open is
+            // a sentence, never a dead button.
+            _setup?.ShowError(NetSession.Describe(failure));
+            return;
+        }
+
+        CloseMultiplayerSetup();
+        ShowLobby(session, $"Seed {seed}. Waiting for players.");
+    }
+
+    private void OnJoinRequested(string playerName, string address, int port)
+    {
+        var session = Net();
+
+        void Failed(NetFailure failure, string sentence)
+        {
+            session.ConnectFailed -= Failed;
+            session.Connected -= Arrived;
+            _setup?.ShowError(sentence);
+        }
+
+        void Arrived()
+        {
+            session.ConnectFailed -= Failed;
+            session.Connected -= Arrived;
+            CloseMultiplayerSetup();
+            ShowLobby(session, "Connected. Waiting for the host to start.");
+        }
+
+        session.ConnectFailed += Failed;
+        session.Connected += Arrived;
+
+        var immediate = session.Join(playerName, address, port);
+        if (immediate != NetFailure.None) Failed(immediate, NetSession.Describe(immediate));
+    }
+
+    private void ShowLobby(NetSession session, string note)
+    {
+        _lobby = GD.Load<PackedScene>("res://scenes/lobby.tscn").Instantiate<Lobby>();
+        _lobby.Bind(session);
+        _lobby.LeaveRequested += LeaveLobby;
+
+        // Start cannot start anything yet, and says so. The world does not
+        // travel over the wire until the command layer lands; a button that
+        // silently did nothing would be the worse of the two lies.
+        _lobby.StartRequested += () =>
+            _lobby?.ShowNote("Nothing to start yet: shared worlds arrive with the command layer.");
+
+        var layer = new CanvasLayer { Name = "LobbyLayer" };
+        layer.AddChild(_lobby);
+        AddChild(layer);
+
+        _lobby.Refresh();
+        _lobby.ShowNote(note);
+    }
+
+    private void LeaveLobby()
+    {
+        _net?.Close("");
+        _lobby?.GetParent()?.QueueFree();
+        _lobby = null;
+    }
+
+    /// Host and client in one process, connecting for real over a loopback
+    /// socket. Two processes would be closer to the truth, but a headless CI
+    /// step that has to orchestrate two engines and reconcile their exit codes
+    /// tests the harness more than the transport. Each session gets its own
+    /// `SceneMultiplayer` bound to its own node path, which is what makes one
+    /// process legal at all.
+    ///
+    /// Everything printed here is a count. A roster that came back empty and a
+    /// roster that was never asked for look identical in a pass line.
+    private async void RunNetTest()
+    {
+        GD.Print("=== NET ===");
+        GD.Print($"protocol        {NetSession.Protocol}");
+
+        var port = Cli.ReadInt("--net-port", NetSession.DefaultPort);
+        var failures = new List<string>();
+
+        var host = new NetSession { Name = "NetHost" };
+        var client = new NetSession { Name = "NetClient" };
+        AddChild(host);
+        AddChild(client);
+
+        var opened = host.Host("Ada", port, maxPlayers: 4);
+        GD.Print($"host            {opened} on port {port}, roster {host.Roster.Count}");
+        if (opened != NetFailure.None)
+        {
+            GD.Print($"net             FAILED: could not host: {NetSession.Describe(opened)}");
+            GetTree().Quit(1);
+            return;
+        }
+
+        // --- a client joins ------------------------------------------------
+        var joined = false;
+        var joinFailure = "";
+        client.Connected += () => joined = true;
+        client.ConnectFailed += (_, why) => joinFailure = why;
+
+        var arrivals = 0;
+        var departures = 0;
+        host.PeerArrived += _ => arrivals++;
+        host.PeerDeparted += _ => departures++;
+
+        var dialled = client.Join("Grace", "127.0.0.1", port);
+        GD.Print($"client dial     {dialled}");
+
+        await Frames(() => joined || joinFailure.Length > 0, 600);
+
+        GD.Print($"handshake       joined={joined} failure={(joinFailure.Length == 0 ? "none" : joinFailure)}");
+        GD.Print($"host roster     {host.Roster.Count}: {Names(host)}");
+        GD.Print($"client roster   {client.Roster.Count}: {Names(client)}");
+        GD.Print($"client id       {client.SelfId} (host is {host.SelfId})");
+        GD.Print($"peer arrivals   {arrivals} seen by the host");
+
+        if (!joined) failures.Add($"the client never connected ({joinFailure})");
+        if (host.Roster.Count != 2) failures.Add($"host roster is {host.Roster.Count}, want 2");
+        if (client.Roster.Count != 2) failures.Add($"client roster is {client.Roster.Count}, want 2");
+        if (client.SelfId <= 1) failures.Add($"client has peer id {client.SelfId}");
+        if (!host.Roster.Any(p => p.Name == "Grace" && !p.IsHost))
+            failures.Add("the host does not know the client's name");
+        if (!client.Roster.Any(p => p.Name == "Ada" && p.IsHost))
+            failures.Add("the client does not know the host's name");
+
+        // --- a message each way --------------------------------------------
+        var atClient = new List<string>();
+        var atHost = new List<string>();
+        client.MessageReceived += (from, bytes) =>
+            atClient.Add($"{from}:{System.Text.Encoding.UTF8.GetString(bytes)}");
+        host.MessageReceived += (from, bytes) =>
+            atHost.Add($"{from}:{System.Text.Encoding.UTF8.GetString(bytes)}");
+
+        // Three each way, not one: an ordered channel that delivered exactly
+        // one message would pass a single-message check while having lost the
+        // property lockstep actually needs.
+        for (var i = 1; i <= 3; i++) host.SendText($"host-{i}");
+        for (var i = 1; i <= 3; i++) client.SendText($"client-{i}", 1);
+
+        await Frames(() => atClient.Count >= 3 && atHost.Count >= 3, 600);
+
+        GD.Print($"host -> client  sent {host.MessagesSent} received {atClient.Count}: " +
+                 $"{string.Join(" ", atClient)}");
+        GD.Print($"client -> host  sent {client.MessagesSent} received {atHost.Count}: " +
+                 $"{string.Join(" ", atHost)}");
+
+        if (atClient.Count != 3) failures.Add($"the client got {atClient.Count} of 3 messages");
+        if (atHost.Count != 3) failures.Add($"the host got {atHost.Count} of 3 messages");
+        if (string.Join(",", atClient) != $"1:host-1,1:host-2,1:host-3")
+            failures.Add("host messages arrived out of order or from the wrong peer");
+        if (string.Join(",", atHost) != $"{client.SelfId}:client-1,{client.SelfId}:client-2," +
+                                        $"{client.SelfId}:client-3")
+            failures.Add("client messages arrived out of order or from the wrong peer");
+
+        // --- a clean disconnect ---------------------------------------------
+        client.Close("");
+        await Frames(() => host.Roster.Count == 1, 600);
+
+        GD.Print($"after leaving   host roster {host.Roster.Count}: {Names(host)}, " +
+                 $"departures {departures}");
+        if (host.Roster.Count != 1) failures.Add($"host roster is {host.Roster.Count} after a leave");
+        if (departures != 1) failures.Add($"the host saw {departures} departures, want 1");
+
+        // --- a client on the wrong protocol ---------------------------------
+        var stale = new NetSession { Name = "NetStale", SpokenProtocol = "0.2.1" };
+        AddChild(stale);
+        var staleReason = "";
+        stale.ConnectFailed += (failure, why) => staleReason = $"{failure}|{why}";
+        stale.Join("Charles", "127.0.0.1", port);
+        await Frames(() => staleReason.Length > 0, 600);
+
+        GD.Print($"version 0.2.1   {(staleReason.Length == 0 ? "NOT REFUSED" : staleReason)}");
+        GD.Print($"host roster     {host.Roster.Count} after the refusal");
+        if (!staleReason.StartsWith("VersionMismatch|"))
+            failures.Add($"a 0.2.1 client was not told about the version ({staleReason})");
+        if (!staleReason.Contains("0.2.1") || !staleReason.Contains(NetSession.Protocol))
+            failures.Add("the version refusal does not name both versions");
+        if (host.Roster.Count != 1) failures.Add("a refused client stayed on the roster");
+
+        // --- a host that is full ---------------------------------------------
+        var small = new NetSession { Name = "NetSmall" };
+        AddChild(small);
+        small.Host("Solo", port + 1, maxPlayers: 1);
+
+        var turnedAway = new NetSession { Name = "NetTurnedAway" };
+        AddChild(turnedAway);
+        var fullReason = "";
+        turnedAway.ConnectFailed += (failure, why) => fullReason = $"{failure}|{why}";
+        turnedAway.Join("Late", "127.0.0.1", port + 1);
+        await Frames(() => fullReason.Length > 0, 600);
+
+        GD.Print($"full host       {(fullReason.Length == 0 ? "NOT REFUSED" : fullReason)}");
+        if (!fullReason.StartsWith("HostFull|")) failures.Add($"a full host let someone in ({fullReason})");
+
+        // --- nobody listening --------------------------------------------------
+        var lonely = new NetSession { Name = "NetLonely", ConnectTimeoutMs = 1200 };
+        AddChild(lonely);
+        var lonelyReason = "";
+        lonely.ConnectFailed += (failure, why) => lonelyReason = $"{failure}|{why}";
+        lonely.Join("Nobody", "127.0.0.1", port + 2);
+        await Frames(() => lonelyReason.Length > 0, 2000);
+
+        GD.Print($"dead port       {(lonelyReason.Length == 0 ? "NO ANSWER AND NO REASON" : lonelyReason)}");
+        if (!lonelyReason.StartsWith("NoAnswer|")) failures.Add($"a dead port gave no reason ({lonelyReason})");
+
+        var bad = new NetSession { Name = "NetBad" };
+        AddChild(bad);
+        var badReason = bad.Join("Typo", "not a host name at all", port);
+        GD.Print($"bad address     {badReason}");
+        if (badReason != NetFailure.BadAddress) failures.Add($"a nonsense address gave {badReason}");
+
+        var badPort = bad.Join("Typo", "127.0.0.1", 99999);
+        GD.Print($"bad port        {badPort}");
+        if (badPort != NetFailure.BadPort) failures.Add($"port 99999 gave {badPort}");
+
+        // --- and the lobby draws what the roster says ---------------------------
+        var lobby = GD.Load<PackedScene>("res://scenes/lobby.tscn").Instantiate<Lobby>();
+        var lobbyLayer = new CanvasLayer { Name = "NetTestLobby" };
+        lobbyLayer.AddChild(lobby);
+        AddChild(lobbyLayer);
+        lobby.Bind(host);
+        lobby.Refresh();
+        GD.Print($"lobby rows      {lobby.RowCount} for {host.Roster.Count} on the roster");
+        if (lobby.RowCount != host.Roster.Count)
+            failures.Add($"the lobby drew {lobby.RowCount} rows for {host.Roster.Count} peers");
+
+        host.Close("");
+        small.Close("");
+
+        if (failures.Count > 0)
+        {
+            foreach (var problem in failures) GD.Print($"net             FAILED: {problem}");
+            GetTree().Quit(1);
+            return;
+        }
+
+        GD.Print("=== NET OK ===");
+        GetTree().Quit();
+    }
+
+    private static string Names(NetSession session) =>
+        session.Roster.Count == 0
+            ? "(empty)"
+            : string.Join(", ", session.Roster.Select(p => p.ToString()));
+
+    /// Waits for a condition, one frame at a time, up to a bound. Everything in
+    /// the net test is asynchronous by nature -- the sockets are only serviced
+    /// when the tree polls them -- and a fixed sleep would either be flaky or
+    /// slow.
+    private async System.Threading.Tasks.Task Frames(System.Func<bool> until, int limit)
+    {
+        for (var i = 0; i < limit && !until(); i++)
+            await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+    }
+
+    /// Captures the three multiplayer screens, each with a deliberately long
+    /// refusal in it: the failure sentences are the longest strings any of
+    /// these screens will ever hold, and a card that a long one pushes past the
+    /// viewport is a defect only a capture shows (docs/0025, docs/0032).
+    private async void RunNetShot()
+    {
+        GD.Print("=== NET SHOT ===");
+        ShowMenu();
+        await Frames(() => false, 8);
+
+        await Capture("menu");
+
+        ShowMultiplayerSetup(MultiplayerSetup.Mode.Host);
+        _setup!.ShowError(NetSession.Describe(NetFailure.SocketUnavailable, "ERR_CANT_CREATE"));
+        await Frames(() => false, 8);
+        await Capture("host");
+
+        ShowMultiplayerSetup(MultiplayerSetup.Mode.Join);
+        // The longest sentence any of these screens can hold. If the card
+        // survives this one it survives all of them.
+        _setup!.ShowError(NetSession.Describe(NetFailure.NoAnswer));
+        await Frames(() => false, 8);
+        await Capture("join");
+
+        CloseMultiplayerSetup();
+
+        var session = Net();
+        session.Host("Ada Lovelace with a very long name indeed", 7801, maxPlayers: 4);
+        ShowLobby(session, "");
+        _lobby!.ShowError(NetSession.Describe(NetFailure.VersionMismatch,
+            "this host is on 0.3.0, you are on 0.2.1."));
+        await Frames(() => false, 8);
+        await Capture("lobby");
+
+        session.Close("");
+        GD.Print("=== NET SHOT OK ===");
+        GetTree().Quit();
+    }
+
+    private async System.Threading.Tasks.Task Capture(string name)
+    {
+        await ToSignal(RenderingServer.Singleton, RenderingServer.SignalName.FramePostDraw);
+        var image = GetViewport().GetTexture().GetImage();
+        image.SavePng($"user://net-{name}.png");
+        GD.Print($"shot {name,-8} {image.GetWidth()}x{image.GetHeight()} -> " +
+                 ProjectSettings.GlobalizePath($"user://net-{name}.png"));
+    }
+
     private void ShowMenu()
     {
         _game?.QueueFree();
@@ -800,6 +1163,8 @@ public sealed partial class Boot : Node
         _menu.NewGameRequested += OnNewGame;
         _menu.LoadRequested += OnLoad;
         _menu.SaveSelectRequested += ShowSaveSelect;
+        _menu.HostGameRequested += () => ShowMultiplayerSetup(MultiplayerSetup.Mode.Host);
+        _menu.JoinGameRequested += () => ShowMultiplayerSetup(MultiplayerSetup.Mode.Join);
 
         var layer = new CanvasLayer { Name = "MenuLayer" };
         layer.AddChild(_menu);

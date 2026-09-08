@@ -40,9 +40,9 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -200.0
-offset_top = -180.0
+offset_top = -226.0
 offset_right = 200.0
-offset_bottom = 180.0
+offset_bottom = 226.0
 grow_horizontal = 2
 grow_vertical = 2
 size_flags_vertical = 4
@@ -73,6 +73,14 @@ text = "New Game"
 [node name="LoadGame" type="Button" parent="Card/Rows"]
 custom_minimum_size = Vector2(0, 34)
 text = "Load Game"
+
+[node name="HostGame" type="Button" parent="Card/Rows"]
+custom_minimum_size = Vector2(0, 34)
+text = "Host Multiplayer World"
+
+[node name="JoinGame" type="Button" parent="Card/Rows"]
+custom_minimum_size = Vector2(0, 34)
+text = "Join Multiplayer World"
 
 [node name="Quit" type="Button" parent="Card/Rows"]
 custom_minimum_size = Vector2(0, 34)

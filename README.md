@@ -67,7 +67,10 @@ Headless flags, all of which live in `game/scripts/Boot.cs` and
 | `--shore-shot` | capture framed on the nearest coastline -- spawn is deliberately inland, so no other capture contains water |
 | `--build-shot` | capture with build mode open and a ghost placed |
 | `--menu-shot`, `--start-shot`, `--editor-shot` | title screen, a new game, the script editor |
+| `--net-test` | a host and a client in one process: roster, messages both ways, clean parting, and every refusal with its reason (ADR 0035) |
+| `--net-shot` | capture the host, join and lobby screens, each holding a long refusal |
 | `--machines=N`, `--seed=N` | size and seed the placeholder factory |
+| `--net-port=N` | the port `--net-test` uses (it also uses N+1 and N+2) |
 
 Godot ignores an unrecognised flag silently, so a capture that looks like the
 default usually means the flag name is wrong.

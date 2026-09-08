@@ -6,6 +6,9 @@ namespace Game;
 /// The title screen. Four things a player can do: carry on, start fresh, pick
 /// an older save, or leave.
 ///
+/// Multiplayer adds two more, below the single-player three: hosting and
+/// joining are separate intentions, and neither is what most launches are for.
+///
 /// Continue is the important one and is deliberately first and default-focused:
 /// on almost every launch after the first, resuming is what the player came to
 /// do. It is disabled rather than hidden when there is nothing to continue, so
@@ -20,6 +23,13 @@ public sealed partial class MainMenu : Control
     /// a screen's worth of question -- which of these is it, how far did it
     /// get -- and it has its own screen now (SaveSelect.dc.html).
     [Signal] public delegate void SaveSelectRequestedEventHandler();
+
+    /// Raised when the player wants to play with somebody. Two entries rather
+    /// than one "Multiplayer" screen, because hosting and joining are different
+    /// intentions and a menu that asks "which did you mean" after the click has
+    /// simply moved the choice one screen later.
+    [Signal] public delegate void HostGameRequestedEventHandler();
+    [Signal] public delegate void JoinGameRequestedEventHandler();
 
     private Button _continue = null!;
     private Button _newGame = null!;
@@ -42,6 +52,10 @@ public sealed partial class MainMenu : Control
         _continue.Pressed += OnContinue;
         _newGame.Pressed += OnNewGame;
         _loadGame.Pressed += () => EmitSignal(SignalName.SaveSelectRequested);
+        GetNode<Button>("Card/Rows/HostGame").Pressed +=
+            () => EmitSignal(SignalName.HostGameRequested);
+        GetNode<Button>("Card/Rows/JoinGame").Pressed +=
+            () => EmitSignal(SignalName.JoinGameRequested);
         GetNode<Button>("Card/Rows/Quit").Pressed += () => GetTree().Quit();
         _saves.ItemActivated += index => LoadSlot((int)index);
 
