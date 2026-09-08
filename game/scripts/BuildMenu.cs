@@ -241,10 +241,12 @@ public sealed partial class BuildMenu : PanelContainer
     /// leads, because "which one makes plates" is the question being asked.
     private string Describe(Recipe recipe)
     {
-        var outputs = string.Join(" + ", recipe.Outputs.Select(o => $"{o.Count} {_names.GetName(o.Item)}"));
+        var outputs = string.Join(" + ",
+            recipe.Outputs.Select(o => $"{o.Count} {ItemText.Of(_names, o.Item)}"));
         var inputs = recipe.Inputs.Count == 0
             ? "nothing"
-            : string.Join(" + ", recipe.Inputs.Select(i => $"{i.Count} {_names.GetName(i.Item)}"));
+            : string.Join(" + ",
+                recipe.Inputs.Select(i => $"{i.Count} {ItemText.Of(_names, i.Item)}"));
 
         return $"{outputs}  <-  {inputs}";
     }
