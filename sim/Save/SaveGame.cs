@@ -39,6 +39,10 @@ public static class SaveGame
             Tick = world.TickCount,
             Items = world.Items.Names.ToList(),
             LocalPlayer = world.LocalIndex,
+            CommandDigest = world.CommandDigest.ToString(
+                System.Globalization.CultureInfo.InvariantCulture),
+            CommandsApplied = world.CommandsApplied,
+            CommandsRefused = world.CommandsRefused,
         };
 
         // Teams before players, in id order, because a player names its team by
@@ -447,6 +451,12 @@ public static class SaveGame
 
         var world = new World(save.Seed, items, gen);
         world.RestoreTick(save.Tick);
+        world.RestoreCommandLog(
+            ulong.TryParse(save.CommandDigest,
+                           System.Globalization.NumberStyles.None,
+                           System.Globalization.CultureInfo.InvariantCulture,
+                           out var digest) ? digest : Hashing.Seed,
+            save.CommandsApplied, save.CommandsRefused);
 
         // Teams and the roster before machines: placing an Uplink registers it,
         // and a delivery arriving on the first tick after load must land on the

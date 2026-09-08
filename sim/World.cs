@@ -2,7 +2,7 @@ namespace Sim;
 
 /// Deterministic simulation root. Owns all machines and advances them one fixed
 /// 60 UPS tick at a time. No wall-clock time, no unseeded randomness.
-public sealed class World
+public sealed partial class World
 {
     private readonly List<Machine> _machines = new();
     private readonly List<Miner> _miners = new();

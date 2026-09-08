@@ -14,7 +14,7 @@ var arguments = args.ToList();
 
 if (arguments.Count == 0 || arguments.Contains("--help"))
 {
-    Console.WriteLine("usage: Sim.Harness --teams-test [--seed=N]");
+    Console.WriteLine("usage: Sim.Harness [--teams-test] [--lockstep-test] [--seed=N] [--ticks=N]");
     return arguments.Count == 0 ? 2 : 0;
 }
 
@@ -24,14 +24,35 @@ foreach (var argument in arguments)
         && int.TryParse(argument["--seed=".Length..], out var parsed))
         seed = parsed;
 
-if (!arguments.Contains("--teams-test"))
+var ticks = 10_000;
+foreach (var argument in arguments)
+    if (argument.StartsWith("--ticks=", StringComparison.Ordinal)
+        && int.TryParse(argument["--ticks=".Length..], out var wanted))
+        ticks = wanted;
+
+if (!arguments.Contains("--teams-test") && !arguments.Contains("--lockstep-test"))
 {
     Console.Error.WriteLine($"unknown flag: {string.Join(' ', arguments)}");
     return 2;
 }
 
-Console.WriteLine($"--- teams test, seed {seed} ---");
-var report = TeamSession.Run(seed);
-foreach (var line in report.Lines) Console.WriteLine(line);
+var failures = 0;
 
-return report.Ok ? 0 : 1;
+if (arguments.Contains("--teams-test"))
+{
+    Console.WriteLine($"--- teams test, seed {seed} ---");
+    var report = TeamSession.Run(seed);
+    foreach (var line in report.Lines) Console.WriteLine(line);
+    failures += report.Failures.Count;
+}
+
+if (arguments.Contains("--lockstep-test"))
+{
+    // Two peers, one command stream, one of them shuffled (ADR 0037).
+    Console.WriteLine($"--- lockstep test, seed {seed}, {ticks} ticks ---");
+    var report = LockstepSession.Run(seed, ticks);
+    foreach (var line in report.Lines) Console.WriteLine(line);
+    failures += report.Failures.Count;
+}
+
+return failures == 0 ? 0 : 1;

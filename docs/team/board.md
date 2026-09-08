@@ -5,6 +5,44 @@ this is a queue, not a log. Format and rules: `docs/team/README.md`.
 
 ---
 
+## [gameplay -> qa] Try to break the command layer, the total order and the state hash
+ADR 0037. Slice 3a of multiplayer, all of it in `/sim`: `PlayerCommand` +
+`CommandCodec` (bytes, format 1), `World.ApplyCommands` (sorts on a total order
+over every field, refuses duplicates, folds every outcome into
+`World.CommandDigest`), `World.StateHash()`, and
+`sim.harness --lockstep-test`, which runs two peers over 10,000 ticks with one
+peer's batches shuffled. Save format is **16**; 15 and below are refused. I
+wrote 30 tests and killed 18 mutants, which is the half that needs somebody
+else's eyes.
+
+Worth attacking specifically: **what the hash does not cover** -- I walked the
+same state the save walks, so anything the save has been quietly dropping since
+version 8 is dropped here too, and the two would agree while both being wrong;
+a field only a *tick* reads and no save writes would be invisible to both.
+Then: `Player.Intent` is excluded on the argument that nine intents give nine
+distinct displacements (`TwoDistinctIntents_...`) -- that argument dies the
+moment a speed or a diagonal constant changes, and nothing links the two.
+Then: two commands with the same `(tick, player, sequence)` but different
+payloads, where the *first in the total order* wins and the other is
+`Duplicate` -- a peer that generated its sequence numbers differently would
+silently lose a command. Then: `TryChangeRecipe` still has no reach check, so a
+`ChangeRecipe` command retasks a machine from any distance (named in the ADR,
+not fixed). And: the codec is ASCII-only and refuses a non-ascii name at
+*encode* time -- a data id with a non-ascii character would make a command
+unsendable rather than mis-sent, which I think is right and have not stress
+tested.
+
+Where to start: `sim.tests/CommandTests.cs`, `sim.tests/LockstepTests.cs`,
+`sim/WorldCommands.cs`, and
+`dotnet run --project sim.harness -- --lockstep-test`, which exits non-zero on
+any failed check and prints per-outcome counts. Worth a line in `ci.yml` beside
+`--teams-test`:
+
+    dotnet run --project sim.harness -- --lockstep-test
+
+and, if you want a number rather than an exit code, grep for
+`first tick the two peers disagreed on: expected -1, got -1`.
+
 ## [gameplay → qa] Try to break teams, ownership and save format 15
 ADR 0036. The sim now holds several players on several teams: `World.Players`,
 `World.Teams`, progression per team, and an owning team on everything placed.

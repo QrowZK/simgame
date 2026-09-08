@@ -173,6 +173,11 @@ jobs:
           dotnet run --project sim.harness -- --teams-test | tee teams.log
           grep -q -- "--- teams ok ---" teams.log
 
+      - name: Lockstep determinism (two peers, shuffled commands)
+        run: |
+          dotnet run --project sim.harness -- --lockstep-test | tee lockstep.log
+          grep -q "first tick the two peers disagreed on: expected -1, got -1" lockstep.log
+
       - name: Save/load session test
         working-directory: game
         run: |

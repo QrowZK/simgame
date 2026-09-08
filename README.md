@@ -28,8 +28,14 @@ Some headless checks belong to the sim rather than to the renderer, and live in
 a small console project so they run on a machine with no display driver:
 
 ```
-dotnet run --project sim.harness -- --teams-test    # teams, roster, ownership, save
+dotnet run --project sim.harness -- --teams-test     # teams, roster, ownership, save
+dotnet run --project sim.harness -- --lockstep-test  # two peers, one shuffled command stream
 ```
+
+`--lockstep-test` takes `--ticks=N` (default 10,000). It runs two worlds from
+one seed, feeds them one command stream with one peer's batches shuffled, and
+compares state hashes every 60 ticks and saves at the end. See
+`docs/0037-commands-the-total-order-and-the-state-hash.md`.
 
 It exits 0 on success and 1 on any failed check, so CI needs no grep. The
 scenario is `Sim.TeamSession.Run`, which `sim.tests` drives as well, so the

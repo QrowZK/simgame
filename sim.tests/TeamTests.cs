@@ -384,7 +384,7 @@ public class TeamTests
     [Fact]
     public void TheSaveVersionMoved_AndFourteenIsRefused()
     {
-        Assert.Equal(15, SaveFile.CurrentVersion);
+        Assert.Equal(16, SaveFile.CurrentVersion);
 
         var save = SaveGame.Capture(NewWorld());
         save.Version = 14;

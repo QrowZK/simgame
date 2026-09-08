@@ -91,11 +91,27 @@ public sealed class SaveFile
     /// one as 15 is not the problem -- writing a 15 and reading it as 14 is,
     /// because a 14 loader would take the first team's research as the world's
     /// and hand a rival's unlocks to everybody on the map. Refused, as always.
-    public const int CurrentVersion = 15;
+    /// 16 added the command log (ADR 0037): the rolling digest over every
+    /// player command this world has been given and what came of it, plus the
+    /// applied and refused counts. It is part of `World.StateHash`, so a file
+    /// without it loads into a world whose hash does not match the one that
+    /// wrote it -- which under lockstep reads as a desync on the first
+    /// comparison after a load. Refused rather than defaulted to zero for that
+    /// reason: a wrong hash is worse than a refused file.
+    public const int CurrentVersion = 16;
 
     public int Version { get; set; } = CurrentVersion;
     public int Seed { get; set; }
     public long Tick { get; set; }
+
+    /// The rolling hash over every command applied or refused, and the two
+    /// counts. Written as a string because `ulong` in JSON is a number that a
+    /// reader with 53 bits of mantissa rounds; the digest's whole job is to be
+    /// exact.
+    public string CommandDigest { get; set; }
+        = Hashing.Seed.ToString(System.Globalization.CultureInfo.InvariantCulture);
+    public int CommandsApplied { get; set; }
+    public int CommandsRefused { get; set; }
 
     /// Item names in id order. This table is what makes the rest of the file
     /// portable: every item reference below is an index into it, and loading
